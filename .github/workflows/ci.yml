@@ -32,5 +32,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Scripts import contract ABIs straight from forge's artifacts (a single source of truth,
+      # no codegen step). contracts/out/ is gitignored, so it has to be built before tsc can
+      # resolve those imports.
+      - uses: foundry-rs/foundry-toolchain@v1
+      - run: forge build
       - run: npm run typecheck
       - run: npm run lint
