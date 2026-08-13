@@ -49,8 +49,19 @@ async function main(): Promise<void> {
 
   const builder = new proofProvider.service.ProofBuilder(chainKey, proofBuilderUrl(), PROVER_TIMEOUT_MS);
   console.log('\nfetching proof…');
-  const proof = await builder.getProof(txHash);
+
+  // getProof returns a ProofResult envelope — {success, data, error} — not the proof itself.
+  // Unwrap it here so the fixture holds the proof fields the contract's execute() consumes.
+  const result = await builder.getProof(txHash);
+  if (!result.success || result.data === undefined) {
+    throw new Error(`Prover rejected the request: ${String(result.error ?? 'unknown error')}`);
+  }
+  const proof = result.data;
   console.log('✓ proof fetched');
+  console.log(`  headerNumber   ${proof.headerNumber}`);
+  console.log(`  txBytes        ${proof.txBytes.length} chars`);
+  console.log(`  merkle sibs    ${proof.merkleProof.siblings.length}`);
+  console.log(`  continuity     ${proof.continuityProof.roots.length} roots`);
 
   const payload = {
     capturedAt: new Date().toISOString(),

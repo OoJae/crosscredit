@@ -5,17 +5,39 @@
       "chainId": 11155111,
       "attestcoinChainKey": 1,
       "explorer": "https://sepolia.etherscan.io",
-      "role": "Source chain — where borrowers build the credit history that gets proven to Creditcoin",
+      "role": "Source chain \u2014 where borrowers build the credit history that gets proven to Creditcoin",
       "contracts": {
         "LoanBook": {
-          "address": "0xe53a54489aec265337f6f8fa3ee6e08ecba5cf9c",
+          "address": "0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c",
           "deployedAt": "2026-08-13",
-          "explorerUrl": "https://sepolia.etherscan.io/address/0xe53a54489aec265337f6f8fa3ee6e08ecba5cf9c",
-          "eventsUrl": "https://sepolia.etherscan.io/address/0xe53a54489aec265337f6f8fa3ee6e08ecba5cf9c#events",
+          "explorerUrl": "https://sepolia.etherscan.io/address/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c",
+          "eventsUrl": "https://sepolia.etherscan.io/address/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c#events",
           "eventTopics": {
             "LoanOpened(uint256,address,uint256,uint64)": "0x0d7f8e19afd65be70c0b9ff46dab1702a44ca0e8fcd33448375d7c2690e5866b",
             "RepaymentMade(uint256,address,uint256,bool,uint64)": "0x7d64aa0e099ec7ce5a5e95941014b245cf86dd8cd1115dd1ee421d8ec4d04206",
             "CollateralAdded(address,uint256)": "0x7dba1be544024070cd5eebfa8bdd80a8b198cea8058c7d3cc1f8dd36e41ab2f7"
+          },
+          "deployBlock": 11482838,
+          "verification": {
+            "sourcify": "exact_match",
+            "sourcifyUrl": "https://repo.sourcify.dev/contracts/full_match/11155111/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c/",
+            "etherscan": "pending \u2014 awaiting ETHERSCAN_API_KEY"
+          },
+          "seededHistory": {
+            "evidence": "docs/evidence/seeded-history.json",
+            "totalEvents": 11,
+            "borrowerA": {
+              "address": "0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6",
+              "events": 9,
+              "blockSpan": 10,
+              "allOnTime": true,
+              "fitsSingleBatch": true
+            },
+            "borrowerB": {
+              "address": "0x04163f60FA50519D86AeFB8e450312bAD76CA0B6",
+              "events": 2,
+              "lateRepayments": 1
+            }
           }
         }
       }
@@ -24,7 +46,7 @@
       "chainId": 102031,
       "explorer": "https://creditcoin-testnet.blockscout.com",
       "rpc": "https://rpc.cc3-testnet.creditcoin.network",
-      "role": "Destination chain — CrossCredit's Attestcoin Smart Contract, scoring, SBT and lending pool",
+      "role": "Destination chain \u2014 CrossCredit's Attestcoin Smart Contract, scoring, SBT and lending pool",
       "protocolContracts": {
         "BlockProverPrecompile": "0x0000000000000000000000000000000000000FD2",
         "ChainInfoPrecompile": "0x0000000000000000000000000000000000000fd3",
@@ -32,5 +54,16 @@
       },
       "contracts": {}
     }
+  },
+  "gateG0": {
+    "status": "PASSED",
+    "date": "2026-08-13",
+    "sepoliaBurnTx": "0xad717c5c85279de036a321b63ccdb109a6c447e79f47261e52f969bdd20ca28d",
+    "creditcoinVerifyTx": "0x7ae82162d5f8ec24471637d1e545452d24adf3aa0066b42b874890fbf550f872",
+    "queryId": "0x2bf5346d29ad6628550c1eedca98d2c378b5fd2b20c4cce5363687e6e4750987",
+    "endToEndSeconds": 579,
+    "creditcoinGasUsed": 393638,
+    "creditcoinCostCTC": 0.000196819,
+    "evidence": "docs/evidence/g0-hello-bridge/README.md"
   }
 }
