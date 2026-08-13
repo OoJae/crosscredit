@@ -9,11 +9,13 @@
 
 ## 1. Mission
 
-You are the sole engineer (with me as operator) building **CrossCredit** for the BUIDL CTC 2026 Fall hackathon (deadline **Sep 6, 2026, 23:59 ET — we submit Sep 5**). Goal: **Grand Prize ($10k) + CEIP investment fast-track.**
+You are the sole engineer (with me as operator) building **CrossCredit** for the BUIDL CTC 2026 Fall hackathon. Goal: **Grand Prize ($10k) + CEIP investment fast-track.**
+
+⏰ **Deadline is disputed — we submit Sep 4.** The DoraHacks page prose says Sep 6, 23:59 ET, but the platform's own countdown is configured to **Sep 6, 04:59 UTC (= Sep 6, 00:59 ET)** — the submit button likely locks ~23h before the stated time. Eventbrite lists a third figure. Treat **Sep 4** as the real deadline until an organizer reconciles it.
 
 CrossCredit = trustless cross-chain credit reputation + lending on Creditcoin:
 - Users build repayment history in `LoanBook.sol` on **Ethereum Sepolia**.
-- An off-chain **Oracle Worker** proves those transactions to Creditcoin via the **Attestcoin Protocol** (Merkle + continuity proofs verified by the native precompile, ~15s, no oracle operator, no bridge).
+- An off-chain **Oracle Worker** proves those transactions to Creditcoin via the **Attestcoin Protocol** (Merkle + continuity proofs verified by the native precompile — synchronously, in one CC3 block, no oracle operator, no bridge). Note: the in-block verification is ~15s, but a Sepolia block takes **~8–10 min to be attested** first. Never pitch "15 seconds end-to-end".
 - `CreditRegistry.sol` (on **Creditcoin CC3 Testnet**) decodes verified events, updates a `CreditProfile`, computes a deterministic score, and syncs a **soulbound Credit Tier NFT** (ERC-721 + ERC-5192).
 - `LendingPool.sol` prices loans by tier — Platinum borrows **undercollateralized (85%)**.
 
@@ -22,20 +24,64 @@ CrossCredit = trustless cross-chain credit reputation + lending on Creditcoin:
 ## 2. Non-negotiables
 
 1. **Never fake the integration in the demo path.** Mocked provers/precompiles are allowed in unit tests only, clearly isolated under `test/mocks/`. Everything user-facing runs against the real precompile on live CC3 testnet.
-2. **Verify before trusting names.** The protocol was recently rebranded (USC → Attestcoin). Every SDK class, package name, precompile address, RPC and API URL in this file is research-derived and marked provisional until Phase 0 confirms it against live docs + installed typings. If reality differs: adapt the code, then update this CLAUDE.md and `docs/BUILD_GUIDE.md` in the same commit.
+2. **Verify before trusting names.** §3 was verified against live docs, the npm registry and CC3 RPC probes on Aug 13, 2026 — it is no longer provisional. But the ecosystem is mid-rebrand and mid-migration: **always confirm a symbol against installed typings (`node_modules/@gluwa/usc-sdk/dist/*.d.ts`) or the pinned examples before depending on it.** If reality differs from §3: adapt the code, then update this CLAUDE.md and `docs/BUILD_GUIDE.md` in the same commit. Tutorial videos and blog posts are known-stale — the pinned repo and the live `.md` docs win.
 3. **Original work window.** All product code is written from Aug 13 onward with clean, frequent, meaningful commits (conventional commits). Code adapted from official Gluwa examples gets explicit attribution in file headers + README. No copied third-party app code.
 4. **Secrets discipline.** Private keys/API URLs only in `.env` (gitignored); maintain `.env.example`; the deployer key is test-only. Never print secrets in logs or commit them — if a secret ever lands in a commit, stop and tell me immediately.
 5. **Scope discipline.** When behind schedule, cut UI polish and stretch features — never the verification depth (multi-event decoding, batch path, replay protection, negative tests, in-contract success validation).
 6. **Ask, don't assume**, for anything requiring my human action: faucets, wallet funding, Discord questions, DoraHacks form, account signups, or spending anything.
 
-## 3. Provisional ground truth (confirm in Phase 0, then delete the ⚠️ marks)
+## 3. Verified ground truth (locked Aug 13, 2026 — live docs, npm registry, CC3 RPC probes)
 
-- Creditcoin **CC3 Testnet**: RPC `https://rpc.cc3-testnet.creditcoin.network` ⚠️, EVM chainId **102031**, gas token tCTC (Discord faucet), Blockscout explorer ⚠️.
-- Source chain: **Ethereum Sepolia**, chainId 11155111, Attestcoin **chainKey 1** ⚠️. Treat Sepolia as the ONLY live source chain unless `getSupportedChains()` proves otherwise.
-- Verifier **precompile @ `0x0FD2`** ⚠️: `verify(chainKey, blockHeight, encodedTx, merkleProof, continuityProof) → bool`. Verifies inclusion + continuity ONLY — **it does not check tx success; our contracts must**. Sync, ~1 block (~15s). **Batch: up to 10 queries sharing a continuity proof** ⚠️.
-- SDK **`@gluwa/usc-sdk`** ⚠️ (TS, ethers v6): `PrecompileChainInfoProvider.getSupportedChains()`, `ProverAPIProofGenerator` (hosted Prover API — capture base URL from docs), `PrecompileBlockProver`, `waitUntilHeightAttested` (15s poll).
-- Solidity base **`@gluwa/creditcoin-public-prover`** ⚠️ (`Types.sol`, `Prover.sol`): Core pattern = `_processOracleResults(proverContract, queryId)` + `isQueryUsed`/`_markQueryUsed` + `_onQueryValidated(...)` hook receiving ABI-encoded `ResultSegment[]` (bytes32 → address/uint/bool).
-- Docs: `docs.creditcoin.org/attestcoin-protocol` (new) and `docs.creditcoin.org/creditcoin-usc/{usc-chains-environments, guided-tutorials, dapp-builder-infrastructure/usc-sdk}` (legacy). Official tutorials in order: **Hello Bridge → Custom Contracts Bridging → Bridge Off-chain Worker** (repos: `gluwa/usc-testnet-bridge-examples`, `gluwa/ccnext-testnet-bridge-examples` ⚠️ — search the gluwa org for post-rebrand names).
+> ⛔ **The pre-2026 architecture is DEAD. Never use it.** `@gluwa/creditcoin-public-prover`,
+> `Types.sol`/`Prover.sol`, `ResultSegment[]`, `_onQueryValidated`, `_processOracleResults`,
+> `isQueryUsed`/`_markQueryUsed`, precompile `0x0Be9`, escrowed `submitQuery`/`getQueryResult` —
+> all belong to the async STARK model that was removed in USC Testnet 2.0. If you see these
+> names in a blog post, tutorial video, or older repo, you are reading stale material.
+
+> 📛 **"Attestcoin" is prose-only branding.** Zero npm packages and zero GitHub repos carry the
+> name; everything ships as `usc-*`, and the docs say so explicitly. Use "Attestcoin Protocol"
+> in the pitch/README; use `usc-*` in every import, path and package name.
+
+**Networks**
+- Creditcoin **CC3 Testnet**: RPC `https://rpc.cc3-testnet.creditcoin.network`, EVM chainId **102031** (`0x18e8f`), ~15s blocks, baseFee ~500 gwei, block gasLimit 75M. Explorer `https://creditcoin-testnet.blockscout.com`. Dashboard `https://dashboard.cc3-testnet.creditcoin.network/`. Gas token tCTC via Discord `token-faucet` → `/faucet address:0x…`.
+- **Source chains on CC3 testnet — there are TWO**: Ethereum Sepolia (**chainKey 1**) and Ethereum Mainnet (**chainKey 3**). `chainKey` is a Creditcoin-internal id, **not** the EVM chainId — never hardcode it; resolve via `getSupportedChains()` and treat `docs/evidence/supported-chains.json` as law. Our source chain is Sepolia; the registry **must** authenticate chainKey, because a contract at the same address on mainnet could otherwise spoof events.
+
+**The verification primitive**
+- **BlockProver precompile @ `0x0000000000000000000000000000000000000FD2`** (docs call this the "Block Prover Precompile"; the Solidity interface is still named `INativeQueryVerifier`):
+  - `verify(uint64 chainKey, uint64 height, bytes encodedTransaction, MerkleProof, ContinuityProof) view returns (bool)` — **reverts on failure**, returns true on success. Never write `if (!verify(...))`; that branch is unreachable.
+  - `verifyAndEmit(...)` — same args, non-view, emits `TransactionVerified(chainKey, height, txIndex)`. **All official examples use this**, not `verify`.
+  - **Batch overload**: `verifyAndEmit(uint64 chainKey, uint64[] heights, bytes[] encodedTxs, MerkleProof[] proofs, ContinuityProof shared)` — **max 10 proofs, and all source blocks must fall within a 1000-block `MAX_BATCH_RANGE`.** That range cap shapes `seed-history.ts`: seeded events must land inside one 1000-block window to fit a single batch.
+  - `calculateTxIndex(MerkleProof) view returns (uint64)`.
+  - Structs: `MerkleProof { bytes32 root; MerkleProofEntry[] siblings; }`, `MerkleProofEntry { bytes32 hash; bool isLeft; }`, `ContinuityProof { bytes32 lowerEndpointDigest; bytes32[] roots; }`.
+- **ChainInfo precompile @ `0x0000000000000000000000000000000000000fd3`**.
+- **It does NOT validate transaction success** — docs state this in a danger callout. Our ASC must `require(receipt.receiptStatus == 1)` via `EvmV1Decoder.decodeReceiptFields()`. This is a headline credibility point in the demo.
+- **Timing, corrected**: verification is synchronous in one CC3 block (~15s) — but only *after* the source block is attested. **Sepolia attestation lag is ~8–10 minutes** (`waitUntilHeightAttested` polls every 15s, 15min default timeout). The demo must pre-attest; do not claim end-to-end 15s.
+
+**Packages (exact pins)**
+- **`@gluwa/usc-sdk@0.18.0`** — TS, ethers `^6.15` as a regular dep. Exports are **namespaces, not flat classes**: `chainInfo.PrecompileChainInfoProvider` (`.getSupportedChains()`), `blockProver.PrecompileBlockProver` (`computeTransactionIndex`, `verifySingle`, `verifyAndEmitSingle`, `verifyBatch`, `verifyAndEmitBatch`), **`proofProvider.service.ProofBuilder(chainKey, proofBuilderUrl)`** (`getProof`, `getBatchProof`; there is no `ProverAPIProofGenerator`), `utils.mergeProofs`, `waitUntilHeightAttested`.
+- **`@gluwa/usc-contracts@0.1.2`** — Solidity. `contracts/write-ability/INativeQueryVerifier.sol`, `contracts/decoding/EvmV1Decoder.sol` (a **library** — imported and inlined; the deployed instance at `0x731c345d79Fb8BbDC541f9DF3b6317585F849F9f` on CC3 is only an off-chain debugging aid).
+- **Proof builder API**: `https://prover.cc3-testnet.creditcoin.network` (alias `https://proof-gen-api.cc3-testnet.creditcoin.network/`; swagger at `/api/swagger/`).
+
+**The contract pattern (what we actually implement)**
+`USCBase.sol` is **vendored in the examples repo, not shipped in the npm package** — we vendor it into `contracts/src/vendored/` with attribution:
+```
+execute(uint8 action, uint64 chainKey, uint64 blockHeight, bytes encodedTransaction,
+        bytes32 merkleRoot, MerkleProofEntry[] siblings,
+        bytes32 lowerEndpointDigest, bytes32[] continuityRoots) external returns (bool)
+  → txIndex = VERIFIER.calculateTxIndex(merkleProof)
+  → queryId = keccak256(abi.encodePacked(chainKey, blockHeight, txIndex))
+  → replay guard: mapping(bytes32 => bool) public processedQueries   (no isQueryUsed helper)
+  → VERIFIER.verifyAndEmit(...)
+  → hook: _processAndEmitEvent(uint8 action, bytes32 queryId, bytes encodedTransaction) internal virtual
+```
+Data is decoded **directly from `encodedTransaction`** via `EvmV1Decoder` — there is no prover contract and no async query lifecycle.
+
+**Docs & examples**
+- Live docs: `docs.creditcoin.org/attestcoin-protocol` (+ `/architecture`, `/attestcoin-protocol-chains-environments`, `/guided-tutorials`, `/dapp-builder-infrastructure/{attestcoin-smart-contracts, attestcoin-sdk-usc-sdk}`). Every legacy `/creditcoin-usc/*` URL 301s here; the bare `/creditcoin-usc` 404s. **Appending `.md` to any docs URL returns clean markdown** — use that for scripted reads.
+- Examples repo: **`gluwa/usc-testnet-bridge-examples`** @ pinned commit `4ff9a3bf5d7fa8dbfec34ae9726d3f81405dca7b` (actively maintained). Toolchain: **Foundry** (solc 0.8.30, optimizer 200, `via_ir=false`, evm `shanghai`, `libs=["node_modules"]`), yarn 1.22.22, OZ 5.4.0, ethers ^6.17.
+  **Four** tutorials in order: **Hello Bridge → Custom Contracts Bridging → Bridge Offchain Worker → Loan Flow**. `loan-flow` (`USCLoanManager.sol`) is architecturally closest to CrossCredit — study it and attribute it, don't copy it.
+  `gluwa/ccnext-testnet-bridge-examples` is the superseded predecessor — do not use.
+- Faucet economics: ~100 tCTC / 24h, ~11 tCTC per oracle query → **~9 queries/day**. Claim daily; treat query budget as a first-class constraint when iterating on live testnet.
 
 ## 4. Repository layout (scaffold in Phase 0)
 
@@ -48,9 +94,13 @@ crosscredit/
 │  ├─ ATTESTCOIN_INTEGRATION.md # REQUIRED submission doc — grows with every integration step
 │  ├─ SCORING.md                # scoring constants + rationale
 │  └─ evidence/                 # supported-chains.json, screenshots, tx hashes
-├─ contracts/                   # Hardhat or Foundry — match the official examples (decide Phase 0)
-│  ├─ sepolia/LoanBook.sol
-│  └─ creditcoin/{CreditRegistry.sol, ScoreLib.sol, CreditTierSBT.sol, LendingPool.sol, TUSD.sol}
+├─ foundry.toml + remappings.txt # one Foundry project at repo root (solc 0.8.30, evm shanghai)
+├─ contracts/
+│  ├─ src/sepolia/LoanBook.sol
+│  ├─ src/creditcoin/{CreditRegistry.sol, ScoreLib.sol, CreditTierSBT.sol, LendingPool.sol, TUSD.sol}
+│  ├─ src/vendored/            # attributed upstream USCBase + verifier interface (pinned 4ff9a3bf)
+│  ├─ test/{mocks/, fixtures/, fork/}
+│  └─ script/                  # forge deploy scripts
 ├─ worker/                      # TS + ethers v6 + SDK: watch & backfill(batch) modes, state.json, pretty logs
 ├─ web/                         # Vite + React + wagmi/viem + Tailwind: Dashboard / Import History / Borrow
 ├─ scripts/                     # check-chains.ts, seed-history.ts, deploy/*, e2e-smoke.ts
@@ -78,14 +128,17 @@ crosscredit/
 - **P5 Deliverables (→ Sep 2):** demo video per BUILD_GUIDE §9 · deck PDF §10 · README final. **G5: all assets are URLs.**
 - **P6 Submit (Sep 4–5):** submit on DoraHacks, verify links incognito + mobile.
 
-## 7. Phase 0 Verification Protocol (do this before ANY product code)
+## 7. Phase 0 Verification Protocol — ✅ EXECUTED Aug 13, 2026
 
-1. `npm view @gluwa/usc-sdk` and search npm for `attestcoin` → record real package names + versions.
-2. Fetch `docs.creditcoin.org/attestcoin-protocol` + the three legacy USC pages → record today's precompile address, Prover API base URL, contract package names, tutorial repo links.
-3. Write + run `scripts/check-chains.ts` against CC3 → commit output to `docs/evidence/supported-chains.json`. **That file is law for source chains.**
-4. Confirm CC3 chainId (102031) & explorer; confirm my wallet has tCTC + SepoliaETH (if not, STOP and give me the exact faucet steps).
-5. Pin the exact commit of any Gluwa example you fork; note it in file headers.
-6. Replace every ⚠️ in this file + BUILD_GUIDE with verified values (single commit: `chore: lock verified attestcoin ground truth`). Anything unresolvable → draft me a precise question for `#buidl-ctc-qna`.
+Findings are locked into §3 above and logged in `PROGRESS.md`. Re-run steps 3–4 if anything on
+testnet starts behaving unexpectedly; the rest is settled.
+
+1. ✅ npm registry queried — `@gluwa/usc-sdk@0.18.0` + `@gluwa/usc-contracts@0.1.2` are current; `@gluwa/creditcoin-public-prover` is the dead architecture; no `attestcoin` package exists.
+2. ✅ Live docs read — precompile `0x…0FD2`, ChainInfo `0x…0fd3`, prover API URL, batch limits (10 / 1000 blocks), success-validation caveat, four tutorials.
+3. ⏳ `scripts/check-chains.ts` → `docs/evidence/supported-chains.json`. **That file is law for source chains.**
+4. ✅ CC3 chainId 102031 + explorer confirmed by live RPC probe. ⏳ Wallet funding is an operator action — see `docs/HUMAN_ACTIONS.md`.
+5. ✅ Examples pinned at `4ff9a3bf5d7fa8dbfec34ae9726d3f81405dca7b`; noted in vendored file headers + README.
+6. ✅ All ⚠️ replaced. Residual unknowns are drafted as Discord/AMA questions in `PROGRESS.md`.
 
 ## 8. Session workflow
 
