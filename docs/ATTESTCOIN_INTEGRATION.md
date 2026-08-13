@@ -159,7 +159,69 @@ user-facing path runs against the real precompile on live CC3 testnet.**
   already on CC3 at `0x731c345d79Fb8BbDC541f9DF3b6317585F849F9f` is 9,598 B — a different build —
   so we will deploy and link our own in Phase 2.
 
-**Gate G0 — real proof round-trip:** ⏳ pending testnet funding.
+**Gate G0 — real proof round-trip: ✅ PASSED.** Full evidence:
+[`docs/evidence/g0-hello-bridge/`](evidence/g0-hello-bridge/README.md).
+
+A Sepolia burn ([`0xad717c5c…`](https://sepolia.etherscan.io/tx/0xad717c5c85279de036a321b63ccdb109a6c447e79f47261e52f969bdd20ca28d),
+block 11482813) was proven to Creditcoin and acted upon
+([`0x7ae82162…`](https://creditcoin-testnet.blockscout.com/tx/0x7ae82162d5f8ec24471637d1e545452d24adf3aa0066b42b874890fbf550f872),
+block 5304687), minting 50 BTKT against QueryId
+`0x2bf5346d29ad6628550c1eedca98d2c378b5fd2b20c4cce5363687e6e4750987`.
+
+**Measured, and it corrects two of our own assumptions:**
+
+| Metric | Measured |
+|---|---|
+| End-to-end | **9 min 39 s** — of which ~8.5 min is attestation and one CC3 block is verification |
+| Gas on CC3 | **393,638** at 0.5 gwei ≈ **0.000197 CTC** per verified query |
+
+The second number retires a constraint we had been designing around: Gluwa's README says 100 tCTC
+buys ~9 oracle queries; it actually buys roughly half a million. Live-testnet iteration is
+effectively free.
+
+Two SDK behaviours were also recorded, because both will shape the Phase 2 worker: the SDK's 10 s
+HTTP timeout also governs the attested-height poll and expired mid-attestation on the first
+attempt (our scripts use 60 s), and `submit_query.ts` exits 0 even on failure — success must be
+gated on output, never on exit code.
+
+### Aug 13, 2026 — Phase 1: the source chain
+
+**`LoanBook.sol` is live on Sepolia** at
+[`0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c`](https://sepolia.etherscan.io/address/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c#events)
+(source verified on Sourcify, `exact_match`). It emits the three events that become a borrower's
+portable reputation:
+
+| Event | topic0 |
+|---|---|
+| `LoanOpened(uint256,address,uint256,uint64)` | `0x0d7f8e19afd65be70c0b9ff46dab1702a44ca0e8fcd33448375d7c2690e5866b` |
+| `RepaymentMade(uint256,address,uint256,bool,uint64)` | `0x7d64aa0e099ec7ce5a5e95941014b245cf86dd8cd1115dd1ee421d8ec4d04206` |
+| `CollateralAdded(address,uint256)` | `0x7dba1be544024070cd5eebfa8bdd80a8b198cea8058c7d3cc1f8dd36e41ab2f7` |
+
+**The event shape is a cross-chain ABI, not an implementation detail.** `CreditRegistry` decodes
+these logs out of a proven receipt and can never call back, so `borrower` is indexed in all three
+— the registry reads it from a topic, never from `msg.sender`, which on Creditcoin is the worker
+relaying the proof. `repay()` is permissionless but always credits `loan.borrower`, so a third
+party settling your debt builds *your* reputation. And `onTime` is stamped by the source contract,
+because the registry has no access to Sepolia's clock — only to what the proven receipt says.
+`contracts/test/LoanBook.t.sol` asserts exact topic counts, topic0 hashes and data widths; those
+assertions are the contract between the two halves of the system.
+
+**Seeded history — [evidence](evidence/seeded-history.json), 11 events across two borrowers.**
+One address cannot demonstrate both ends of the tier system, since Platinum requires `late == 0`:
+
+| Borrower | Events | Profile |
+|---|---|---|
+| A `0x8ce70729…` | **9**, all on time, spanning **10 blocks** | Clean record → targets Platinum and the 85% undercollateralized borrow |
+| B `0x04163f60…` | 2, including **one late repayment** (`onTime=false`) | Tier contrast — proves the penalty is real on live testnet |
+
+Borrower A's 9 events fit **one batch**: under the 10-proof `MAX_BATCH_SIZE` and far under the
+1000-block `MAX_BATCH_RANGE`. That constraint was designed into the seeding script rather than
+discovered afterwards — a history spread over more than 1000 blocks could not be imported in a
+single transaction, and the batch demo would have been impossible.
+
+**One infrastructure limit found:** Alchemy's free tier caps `eth_getLogs` at a **10-block range**.
+The Phase 2 worker must paginate its event scan in 10-block windows or use a different provider —
+a naive full-range query fails outright.
 
 ---
 
