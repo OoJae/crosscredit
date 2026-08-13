@@ -1,0 +1,36 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  solidity:
+    name: contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # Must run before forge: foundry.toml sets libs = ["node_modules"], so the
+      # Gluwa and OpenZeppelin sources have to exist on disk before compilation.
+      - run: npm ci
+      - uses: foundry-rs/foundry-toolchain@v1
+      - run: forge build --sizes
+      - run: FOUNDRY_PROFILE=ci forge test -vvv
+
+  typescript:
+    name: worker + scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
