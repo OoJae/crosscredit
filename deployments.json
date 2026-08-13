@@ -21,7 +21,7 @@
           "verification": {
             "sourcify": "exact_match",
             "sourcifyUrl": "https://repo.sourcify.dev/contracts/full_match/11155111/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c/",
-            "etherscan": "pending \u2014 awaiting ETHERSCAN_API_KEY"
+            "etherscan": "verified"
           },
           "seededHistory": {
             "evidence": "docs/evidence/seeded-history.json",
@@ -52,7 +52,27 @@
         "ChainInfoPrecompile": "0x0000000000000000000000000000000000000fd3",
         "proofBuilderApi": "https://prover.cc3-testnet.creditcoin.network"
       },
-      "contracts": {}
+      "contracts": {
+        "CreditRegistry": {
+          "address": "0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c",
+          "deployedAt": "2026-08-13",
+          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c",
+          "constructorArgs": {
+            "sourceChainKey": 1,
+            "loanBook": "0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c (Sepolia)"
+          },
+          "linkedLibraries": {
+            "EvmV1Decoder": "0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa"
+          },
+          "note": "Shares an address with LoanBook on Sepolia \u2014 same deployer, same nonce, different chain. Exactly why the registry authenticates chainKey."
+        },
+        "EvmV1Decoder": {
+          "address": "0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa",
+          "deployedAt": "2026-08-13",
+          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa",
+          "note": "Our own build of @gluwa/usc-contracts@0.1.2 (solc 0.8.30). External library \u2014 its public functions force delegatecall linking. Deliberately NOT the pre-existing 0x731c345d... instance, which is a different build (9,598 B, solc 0.8.23) of unverified provenance."
+        }
+      }
     }
   },
   "gateG0": {
@@ -65,5 +85,40 @@
     "creditcoinGasUsed": 393638,
     "creditcoinCostCTC": 0.000196819,
     "evidence": "docs/evidence/g0-hello-bridge/README.md"
+  },
+  "gateG2": {
+    "status": "PASSED",
+    "date": "2026-08-13",
+    "description": "Sepolia repayment history verified on Creditcoin; score moved 0 -> 710 (Bronze -> Platinum)",
+    "firstVerifiedRepayment": {
+      "sourceTx": "0xeeaa5b3f44a0727b175dab9a97838b6e50e0c476668fc18649d77b7b81e9e8ea",
+      "creditcoinTx": "0x67ee797cc9316e5d364157e7cf31dcd8b78d300bf0c09813f092a78afb3f2bef",
+      "creditcoinBlock": 5304859,
+      "scoreAfter": 110
+    },
+    "verifiedSubmissions": 11,
+    "averageGasPerIngest": 403558,
+    "replayProtectionProof": {
+      "creditcoinTx": "0x7c4737cab8f77b699c28906cde9c8b4758a215a850847115702e9a35a0e2a0a5",
+      "status": 0,
+      "revert": "Query already processed"
+    },
+    "finalProfiles": {
+      "0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6": {
+        "score": 710,
+        "tier": "Platinum",
+        "onTime": 5,
+        "late": 0,
+        "loansClosed": 3
+      },
+      "0x04163f60FA50519D86AeFB8e450312bAD76CA0B6": {
+        "score": 0,
+        "tier": "Bronze",
+        "onTime": 0,
+        "late": 1,
+        "loansClosed": 1
+      }
+    },
+    "evidence": "docs/evidence/g2-verified-credit-loop/README.md"
   }
 }

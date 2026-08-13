@@ -94,7 +94,7 @@ export async function submitProof(
 
   let gasLimit = GAS_LIMIT_FLOOR;
   try {
-    const estimated = (await registry['execute']!.estimateGas(...call)) as bigint;
+    const estimated = (await registry['execute']!.estimateGas(...call));
     const buffered = (estimated * GAS_BUFFER_PERCENT) / 100n;
     gasLimit = buffered > GAS_LIMIT_FLOOR ? buffered : GAS_LIMIT_FLOOR;
   } catch (error) {

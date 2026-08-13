@@ -36,11 +36,11 @@ export async function scanEvents(
 
     for (const log of logs) {
       if (!('fragment' in log) || log.fragment === undefined) continue;
-      const args = (log as ethers.EventLog).args;
+      const args = (log).args;
       found.push({
         txHash: log.transactionHash,
         blockNumber: log.blockNumber,
-        eventName: (log as ethers.EventLog).fragment.name,
+        eventName: (log).fragment.name,
         borrower: (args['borrower'] as string | undefined) ?? ethers.ZeroAddress,
       });
     }

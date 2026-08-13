@@ -59,7 +59,7 @@ CrossCredit = trustless cross-chain credit reputation + lending on Creditcoin:
 
 **Packages (exact pins)**
 - **`@gluwa/usc-sdk@0.18.0`** — TS, ethers `^6.15` as a regular dep. Exports are **namespaces, not flat classes**: `chainInfo.PrecompileChainInfoProvider` (`.getSupportedChains()`), `blockProver.PrecompileBlockProver` (`computeTransactionIndex`, `verifySingle`, `verifyAndEmitSingle`, `verifyBatch`, `verifyAndEmitBatch`), **`proofProvider.service.ProofBuilder(chainKey, proofBuilderUrl)`** (`getProof`, `getBatchProof`; there is no `ProverAPIProofGenerator`), `utils.mergeProofs`, `waitUntilHeightAttested`.
-- **`@gluwa/usc-contracts@0.1.2`** — Solidity. `contracts/write-ability/INativeQueryVerifier.sol`, `contracts/decoding/EvmV1Decoder.sol` (a **library** — imported and inlined; the deployed instance at `0x731c345d79Fb8BbDC541f9DF3b6317585F849F9f` on CC3 is only an off-chain debugging aid).
+- **`@gluwa/usc-contracts@0.1.2`** — Solidity. `contracts/write-ability/INativeQueryVerifier.sol`, `contracts/decoding/EvmV1Decoder.sol`. ⚠️ **`EvmV1Decoder` is an EXTERNAL library, not an inlined one** — all 16 of its functions are `public`, so it compiles to a separate 13,261-byte deployable and links by `delegatecall`. `forge test` links it automatically; deployment needs `forge create --libraries <path>:EvmV1Decoder:<address>`. **We deploy our own** (CC3: `0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa`) and deliberately do NOT link the pre-existing `0x731c345d79Fb8BbDC541f9DF3b6317585F849F9f`: it is 9,598 B from solc 0.8.23, a different build of unverified provenance, and a library executes in *our* storage context.
 - **Proof builder API**: `https://prover.cc3-testnet.creditcoin.network` (alias `https://proof-gen-api.cc3-testnet.creditcoin.network/`; swagger at `/api/swagger/`).
 
 **The contract pattern (what we actually implement)**
@@ -122,8 +122,8 @@ crosscredit/
 
 - **P0 Verify (Aug 13–14):** Verification Protocol below → Tutorial 1 end-to-end → scaffold + CI. **G0: real proof round-trip.**
 - **P1 Source (Aug 15–16):** LoanBook + tests → deploy Sepolia → seed 9–10 mixed events. **G1: history on Etherscan.**
-- **P2 Core (→ Aug 20):** CreditRegistry single-event loop, live. **G2 (make-or-break): Sepolia repay → verified → score changes on CC3.** If G2 slips: freeze features, cut to the single-event loop + SBT + minimal UI, and tell me to escalate in Discord.
-- **P3 Depth (→ Aug 25):** all 3 event types · **batch ≤10** · ScoreLib · SBT (on-chain SVG) · LendingPool tiers · negative-path repro script. **G3: full loop headless.** (Batch API blocked >1 day → sequential fallback, batch stays in narrative.)
+- **P2 Core — ✅ DONE Aug 13 (7 days early).** **G2 PASSED**: Sepolia repayment history verified on CC3, score 0 → 710 (Bronze → Platinum). Scope exceeded the plan — all three event types and a real `ScoreLib` shipped, not just the single-event loop. Evidence: `docs/evidence/g2-verified-credit-loop/`.
+- **P3 Depth (→ Aug 25):** ~~all 3 event types~~ ✅ · ~~ScoreLib~~ ✅ · **batch ≤10** (the remaining depth item, and untested by any official example) · SBT (on-chain SVG) · LendingPool tiers · negative-path repro script. **G3: full loop headless.** (Batch API blocked >1 day → sequential fallback, batch stays in narrative.)
 - **P4 Frontend/polish (→ Aug 30):** 3 screens vs live testnet · NatSpec/docs pass. **G4: stranger runs demo from README in <10 min; happy path in one take.**
 - **P5 Deliverables (→ Sep 2):** demo video per BUILD_GUIDE §9 · deck PDF §10 · README final. **G5: all assets are URLs.**
 - **P6 Submit (Sep 4–5):** submit on DoraHacks, verify links incognito + mobile.
