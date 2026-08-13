@@ -2,8 +2,12 @@
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2023"],
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    // "bundler" resolution (tsx runs these, never tsc's emit) makes both our ESM scripts and
+    // @gluwa/usc-sdk's CJS declarations resolve `ethers` through its `import` export condition.
+    // Under NodeNext they resolve to lib.esm and lib.commonjs respectively, producing two
+    // distinct JsonRpcApiProvider declarations whose #private brands are mutually unassignable.
+    "module": "preserve",
+    "moduleResolution": "bundler",
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,

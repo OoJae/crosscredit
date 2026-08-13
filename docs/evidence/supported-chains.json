@@ -1,0 +1,37 @@
+{
+  "capturedAt": "2026-08-13T20:45:20.763Z",
+  "rpc": "https://rpc.cc3-testnet.creditcoin.network",
+  "cc3ChainId": 102031,
+  "cc3BlockHeight": 5304475,
+  "chainInfoPrecompile": "0x0000000000000000000000000000000000000fd3",
+  "chains": [
+    {
+      "chainKey": 3,
+      "chainId": 1,
+      "chainName": "0x457468657265756d",
+      "chainEncoding": 1,
+      "chainNameDecoded": "Ethereum",
+      "attestationGenesisHeight": 0,
+      "latestAttested": {
+        "height": 25748540,
+        "hash": "0x583fa4431ba30a18d90745a185a0a69b6c657835682f85c7262c353a97e0b8f1",
+        "isAttestation": true,
+        "exists": true
+      }
+    },
+    {
+      "chainKey": 1,
+      "chainId": 11155111,
+      "chainName": "0x5365706f6c696120657468657265756d",
+      "chainEncoding": 1,
+      "chainNameDecoded": "Sepolia ethereum",
+      "attestationGenesisHeight": 0,
+      "latestAttested": {
+        "height": 11482570,
+        "hash": "0x8a4ed0d8a6138da2a0b7ba4e7cb53c26921fdf5e2b23be6037df0adbb1433c08",
+        "isAttestation": true,
+        "exists": true
+      }
+    }
+  ]
+}
