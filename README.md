@@ -31,18 +31,31 @@ Full measurements and the two SDK failure modes we hit:
 
 | Contract | Chain | Address |
 |---|---|---|
-| `LoanBook` | Ethereum Sepolia | [`0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c`](https://sepolia.etherscan.io/address/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c#events) — source verified |
+| `LoanBook` | Ethereum Sepolia | [`0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c`](https://sepolia.etherscan.io/address/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c#events) — verified on Etherscan |
+| `CreditRegistry` | Creditcoin CC3 | [`0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c`](https://creditcoin-testnet.blockscout.com/address/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c) |
+| `EvmV1Decoder` (linked) | Creditcoin CC3 | [`0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa`](https://creditcoin-testnet.blockscout.com/address/0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa) |
 
 Seeded with [11 real events](docs/evidence/seeded-history.json) across two borrowers: a clean
 9-event record (all on time, spanning 10 blocks — so it fits a **single** batch proof) and a
 second borrower with a late repayment, for tier contrast.
+
+**The full credit loop runs live.** That history was proven to Creditcoin and turned into an
+on-chain score that climbed **0 → 710, Bronze → Platinum**, at ~0.0002 CTC per verified event —
+with replay protection demonstrated on-chain, not just in tests. See
+[Gate G2 evidence](docs/evidence/g2-verified-credit-loop/README.md) and
+[the scoring model](docs/SCORING.md).
+
+```bash
+npm run worker:backfill -- --from-block 11482838   # replay a borrower's whole history
+npm run worker:watch                               # or follow the chain head
+```
 
 ## Quickstart
 
 ```bash
 npm install
 cp .env.example .env      # fill in SEPOLIA_RPC_URL and a test-only DEPLOYER_PRIVATE_KEY
-forge test                # 31 tests
+forge test                # 72 tests
 npm run check:chains      # re-derives docs/evidence/supported-chains.json from live CC3
 ```
 

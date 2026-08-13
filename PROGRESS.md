@@ -8,11 +8,12 @@ Session log. Updated at the end of every session: done / next / blockers / addre
 
 | | |
 |---|---|
-| **Phase** | 1 complete → next is **Phase 2 (CreditRegistry)** |
+| **Phase** | 2 complete → next is **Phase 3 (batch, SBT, LendingPool)** |
 | **Day** | 1 of 23 (Aug 13, 2026) |
 | **G0** — real proof round-trip | ✅ **PASSED** — [evidence](docs/evidence/g0-hello-bridge/README.md) |
 | **G1** — seeded history on a public explorer | ✅ **PASSED** — 11 events, verified source |
-| **Next gate** | **G2 (make-or-break)** — Sepolia repay → verified → score changes on CC3 |
+| **G2** — make-or-break credit loop | ✅ **PASSED** — score 0 → 710, Bronze → Platinum, live |
+| **Next gate** | **G3** — batch ≤10 · SBT · LendingPool tiers · negative-path repro |
 | **Repo** | <https://github.com/OoJae/crosscredit> (public, CI green) |
 | **Internal submit target** | **Sep 4, 2026** (deadline disputed — see Open questions) |
 
@@ -24,7 +25,8 @@ Session log. Updated at the end of every session: done / next / blockers / addre
 | LoanBook | Sepolia | [`0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c`](https://sepolia.etherscan.io/address/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c#events) ✅ verified (Sourcify) |
 | Borrower A (clean, targets Platinum) | Sepolia | `0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6` — 9 on-time events |
 | Borrower B (one late repayment) | Sepolia | `0x04163f60FA50519D86AeFB8e450312bAD76CA0B6` — 2 events |
-| CreditRegistry | CC3 | _not deployed (P2)_ |
+| CreditRegistry | CC3 | [`0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c`](https://creditcoin-testnet.blockscout.com/address/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c) ✅ live |
+| EvmV1Decoder (ours, linked) | CC3 | [`0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa`](https://creditcoin-testnet.blockscout.com/address/0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa) |
 | CreditTierSBT | CC3 | _not deployed (P3)_ |
 | LendingPool | CC3 | _not deployed (P3)_ |
 | TUSD | CC3 | _not deployed (P3)_ |
@@ -170,3 +172,44 @@ borrowers. Borrower A's 9 events span 10 blocks — comfortably inside both batc
 **Blockers**
 - None. `ETHERSCAN_API_KEY` is still outstanding but Sourcify verification already covers G1;
   Etherscan is a nice-to-have for judge familiarity.
+
+
+### Session 3 — Aug 13, 2026 (Phase 2, Gate G2)
+
+**G2 PASSED — the make-or-break loop works end to end on live testnet.**
+Ten Sepolia transactions attested, proven and verified on Creditcoin. Borrower A's score climbed
+**0 → 110 → 260 → 290 → 450 → 560 → 710**, Bronze → Silver → Gold → **Platinum**. Borrower B's
+late repayment floors them at 0/Bronze. ~403,558 gas (~0.0002 CTC) per ingest.
+Evidence: `docs/evidence/g2-verified-credit-loop/`.
+
+**Shipped**
+- `CreditRegistry.sol` — the ASC. Five-check validation chain, all three event types, loan closure
+  *derived* from proven events (LoanBook emits no "closed"), out-of-order proof reconciliation.
+- `ScoreLib.sol` — deterministic 0–1000 model, `internal` so it inlines. Calibrated against the
+  real seeded profiles; Borrower A scores exactly 710 both in the test and on chain.
+- `worker/` — persisted state, 10-block paginated scans, watch + backfill + single-tx modes.
+- 72 tests (was 31), including `RealProof.t.sol`, which decodes txBytes captured from the live
+  prover — synthetic tests only prove our decoder agrees with our encoder.
+- Deployed + linked on CC3; LoanBook now also verified on Etherscan.
+
+**Findings for Phase 3**
+1. **`forge script` cannot deploy to CC3** — simulation panics with `prevrandao not set` on the
+   Frontier/Substrate EVM. Use `forge create` + `--libraries`, as Gluwa's examples do (now we know
+   why they do). Any future deploy script must follow that path.
+2. **`EvmV1Decoder` is an external library**, not inlined — all 16 functions are `public`. Deploy
+   our own and link; the pre-existing CC3 instance is a different build of unverified provenance,
+   and libraries execute in the caller's storage context. **CLAUDE.md corrected.**
+3. **Gas estimation needs triage.** A deterministic `Query already processed` revert during
+   estimation means "do not broadcast"; the examples' fallback broadcasts anyway and burns gas.
+4. Continuity proofs grow with distance from the attestation anchor (40–59 roots observed) —
+   worth watching when batching, since a batch shares one continuity proof.
+
+**Next — Phase 3 (G3)**
+- **Batch verification (≤10, one shared continuity proof, ≤1000-block range)** — the remaining
+  depth item and the riskiest: no official example uses it, so it is being built from the ABI.
+  Borrower A's 9 events span 10 blocks, so the whole history fits one batch by construction.
+- `CreditTierSBT` (ERC-721 + ERC-5192, on-chain SVG) · `LendingPool` tier-priced terms · `TUSD`.
+- ScoreLib recalibration is **done** (per-0.0001 ETH) — no longer outstanding.
+
+**Blockers**
+- None.

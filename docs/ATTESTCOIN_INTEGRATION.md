@@ -102,6 +102,24 @@ sequence before a single point of credit score moves:
 Checks 2 and 3 are the ones that require actually understanding the protocol, and both are
 demonstrated on camera as rejected transactions.
 
+**All five are implemented and live** in
+[`CreditRegistry.sol`](../contracts/src/creditcoin/CreditRegistry.sol), each with a test that
+fails loudly if it is removed — see the table in
+[`evidence/g2-verified-credit-loop/`](evidence/g2-verified-credit-loop/README.md).
+
+### A sixth property, and why the examples get it wrong
+
+`queryId` is derived from `(chainKey, blockHeight, txIndex)`, so it identifies a **transaction**,
+not an event. Gluwa's examples route on the caller-supplied `action` and ingest only the *first*
+matching log — which means a transaction emitting two credit events could only ever be submitted
+once, and the second event would be lost forever behind the replay guard.
+
+CrossCredit instead ingests **every** recognised `LoanBook` log in the proven transaction,
+dispatching each on its own `topic0`. One query id then corresponds exactly to "all credit events
+in that transaction": complete, and still perfectly replay-protected. `action` is validated as a
+known enum and otherwise unused, because it arrives from the caller and is **not covered by the
+proof** — routing on it would mean trusting unattested data.
+
 ---
 
 ## 4. Integration log
@@ -235,3 +253,51 @@ forge test -vvv               # contract suite
 ```
 
 Deployed addresses land in `deployments.json` and in the README as each phase ships.
+
+
+### Aug 13, 2026 — Phase 2: the credit loop closes (Gate G2)
+
+**`CreditRegistry` is live on CC3** at
+[`0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c`](https://creditcoin-testnet.blockscout.com/address/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c),
+linked against our own `EvmV1Decoder` at
+[`0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa`](https://creditcoin-testnet.blockscout.com/address/0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa).
+
+Ten Sepolia transactions were attested, proven and verified on Creditcoin, moving a borrower's
+score **0 → 710, Bronze → Platinum**, at ~403,558 gas (~0.0002 CTC) per ingest. Full run,
+per-block score progression and final profiles:
+[`evidence/g2-verified-credit-loop/`](evidence/g2-verified-credit-loop/README.md).
+
+**Replay protection demonstrated on-chain**, not just in tests: a forced resubmission reverted
+with `Query already processed`
+([`0x7c4737ca…`](https://creditcoin-testnet.blockscout.com/tx/0x7c4737cab8f77b699c28906cde9c8b4758a215a850847115702e9a35a0e2a0a5),
+status 0) and the score held at 110 instead of doubling.
+
+**Facts are derived, never asserted.** `LoanBook` emits no "loan closed" event, so the registry
+reconstructs closure by accumulating proven repayments against a proven principal — and reconciles
+out-of-order proofs, since each proof is independent and a repayment can legitimately be verified
+before the opening it belongs to. The on-chain `loansClosed = 3` for Borrower A was inferred
+entirely from cryptographically verified inputs.
+
+**Tested against real prover output.** `contracts/test/RealProof.t.sol` decodes `txBytes` captured
+from the live CC3 prover for transactions that actually happened on Sepolia. Synthetic tests only
+prove our decoder agrees with our encoder; these would catch any divergence between our
+understanding of the Attestcoin encoding and the real thing. 72 tests total, including the full
+negative matrix.
+
+**Three integration findings worth recording:**
+
+1. **`EvmV1Decoder` is an external library.** All 16 functions are `public`, so it compiles to a
+   separate 13,261-byte deployable and links by `delegatecall` — it is not inlined. We deploy our
+   own rather than linking the pre-existing CC3 instance at `0x731c345d…`, which is a different
+   build (9,598 B, solc 0.8.23) of unverified provenance; a library executes in the *calling*
+   contract's storage context, so provenance matters.
+2. **`forge script` cannot deploy to CC3.** Its simulation panics with
+   `header validation error: prevrandao not set` against the Frontier/Substrate EVM. This is
+   almost certainly why Gluwa's examples use the two-step `forge create` + `--libraries` flow,
+   which we now follow.
+3. **Gas estimation must be triaged, not blanket-caught.** When estimation surfaces a
+   deterministic `Query already processed` revert, broadcasting anyway just burns gas on a
+   transaction that cannot succeed — which is exactly what the examples' fallback does, since it
+   fires on any estimation failure. Our worker aborts on that signal and uses a 900k floor
+   (sized from the ~400k a real ingest costs) only for genuinely ambiguous failures; the examples'
+   formula computes ~70k.
