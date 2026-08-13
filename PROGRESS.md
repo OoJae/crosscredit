@@ -12,6 +12,7 @@ Session log. Updated at the end of every session: done / next / blockers / addre
 | **Day** | 1 of 23 (Aug 13, 2026) |
 | **Current gate** | **G0** — real proof round-trip on CC3 testnet (hello-bridge) |
 | **G0 status** | ⏳ blocked on wallet funding (faucets — see `docs/HUMAN_ACTIONS.md`) |
+| **Repo** | <https://github.com/OoJae/crosscredit> (public, CI green) |
 | **Internal submit target** | **Sep 4, 2026** (deadline disputed — see Open questions) |
 
 ## Addresses
@@ -42,7 +43,7 @@ An oracle query costs ~11 tCTC; the faucet gives ~100 tCTC/24h → **~9 queries/
 
 | Date | Faucet claimed | Spent | Note |
 |---|---|---|---|
-| Aug 13 | ⏳ pending operator | 0 | wallet created |
+| Aug 13 | ⏳ pending operator | 0 | wallet created; nothing spent yet (G0 not run) |
 
 ---
 
@@ -81,10 +82,37 @@ An oracle query costs ~11 tCTC; the faucet gives ~100 tCTC/24h → **~9 queries/
 7. **Faucet economics are a real constraint**: ~100 tCTC/day ≈ 9 oracle queries.
 8. Toolchain follows the live examples: **Foundry** (solc 0.8.30, evm shanghai), OZ 5.4.0.
 
+**Also done (Track A complete)**
+- Toolchain: Foundry (solc 0.8.30, settings mirrored from the pinned examples) + TS strict +
+  eslint + GitHub Actions CI. **CI green on first push.**
+- `scripts/check-chains.ts` → `docs/evidence/supported-chains.json`, capturing supported chains
+  *and* each one's latest attested height (registration ≠ attestors actually running).
+- Vendored `USCBase.sol` + `VerifierInterface.sol` with full attribution headers, pinned to
+  `4ff9a3bf`. 8 unit tests, all green, exercising the real vendored bytecode via `vm.etch` of a
+  mock at the precompile's actual address.
+- `docs/ATTESTCOIN_INTEGRATION.md` seeded (this is a **required** submission deliverable).
+- Public repo created and pushed: <https://github.com/OoJae/crosscredit>.
+- Verified no private key ever entered git history.
+
+**Findings that only surfaced by running the code** (documented in ATTESTCOIN_INTEGRATION.md)
+- `INativeQueryVerifier` as published in `@gluwa/usc-contracts@0.1.2` is, by its own NatSpec, a
+  **lean copy** with only the single-query view `verify` — no `verifyAndEmit`, no batch, no
+  `calculateTxIndex`. Our vendored interface adds them from the SDK's canonical
+  `block_prover.json` ABI, which also **confirms the batch `verify` view variant exists**.
+- `EvmV1Decoder`'s functions are `public`, not `internal` → it is an **external library needing
+  link-time deployment** (13,261 B), not an inlined one. The instance already on CC3 at
+  `0x731c34…` is 9,598 B, i.e. a *different build*, so Phase 2 must deploy and link our own.
+- ChainInfo returns `chainName` hex-encoded, contradicting the SDK docstring's example.
+- `chainInfo.waitUntilHeightAttested` is marked **legacy in its own docstring**; the canonical one
+  lives in `proof-provider/service`. The worker must use the latter.
+- ethers ships dual CJS/ESM types; under NodeNext our ESM scripts and the CJS SDK resolved two
+  incompatible `JsonRpcApiProvider` declarations. Fixed via `moduleResolution: bundler`.
+
 **Next**
-- Finish Track A: toolchain + CI, `check-chains.ts` evidence, vendor USCBase, push to GitHub.
-- Gate G0 the moment the wallet is funded.
-- Then Phase 1: `LoanBook.sol` TDD (needs no testnet — safe to start while faucets pend).
+- **Gate G0** the moment the wallet is funded (hello-bridge round-trip; runbook in the plan).
+  Capture a golden proof fixture at the same time — the block is already attested by then, so
+  `getProof` returns instantly and the fixture is free.
+- Phase 1: `LoanBook.sol` TDD — **needs no testnet**, so it starts now regardless of faucets.
 
 **Blockers**
 - Wallet unfunded on both chains → G0 blocked. Operator checklist: `docs/HUMAN_ACTIONS.md`.
