@@ -1,0 +1,36 @@
+{
+  "note": "Canonical record of every CrossCredit deployment. Updated in the same commit as each deploy.",
+  "networks": {
+    "ethereum-sepolia": {
+      "chainId": 11155111,
+      "attestcoinChainKey": 1,
+      "explorer": "https://sepolia.etherscan.io",
+      "role": "Source chain — where borrowers build the credit history that gets proven to Creditcoin",
+      "contracts": {
+        "LoanBook": {
+          "address": "0xe53a54489aec265337f6f8fa3ee6e08ecba5cf9c",
+          "deployedAt": "2026-08-13",
+          "explorerUrl": "https://sepolia.etherscan.io/address/0xe53a54489aec265337f6f8fa3ee6e08ecba5cf9c",
+          "eventsUrl": "https://sepolia.etherscan.io/address/0xe53a54489aec265337f6f8fa3ee6e08ecba5cf9c#events",
+          "eventTopics": {
+            "LoanOpened(uint256,address,uint256,uint64)": "0x0d7f8e19afd65be70c0b9ff46dab1702a44ca0e8fcd33448375d7c2690e5866b",
+            "RepaymentMade(uint256,address,uint256,bool,uint64)": "0x7d64aa0e099ec7ce5a5e95941014b245cf86dd8cd1115dd1ee421d8ec4d04206",
+            "CollateralAdded(address,uint256)": "0x7dba1be544024070cd5eebfa8bdd80a8b198cea8058c7d3cc1f8dd36e41ab2f7"
+          }
+        }
+      }
+    },
+    "creditcoin-cc3-testnet": {
+      "chainId": 102031,
+      "explorer": "https://creditcoin-testnet.blockscout.com",
+      "rpc": "https://rpc.cc3-testnet.creditcoin.network",
+      "role": "Destination chain — CrossCredit's Attestcoin Smart Contract, scoring, SBT and lending pool",
+      "protocolContracts": {
+        "BlockProverPrecompile": "0x0000000000000000000000000000000000000FD2",
+        "ChainInfoPrecompile": "0x0000000000000000000000000000000000000fd3",
+        "proofBuilderApi": "https://prover.cc3-testnet.creditcoin.network"
+      },
+      "contracts": {}
+    }
+  }
+}

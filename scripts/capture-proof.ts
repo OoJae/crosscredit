@@ -1,0 +1,79 @@
+/**
+ * Captures a real Attestcoin proof for an already-attested source transaction and saves it as a
+ * test fixture.
+ *
+ * Why this exists: proofs are the one input we cannot invent. `EvmV1Decoder` parses a bespoke
+ * encoding of an Ethereum transaction + receipt, and a hand-written `bytes` blob would prove
+ * nothing about whether our decoding is correct. A captured proof gives us
+ *   - real `txBytes` to unit-test the registry's decode-and-validate chain against, and
+ *   - a golden proof replayable against the live precompile's `verify` **view** in a fork test.
+ *
+ * It is free to run: the source block is already attested, so the prover serves from cache, and
+ * `verify` is a view call that costs no gas.
+ *
+ * Run: npx tsx scripts/capture-proof.ts <txHash> [outputPath]
+ */
+import {writeFileSync, mkdirSync} from 'node:fs';
+import {dirname} from 'node:path';
+import {ethers} from 'ethers';
+import {proofProvider} from '@gluwa/usc-sdk';
+import {required, optional, proofBuilderUrl} from './lib/env.js';
+
+const DEFAULT_OUTPUT = 'contracts/test/fixtures/g0-proof.json';
+
+// The SDK's default HTTP timeout is 10s, which we have already seen expire against a cold
+// prover cache. Proof payloads can be large, so allow considerably longer.
+const PROVER_TIMEOUT_MS = 60_000;
+
+async function main(): Promise<void> {
+  const txHash = process.argv[2];
+  const outputPath = process.argv[3] ?? DEFAULT_OUTPUT;
+
+  if (txHash === undefined || !/^0x[0-9a-fA-F]{64}$/.test(txHash)) {
+    throw new Error('Usage: npx tsx scripts/capture-proof.ts <txHash> [outputPath]');
+  }
+
+  const chainKey = Number.parseInt(optional('SOURCE_CHAIN_KEY', '1'), 10);
+  const sourceRpc = new ethers.JsonRpcProvider(required('SEPOLIA_RPC_URL'));
+
+  const tx = await sourceRpc.getTransaction(txHash);
+  if (tx === null) throw new Error(`Transaction ${txHash} not found on the source chain`);
+  if (tx.blockNumber === null) throw new Error(`Transaction ${txHash} is not yet mined`);
+
+  const receipt = await sourceRpc.getTransactionReceipt(txHash);
+
+  console.log(`tx        ${txHash}`);
+  console.log(`block     ${tx.blockNumber}`);
+  console.log(`status    ${receipt?.status === 1 ? 'success' : 'FAILED'}`);
+  console.log(`chainKey  ${chainKey}`);
+
+  const builder = new proofProvider.service.ProofBuilder(chainKey, proofBuilderUrl(), PROVER_TIMEOUT_MS);
+  console.log('\nfetching proof…');
+  const proof = await builder.getProof(txHash);
+  console.log('✓ proof fetched');
+
+  const payload = {
+    capturedAt: new Date().toISOString(),
+    note: 'Real Attestcoin proof captured from the live CC3 testnet prover. Test fixture only.',
+    sourceTxHash: txHash,
+    sourceBlockNumber: tx.blockNumber,
+    sourceReceiptStatus: receipt?.status ?? null,
+    emittedBy: receipt?.to ?? null,
+    logCount: receipt?.logs.length ?? 0,
+    chainKey,
+    proof,
+  };
+
+  mkdirSync(dirname(outputPath), {recursive: true});
+  writeFileSync(
+    outputPath,
+    `${JSON.stringify(payload, (_key, value: unknown) => (typeof value === 'bigint' ? value.toString() : value), 2)}\n`,
+  );
+
+  console.log(`\n✓ wrote ${outputPath}`);
+}
+
+main().catch((error: unknown) => {
+  console.error('✗ capture-proof failed:', error);
+  process.exitCode = 1;
+});

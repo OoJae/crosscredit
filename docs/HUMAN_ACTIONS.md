@@ -22,10 +22,10 @@ Private key lives in `.env` (`DEPLOYER_PRIVATE_KEY`) only. `.env` is gitignored.
 - [ ] Run: `/faucet address:0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6`
 - [ ] Bot replies "CTC faucet submitted" → then "CTC Faucet successful" in a thread
 
-**Claim this every 24h starting today, even on days we don't need it.** The faucet yields
-~100 tCTC/day and a single Attestcoin oracle query costs ~11 tCTC — roughly **9 queries per
-day**. Banked tCTC *is* our Phase 2/3 iteration budget; a dry wallet blocks the make-or-break
-G2 gate.
+✅ **Done — funded with 10,000 tCTC.** Worth topping up occasionally as insurance, but no longer
+urgent: the "100 tCTC ≈ 9 queries" line in Gluwa's README is stale. A real bridge transaction
+measures ~393k gas at 0.5 gwei ≈ **0.0002 CTC**, so the current balance covers effectively
+unlimited iteration.
 
 ## 2. Sepolia ETH (source-chain gas)
 

@@ -81,7 +81,7 @@ Data is decoded **directly from `encodedTransaction`** via `EvmV1Decoder` — th
 - Examples repo: **`gluwa/usc-testnet-bridge-examples`** @ pinned commit `4ff9a3bf5d7fa8dbfec34ae9726d3f81405dca7b` (actively maintained). Toolchain: **Foundry** (solc 0.8.30, optimizer 200, `via_ir=false`, evm `shanghai`, `libs=["node_modules"]`), yarn 1.22.22, OZ 5.4.0, ethers ^6.17.
   **Four** tutorials in order: **Hello Bridge → Custom Contracts Bridging → Bridge Offchain Worker → Loan Flow**. `loan-flow` (`USCLoanManager.sol`) is architecturally closest to CrossCredit — study it and attribute it, don't copy it.
   `gluwa/ccnext-testnet-bridge-examples` is the superseded predecessor — do not use.
-- Faucet economics: ~100 tCTC / 24h, ~11 tCTC per oracle query → **~9 queries/day**. Claim daily; treat query budget as a first-class constraint when iterating on live testnet.
+- **Faucet economics: not a constraint.** The examples' README claims "100 tCTC ≈ 9 oracle queries", but that line is stale. A real bridge `execute()` measures **~393k gas at 0.5 gwei ≈ 0.0002 CTC**. Our wallet holds 10,000 tCTC — effectively unlimited queries. Iterate freely on live testnet; do not design around a query budget.
 
 ## 4. Repository layout (scaffold in Phase 0)
 

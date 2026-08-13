@@ -173,8 +173,10 @@ execute(uint8 action, uint64 chainKey, uint64 blockHeight, bytes encodedTransact
   study and attribute, don't copy. `gluwa/ccnext-testnet-bridge-examples` is superseded.
 - **"Attestcoin" is prose-only branding** — no npm package or GitHub repo carries the name;
   everything ships as `usc-*`, and the docs say so. Attestcoin in the pitch, `usc-*` in imports.
-- **Faucet economics**: ~100 tCTC / 24h, ~11 tCTC per oracle query → **~9 live queries per day**.
-  Claim daily; treat the query budget as a first-class constraint when iterating on testnet.
+- **Faucet economics — a non-issue, contrary to the docs.** The examples' README states "100 test CTC…
+  is sufficient to submit 9 oracle queries, since testnet oracle fees are artificially high". Measured
+  reality: a real bridge `execute()` costs **~393k gas at 0.5 gwei ≈ 0.0002 CTC**. With 10,000 tCTC in
+  hand that is ~50 million queries' worth. **Iterate freely; do not design around a query budget.**
 
 ---
 
