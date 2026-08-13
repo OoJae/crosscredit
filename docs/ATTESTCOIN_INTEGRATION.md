@@ -301,3 +301,67 @@ negative matrix.
    fires on any estimation failure. Our worker aborts on that signal and uses a 900k floor
    (sized from the ~400k a real ingest costs) only for genuinely ambiguous failures; the examples'
    formula computes ~70k.
+
+
+### Aug 14, 2026 — Phase 3: batch verification, tiers and undercollateralized credit (Gate G3)
+
+**Batch verification is live** — the deepest use of the protocol in this project, and the one with
+no precedent in Gluwa's example repository.
+[`CreditRegistry.executeBatch`](../contracts/src/creditcoin/CreditRegistry.sol) verifies up to ten
+source transactions against **one shared continuity proof** in a single Creditcoin transaction.
+
+A fresh wallet's entire Sepolia credit history — 9 events, 9 transactions, 9 blocks — was imported
+in [one transaction](https://creditcoin-testnet.blockscout.com/tx/0xc8ca57e39f8fb840ff4e9de837f1f826b0ff41f30039cb311f6a1fbce325437b)
+that emitted **9 `HistoryEventIngested` events** and took the borrower from Bronze to Platinum.
+
+| Path | Gas per event | Nine events |
+|---|---|---|
+| Single proof | ~433,000 | ~3,897,000 |
+| **Batch** | **126,146** | **1,135,318** (**3.4× cheaper**) |
+
+Both measured on the same registry the same day. The saving is structural: verifying a foreign
+block means walking a continuity chain back to an attested block, and a batch performs that walk
+once for the whole set — which is precisely why the precompile requires every source block inside
+a 1000-block window.
+
+**What we had to establish ourselves**, since the SDK documents none of it:
+
+- **`MAX_BATCH_SIZE = 10`**, found by probing the live precompile — ten proofs pass the size gate,
+  eleven revert with `heights: Value is too large for length`. The registry rejects oversized
+  batches before the call so the error is legible.
+- **`getBatchProof` returns `Map<height, Map<txIndex, entry>>`, not arrays**, iterating ascending
+  height then txIndex — *not* input order. Flattening positionally would silently mis-attribute
+  proofs to transactions whenever two land in different blocks, quietly crediting the wrong
+  borrower. We key on each entry's own `txHash` and assert nothing was dropped.
+- **Failure is always a revert**, never a `false` return, so `=== false` is not a failure check.
+- **The batch `verify` view is a free dry-run** sharing all validation with the emit path. Every
+  batch is dry-run before submission, so a doomed batch costs nothing.
+
+**Atomicity, and why query ids are reserved before verification.** `executeBatch` inverts the
+vendored base's order: it marks every query id *first*, then verifies. Safe, because any failure
+reverts and unwinds the marks. Necessary, because it is the only thing that catches a **duplicate
+inside the same batch** — two copies of one proof would otherwise both pass an up-front "not yet
+processed" check and be counted twice. One bad proof discards the whole batch; a half-imported
+credit history would be worse than none.
+
+**The payoff.** That verified history mints a soulbound
+[`CreditTierSBT`](../contracts/src/creditcoin/CreditTierSBT.sol) (ERC-721 + ERC-5192, metadata and
+SVG generated on-chain) and prices a real loan: Borrower C
+[borrowed 100 tUSD against 85 tCTC](https://creditcoin-testnet.blockscout.com/tx/0xb6da8c060e8e9c3ff84e17e0399bcc3c844c58507fcb11655de540d82270d833)
+— **more value than they posted**. Undercollateralized credit is only defensible because the tier
+traces back through the registry to transactions the precompile verified; a self-reported
+reputation could never justify it. Borrower B's single late repayment costs them **650 tCTC more
+collateral** on an identical loan.
+
+**Five attacks rejected on the live chain** ([evidence](evidence/g3-negative-paths/results.json),
+reproducible with `npm run negative-paths`, all free `eth_call`s): forged merkle root, tampered
+payload, wrong source chain, replayed query, oversized batch. Each run verifies an untampered
+proof first, because a rejection means nothing if the baseline was already invalid.
+
+**Continuity proofs expire — a finding we could not find documented anywhere.** The first
+negative-path run failed its own baseline with `Continuity proof does not match attestation or
+checkpoint`, using a proof captured hours earlier. A continuity proof anchors to the attestation
+state at generation time and stops verifying once attestation advances past that anchor, even
+though the underlying transaction is untouched and valid. Consequences we adopted: the script
+fetches its baseline fresh every run, stored fixtures are used only for decoder tests, and a
+production worker should fetch and submit promptly rather than queue proofs for later.

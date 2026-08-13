@@ -8,12 +8,13 @@ Session log. Updated at the end of every session: done / next / blockers / addre
 
 | | |
 |---|---|
-| **Phase** | 2 complete → next is **Phase 3 (batch, SBT, LendingPool)** |
+| **Phase** | 3 complete → next is **Phase 4 (frontend)** |
 | **Day** | 1 of 23 (Aug 13, 2026) |
 | **G0** — real proof round-trip | ✅ **PASSED** — [evidence](docs/evidence/g0-hello-bridge/README.md) |
 | **G1** — seeded history on a public explorer | ✅ **PASSED** — 11 events, verified source |
 | **G2** — make-or-break credit loop | ✅ **PASSED** — score 0 → 710, Bronze → Platinum, live |
-| **Next gate** | **G3** — batch ≤10 · SBT · LendingPool tiers · negative-path repro |
+| **G3** — batch · SBT · pool · negative paths | ✅ **PASSED** — 9 proofs in ONE tx, 3.4× cheaper |
+| **Next gate** | **G4** — 3 UI screens vs live testnet; stranger runs demo from README |
 | **Repo** | <https://github.com/OoJae/crosscredit> (public, CI green) |
 | **Internal submit target** | **Sep 4, 2026** (deadline disputed — see Open questions) |
 
@@ -25,7 +26,12 @@ Session log. Updated at the end of every session: done / next / blockers / addre
 | LoanBook | Sepolia | [`0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c`](https://sepolia.etherscan.io/address/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c#events) ✅ verified (Sourcify) |
 | Borrower A (clean, targets Platinum) | Sepolia | `0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6` — 9 on-time events |
 | Borrower B (one late repayment) | Sepolia | `0x04163f60FA50519D86AeFB8e450312bAD76CA0B6` — 2 events |
-| CreditRegistry | CC3 | [`0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c`](https://creditcoin-testnet.blockscout.com/address/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c) ✅ live |
+| CreditRegistry (batch) | CC3 | [`0xB5F3B44113A31B07508464de39d7ddd939184B2c`](https://creditcoin-testnet.blockscout.com/address/0xB5F3B44113A31B07508464de39d7ddd939184B2c) ✅ **current** |
+| CreditTierSBT | CC3 | [`0x96a68DBe0cC9BD13E92B4730eFfE531F63f4B2F6`](https://creditcoin-testnet.blockscout.com/address/0x96a68DBe0cC9BD13E92B4730eFfE531F63f4B2F6) |
+| LendingPool (100k tUSD) | CC3 | [`0xA37a9338b17c20917046E29F23D9d8F796a5FDAb`](https://creditcoin-testnet.blockscout.com/address/0xA37a9338b17c20917046E29F23D9d8F796a5FDAb) |
+| TUSD | CC3 | [`0x26FEEdECb79A69EdC7d3Bdb8Cf4dD96E17a3B051`](https://creditcoin-testnet.blockscout.com/address/0x26FEEdECb79A69EdC7d3Bdb8Cf4dD96E17a3B051) |
+| Borrower C (batch demo) | Sepolia | `0x8C04C28894BADcE63d1F00f356AbB126983522Cf` — 9 events, Platinum |
+| ~~CreditRegistry (Phase 2)~~ | CC3 | ~~`0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c`~~ superseded (no batch) |
 | EvmV1Decoder (ours, linked) | CC3 | [`0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa`](https://creditcoin-testnet.blockscout.com/address/0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa) |
 | CreditTierSBT | CC3 | _not deployed (P3)_ |
 | LendingPool | CC3 | _not deployed (P3)_ |
@@ -210,6 +216,43 @@ Evidence: `docs/evidence/g2-verified-credit-loop/`.
   Borrower A's 9 events span 10 blocks, so the whole history fits one batch by construction.
 - `CreditTierSBT` (ERC-721 + ERC-5192, on-chain SVG) · `LendingPool` tier-priced terms · `TUSD`.
 - ScoreLib recalibration is **done** (per-0.0001 ETH) — no longer outstanding.
+
+**Blockers**
+- None.
+
+
+### Session 4 — Aug 13–14, 2026 (Phase 3, Gate G3)
+
+**G3 PASSED — the depth items are done and demonstrated live.**
+
+- **Batch verification.** 9 Sepolia transactions verified in ONE Creditcoin transaction
+  ([`0xc8ca57e3…`](https://creditcoin-testnet.blockscout.com/tx/0xc8ca57e39f8fb840ff4e9de837f1f826b0ff41f30039cb311f6a1fbce325437b),
+  block 5305011), 9 `HistoryEventIngested` events, Bronze → Platinum. **126,146 gas per event vs
+  ~433,000 single-proof — 3.4× cheaper**, measured like-for-like.
+- **CreditTierSBT** — ERC-721 + ERC-5192, on-chain SVG, permissionless `sync`. Badge #1 minted and
+  locked for Borrower C.
+- **LendingPool + TUSD** — funded with 100k tUSD. Borrower C **borrowed 100 tUSD against 85 tCTC**
+  live. B's one late repayment costs 650 tCTC more collateral on an identical loan.
+- **5/5 attacks rejected** against the live precompile, all free `eth_call`s.
+- 130 tests (was 72), all green.
+
+**Findings**
+1. **Continuity proofs expire.** A proof captured hours earlier failed to verify — it anchors to
+   the attestation state at generation time. Fetch fresh, submit promptly; stored fixtures are for
+   decoder tests only. Undocumented anywhere we could find.
+2. **`getBatchProof` returns a nested Map in ascending-height order, not input order.** Keying
+   positionally would credit the wrong borrower. We key on each entry's `txHash`.
+3. `MAX_BATCH_SIZE = 10` confirmed by probing the live precompile; the SDK has no such constant.
+4. `forge script` still cannot deploy to CC3 (`prevrandao`) — `forge create --libraries` throughout.
+
+**Registry redeployed** to `0xB5F3B441…84B2c` to add `executeBatch`; all three borrowers were
+re-imported onto it, so single-proof and batch paths are both demonstrable on one contract. The
+Phase 2 registry's G2 transactions remain valid historical evidence.
+
+**Next — Phase 4 (G4)**
+- Three screens against live testnet: Dashboard (score dial, SBT badge, ingested events),
+  Import History (the batch moment), Borrow (tier terms, collateral calculator).
+- NatSpec/docs pass; README quickstart a stranger can follow in <10 min.
 
 **Blockers**
 - None.
