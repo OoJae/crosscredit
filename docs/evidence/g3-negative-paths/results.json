@@ -1,0 +1,45 @@
+{
+  "capturedAt": "2026-08-13T23:07:35.500Z",
+  "network": "creditcoin-cc3-testnet",
+  "registry": "0xB5F3B44113A31B07508464de39d7ddd939184B2c",
+  "precompile": "0x0000000000000000000000000000000000000FD2",
+  "baselineProof": "0xeeaa5b3f44a0727b175dab9a97838b6e50e0c476668fc18649d77b7b81e9e8ea",
+  "allRejected": true,
+  "results": [
+    {
+      "name": "Forged merkle proof",
+      "attack": "merkle root replaced with 0xdede…",
+      "layer": "block-prover precompile",
+      "rejected": true,
+      "reason": "Merkle proof validation failed"
+    },
+    {
+      "name": "Tampered transaction payload",
+      "attack": "last 4 bytes of txBytes altered",
+      "layer": "block-prover precompile",
+      "rejected": true,
+      "reason": "Merkle proof validation failed"
+    },
+    {
+      "name": "Wrong source chain",
+      "attack": "real Sepolia proof submitted as chainKey 3 (Ethereum Mainnet)",
+      "layer": "block-prover precompile (registry WrongSourceChain is the second line, unit-tested)",
+      "rejected": true,
+      "reason": "Continuity proof does not match attestation or checkpoint"
+    },
+    {
+      "name": "Replayed query",
+      "attack": "resubmitting an already-ingested transaction",
+      "layer": "USCBase replay guard",
+      "rejected": true,
+      "reason": "Query already processed"
+    },
+    {
+      "name": "Oversized batch",
+      "attack": "11 proofs, one over MAX_BATCH_SIZE (10)",
+      "layer": "CreditRegistry.BatchTooLarge",
+      "rejected": true,
+      "reason": "BatchTooLarge(uint256,uint256)"
+    }
+  ]
+}

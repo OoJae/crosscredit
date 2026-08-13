@@ -54,9 +54,9 @@
       },
       "contracts": {
         "CreditRegistry": {
-          "address": "0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c",
-          "deployedAt": "2026-08-13",
-          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c",
+          "address": "0xB5F3B44113A31B07508464de39d7ddd939184B2c",
+          "deployedAt": "2026-08-14",
+          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0xB5F3B44113A31B07508464de39d7ddd939184B2c",
           "constructorArgs": {
             "sourceChainKey": 1,
             "loanBook": "0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c (Sepolia)"
@@ -64,13 +64,41 @@
           "linkedLibraries": {
             "EvmV1Decoder": "0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa"
           },
-          "note": "Shares an address with LoanBook on Sepolia \u2014 same deployer, same nonce, different chain. Exactly why the registry authenticates chainKey."
+          "features": [
+            "single-proof execute",
+            "batch executeBatch (<=10, one shared continuity proof)"
+          ],
+          "supersedes": "0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c (Phase 2, no batch support)"
         },
         "EvmV1Decoder": {
           "address": "0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa",
           "deployedAt": "2026-08-13",
           "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa",
           "note": "Our own build of @gluwa/usc-contracts@0.1.2 (solc 0.8.30). External library \u2014 its public functions force delegatecall linking. Deliberately NOT the pre-existing 0x731c345d... instance, which is a different build (9,598 B, solc 0.8.23) of unverified provenance."
+        },
+        "CreditTierSBT": {
+          "address": "0x96a68DBe0cC9BD13E92B4730eFfE531F63f4B2F6",
+          "deployedAt": "2026-08-14",
+          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0x96a68DBe0cC9BD13E92B4730eFfE531F63f4B2F6",
+          "standard": "ERC-721 + ERC-5192 (soulbound)",
+          "note": "On-chain SVG + metadata. sync(borrower) is permissionless: it derives from the registry, which derives from proofs."
+        },
+        "LendingPool": {
+          "address": "0xA37a9338b17c20917046E29F23D9d8F796a5FDAb",
+          "deployedAt": "2026-08-14",
+          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0xA37a9338b17c20917046E29F23D9d8F796a5FDAb",
+          "liquidity": "100000 tUSD",
+          "terms": {
+            "Bronze": "150% / 14%",
+            "Silver": "130% / 11%",
+            "Gold": "110% / 8%",
+            "Platinum": "85% / 6% (undercollateralized)"
+          }
+        },
+        "TUSD": {
+          "address": "0x26FEEdECb79A69EdC7d3Bdb8Cf4dD96E17a3B051",
+          "deployedAt": "2026-08-14",
+          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0x26FEEdECb79A69EdC7d3Bdb8Cf4dD96E17a3B051"
         }
       }
     }
@@ -120,5 +148,65 @@
       }
     },
     "evidence": "docs/evidence/g2-verified-credit-loop/README.md"
+  },
+  "gateG3": {
+    "status": "PASSED",
+    "date": "2026-08-14",
+    "description": "Whole credit history batch-verified in ONE Creditcoin transaction; Bronze to Platinum; undercollateralized borrow executed live",
+    "batchImport": {
+      "borrower": "0x8C04C28894BADcE63d1F00f356AbB126983522Cf",
+      "creditcoinTx": "0xc8ca57e39f8fb840ff4e9de837f1f826b0ff41f30039cb311f6a1fbce325437b",
+      "creditcoinBlock": 5305011,
+      "proofsInBatch": 9,
+      "historyEventsIngested": 9,
+      "sharedContinuityRoots": 13,
+      "sourceBlockSpan": 9,
+      "gasUsed": 1135318,
+      "gasPerEvent": 126146,
+      "scoreAfter": 710,
+      "tierAfter": "Platinum"
+    },
+    "gasComparison": {
+      "singleProofPerEvent": 433000,
+      "batchPerEvent": 126146,
+      "improvement": "3.4x",
+      "savedOnNineEvents": "71%"
+    },
+    "sbtMint": {
+      "tx": "0x551932735f75d5b450b9d76dfc32d36951ff4202bb701ce62f65e98e607b2211",
+      "tokenId": 1,
+      "locked": true
+    },
+    "undercollateralizedBorrow": {
+      "tx": "0xb6da8c060e8e9c3ff84e17e0399bcc3c844c58507fcb11655de540d82270d833",
+      "borrowedTUSD": "100",
+      "collateralTCTC": "85",
+      "ratio": "85%"
+    },
+    "negativePaths": {
+      "attacksRejected": "5/5",
+      "evidence": "docs/evidence/g3-negative-paths/results.json"
+    },
+    "finalProfiles": {
+      "0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6": {
+        "score": 710,
+        "tier": "Platinum",
+        "importedVia": "11 single proofs",
+        "sbt": 2
+      },
+      "0x04163f60FA50519D86AeFB8e450312bAD76CA0B6": {
+        "score": 0,
+        "tier": "Bronze",
+        "importedVia": "2 single proofs",
+        "sbt": 3
+      },
+      "0x8C04C28894BADcE63d1F00f356AbB126983522Cf": {
+        "score": 710,
+        "tier": "Platinum",
+        "importedVia": "1 batch of 9",
+        "sbt": 1
+      }
+    },
+    "evidence": "docs/evidence/g3-batch-import/README.md"
   }
 }

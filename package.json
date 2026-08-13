@@ -22,7 +22,8 @@
     "worker:watch": "tsx worker/index.ts watch",
     "worker:backfill": "tsx worker/index.ts backfill",
     "seed:borrower-c": "tsx scripts/seed-borrower-c.ts",
-    "worker:batch": "tsx worker/index.ts batch"
+    "worker:batch": "tsx worker/index.ts batch",
+    "negative-paths": "tsx scripts/negative-paths.ts"
   },
   "dependencies": {
     "@gluwa/usc-contracts": "0.1.2",
