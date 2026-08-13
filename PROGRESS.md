@@ -32,7 +32,7 @@ Protocol-side (not ours, verified live Aug 13):
 |---|---|
 | BlockProver precompile | `0x0000000000000000000000000000000000000FD2` |
 | ChainInfo precompile | `0x0000000000000000000000000000000000000fd3` |
-| EvmV1Decoder (deployed, debug aid) | `0x731c345d79Fb8BbDC541f9DF3b6317585F849F9f` |
+| EvmV1Decoder (theirs, 9,598 B — **not** our build, see findings) | `0x731c345d79Fb8BbDC541f9DF3b6317585F849F9f` |
 | CC3 RPC | `https://rpc.cc3-testnet.creditcoin.network` (chainId 102031) |
 | CC3 explorer | `https://creditcoin-testnet.blockscout.com` |
 | Proof builder API | `https://prover.cc3-testnet.creditcoin.network` |
