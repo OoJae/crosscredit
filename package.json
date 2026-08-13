@@ -18,7 +18,9 @@
     "format": "prettier --write \"**/*.{ts,json,md}\"",
     "capture:proof": "tsx scripts/capture-proof.ts",
     "seed:history": "tsx scripts/seed-history.ts",
-    "deploy:loanbook": "forge script contracts/script/DeployLoanBook.s.sol:DeployLoanBook --rpc-url $SEPOLIA_RPC_URL --broadcast"
+    "deploy:loanbook": "forge script contracts/script/DeployLoanBook.s.sol:DeployLoanBook --rpc-url $SEPOLIA_RPC_URL --broadcast",
+    "worker:watch": "tsx worker/index.ts watch",
+    "worker:backfill": "tsx worker/index.ts backfill"
   },
   "dependencies": {
     "@gluwa/usc-contracts": "0.1.2",
