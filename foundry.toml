@@ -12,6 +12,8 @@ optimizer = true
 optimizer_runs = 200
 via_ir = false
 evm_version = "shanghai"
+# Tests decode REAL captured Attestcoin proofs, so they need read access to the fixtures.
+fs_permissions = [{access = "read", path = "./contracts/test/fixtures"}]
 
 # CI: skip fork tests (they need live RPC + a captured proof fixture).
 [profile.ci]
