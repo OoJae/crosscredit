@@ -1,0 +1,28 @@
+# Secrets — NEVER commit
+.env
+.env.local
+*.pem
+*.key
+
+# Dependencies
+node_modules/
+
+# Foundry artifacts
+contracts/out/
+contracts/cache/
+broadcast/
+
+# Pinned upstream examples (cloned, not vendored into git)
+vendor/
+
+# Worker runtime state
+worker/state.json
+
+# Build output
+web/dist/
+*.tsbuildinfo
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
