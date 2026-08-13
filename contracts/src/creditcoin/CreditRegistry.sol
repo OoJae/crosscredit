@@ -5,6 +5,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {EvmV1Decoder} from "@gluwa/usc-contracts/contracts/decoding/EvmV1Decoder.sol";
 import {USCBase} from "../vendored/USCBase.sol";
+import {INativeQueryVerifier} from "../vendored/VerifierInterface.sol";
 import {CreditProfile, ScoreLib, Tier} from "./ScoreLib.sol";
 
 /// @title CreditRegistry
@@ -87,6 +88,17 @@ contract CreditRegistry is USCBase, Ownable, Pausable {
     error NoRecognisedEvents();
     error UnknownAction(uint8 action);
     error ZeroAddress();
+    error EmptyBatch();
+    error BatchTooLarge(uint256 size, uint256 maximum);
+    error BatchLengthMismatch();
+    error QueryAlreadyProcessed(bytes32 queryId);
+
+    /// @notice Largest batch the block-prover precompile accepts.
+    /// @dev Not a documented constant in the SDK — confirmed by probing the live CC3 precompile:
+    /// ten proofs pass the size gate, eleven revert with `heights: Value is too large for length`.
+    /// Enforced here so an oversized batch fails with a clear error before spending gas on the
+    /// precompile call.
+    uint256 public constant MAX_BATCH_SIZE = 10;
 
     /// @param sourceChainKey Creditcoin-internal source-chain id — 1 for Sepolia on CC3 testnet.
     /// Taken from `docs/evidence/supported-chains.json`, never hardcoded, because the same key
@@ -145,6 +157,81 @@ contract CreditRegistry is USCBase, Ownable, Pausable {
     function _processAndEmitEvent(uint8 action, bytes32 queryId, uint64 chainKey, bytes memory encodedTransaction)
         internal
         override
+    {
+        _ingestTransaction(action, queryId, chainKey, encodedTransaction);
+    }
+
+    /// @notice Verifies and applies up to {MAX_BATCH_SIZE} source transactions in **one**
+    /// Creditcoin transaction, sharing a single continuity proof.
+    ///
+    /// @dev This is what makes "import my entire credit history in one transaction" possible, and
+    /// it is our own entrypoint: the vendored {USCBase-execute} handles exactly one proof.
+    ///
+    /// Sharing one continuity proof across the batch is where the saving comes from — the
+    /// expensive part of verification is walking the chain back to an attested block, and that
+    /// walk happens once instead of N times. The precompile requires every source block to fall
+    /// within a 1000-block window for that to be sound.
+    ///
+    /// **Query ids are reserved before verification, not after.** {USCBase-execute} marks after
+    /// verifying so a rejected proof cannot burn a legitimate id; here, marking first is both safe
+    /// and necessary. Safe because any failure reverts the whole transaction and unwinds the
+    /// marks. Necessary because it is the only thing that catches a **duplicate inside the same
+    /// batch** — two copies of one proof would otherwise both pass a "not yet processed" check and
+    /// be counted twice.
+    ///
+    /// The batch is atomic: one bad proof, one replay, or one unrecognised event reverts
+    /// everything. A partially-applied credit history would be worse than none.
+    ///
+    /// @param actions Declared intent per item. Unattested, so validated but never used for routing.
+    /// @param chainKey Source chain for every item in the batch.
+    /// @param heights Source block per item, index-aligned with the other arrays.
+    /// @param encodedTransactions Attestcoin-encoded transaction + receipt per item.
+    /// @param merkleProofs Inclusion proof per item.
+    /// @param sharedContinuityProof The single continuity proof covering all of them.
+    /// @return True when every item verified and was applied.
+    function executeBatch(
+        uint8[] calldata actions,
+        uint64 chainKey,
+        uint64[] calldata heights,
+        bytes[] calldata encodedTransactions,
+        INativeQueryVerifier.MerkleProof[] calldata merkleProofs,
+        INativeQueryVerifier.ContinuityProof calldata sharedContinuityProof
+    ) external returns (bool) {
+        uint256 size = heights.length;
+        if (size == 0) revert EmptyBatch();
+        if (size > MAX_BATCH_SIZE) revert BatchTooLarge(size, MAX_BATCH_SIZE);
+        if (
+            actions.length != size || encodedTransactions.length != size || merkleProofs.length != size
+        ) revert BatchLengthMismatch();
+
+        bytes32[] memory queryIds = new bytes32[](size);
+        for (uint256 i = 0; i < size; ++i) {
+            bytes32 queryId =
+                _computeQueryId(chainKey, heights[i], merkleProofs[i].root, merkleProofs[i].siblings);
+            if (processedQueries[queryId]) revert QueryAlreadyProcessed(queryId);
+            processedQueries[queryId] = true;
+            queryIds[i] = queryId;
+        }
+
+        // One precompile call for the whole batch. It reverts on any failure rather than
+        // returning false, so a successful return means every proof checked out.
+        bool verified = VERIFIER.verifyAndEmit(
+            chainKey, heights, encodedTransactions, merkleProofs, sharedContinuityProof
+        );
+        require(verified, "Batch proof verification failed");
+
+        for (uint256 i = 0; i < size; ++i) {
+            _ingestTransaction(actions[i], queryIds[i], chainKey, encodedTransactions[i]);
+        }
+
+        return true;
+    }
+
+    /// @dev The single validation-and-apply path, shared by {USCBase-execute} and
+    /// {executeBatch}, so both routes enforce identical rules by construction rather than by
+    /// discipline.
+    function _ingestTransaction(uint8 action, bytes32 queryId, uint64 chainKey, bytes memory encodedTransaction)
+        internal
         whenNotPaused
     {
         if (action > uint8(Action.CollateralAdded)) revert UnknownAction(action);

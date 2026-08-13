@@ -26,6 +26,28 @@ export interface ExecuteArgs {
 export const ACTION_REPAYMENT_MADE = 1;
 
 /**
+ * Blocks until a source block has been attested on Creditcoin.
+ *
+ * @param config Worker configuration.
+ * @param blockNumber Height to wait for. For a batch this must be the **highest** block in it,
+ * since the prover cannot serve any proof past its attested tip.
+ *
+ * @remarks
+ * Sepolia attestation measures ~8-10 minutes. The wait is free and idempotent, so a timeout just
+ * means trying again later rather than losing anything. Uses `ProofBuilder`'s implementation —
+ * the one on `PrecompileChainInfoProvider` is marked legacy in its own docstring.
+ */
+export async function waitForAttestation(config: WorkerConfig, blockNumber: number): Promise<void> {
+  const builder = new proofProvider.service.ProofBuilder(
+    config.chainKey,
+    config.proofBuilderUrl,
+    PROVER_TIMEOUT_MS,
+  );
+  await builder.waitUntilHeightAttested(config.chainKey, blockNumber, 15_000, 1_200_000);
+  console.log(`  ✓ attested        block ${blockNumber} on chainKey ${config.chainKey}`);
+}
+
+/**
  * Waits until the source block is attested, then fetches its proof.
  *
  * @param config Worker configuration.
@@ -43,11 +65,7 @@ export async function fetchProof(
     PROVER_TIMEOUT_MS,
   );
 
-  // Sepolia attestation measures ~8-10 minutes. Polling every 15s with a generous ceiling
-  // matches the reference examples; the wait is free and idempotent, so a timeout just means
-  // running again later.
-  await builder.waitUntilHeightAttested(config.chainKey, blockNumber, 15_000, 1_200_000);
-  console.log(`  ✓ attested        block ${blockNumber} on chainKey ${config.chainKey}`);
+  await waitForAttestation(config, blockNumber);
 
   // getProof returns a {success, data, error} envelope rather than the proof itself.
   const result = await builder.getProof(txHash);

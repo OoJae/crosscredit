@@ -20,7 +20,9 @@
     "seed:history": "tsx scripts/seed-history.ts",
     "deploy:loanbook": "forge script contracts/script/DeployLoanBook.s.sol:DeployLoanBook --rpc-url $SEPOLIA_RPC_URL --broadcast",
     "worker:watch": "tsx worker/index.ts watch",
-    "worker:backfill": "tsx worker/index.ts backfill"
+    "worker:backfill": "tsx worker/index.ts backfill",
+    "seed:borrower-c": "tsx scripts/seed-borrower-c.ts",
+    "worker:batch": "tsx worker/index.ts batch"
   },
   "dependencies": {
     "@gluwa/usc-contracts": "0.1.2",

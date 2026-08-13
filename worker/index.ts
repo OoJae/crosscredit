@@ -19,7 +19,9 @@ import registryArtifact from '../contracts/out/CreditRegistry.sol/CreditRegistry
 import {loadConfig, POLL_INTERVAL_MS, type WorkerConfig} from './config.js';
 import {loadState, isSubmitted, recordSubmitted, recordFailure, saveState, type WorkerState} from './state.js';
 import {scanEvents, groupByTransaction, type SourceEvent} from './scan.js';
-import {fetchProof, submitProof, describe} from './prove.js';
+import {fetchProof, submitProof, describe, waitForAttestation, ACTION_REPAYMENT_MADE} from './prove.js';
+import {fetchBatchProof, dryRunBatch, MAX_BATCH_SIZE} from './batch.js';
+import {GAS_LIMIT_FLOOR} from './config.js';
 
 function abiOf(artifact: unknown): ethers.InterfaceAbi {
   return (artifact as {abi: ethers.InterfaceAbi}).abi;
@@ -113,6 +115,91 @@ async function main(): Promise<void> {
       eventName: parsed?.name ?? 'Unknown',
       borrower: (parsed?.args['borrower'] as string | undefined) ?? ethers.ZeroAddress,
     });
+    return;
+  }
+
+  if (mode === 'batch') {
+    const borrowerIndex = process.argv.indexOf('--borrower');
+    const borrower = borrowerIndex !== -1 ? process.argv[borrowerIndex + 1] : undefined;
+
+    console.log(`\nBatch-importing blocks ${state.cursorBlock}..${head}`);
+    if (borrower !== undefined) console.log(`Filtering to borrower ${borrower}`);
+
+    let events = groupByTransaction(await scanEvents(loanBook, state.cursorBlock, head));
+    if (borrower !== undefined) {
+      const target = borrower.toLowerCase();
+      events = events.filter((e) => e.borrower.toLowerCase() === target);
+    }
+    const pending = events.filter((e) => !isSubmitted(state, e.txHash));
+
+    console.log(`${pending.length} transaction(s) to import.`);
+    if (pending.length === 0) return;
+    if (pending.length > MAX_BATCH_SIZE) {
+      // Chunking is correct but splits the "one transaction" story, so say so plainly.
+      console.log(`Splitting into chunks of ${MAX_BATCH_SIZE} (precompile limit).`);
+    }
+
+    for (let offset = 0; offset < pending.length; offset += MAX_BATCH_SIZE) {
+      const chunk = pending.slice(offset, offset + MAX_BATCH_SIZE);
+      console.log(`\n▸ Batch of ${chunk.length}`);
+
+      // Every source block must be attested before the prover will serve a proof; the highest
+      // one gates the whole batch.
+      await waitForAttestation(config, Math.max(...chunk.map((e) => e.blockNumber)));
+
+      const args = await fetchBatchProof(config, chunk.map((e) => e.txHash));
+      if (!(await dryRunBatch(config, args))) {
+        console.error('  ✗ aborting — the precompile rejected the batch, so submitting would only burn gas');
+        return;
+      }
+
+      const actions = args.sourceTxHashes.map(() => ACTION_REPAYMENT_MADE);
+      const call = [
+        actions,
+        args.chainKey,
+        args.heights,
+        args.encodedTransactions,
+        args.merkleProofs,
+        [args.continuityProof.lowerEndpointDigest, args.continuityProof.roots],
+      ] as const;
+
+      let gasLimit = GAS_LIMIT_FLOOR * BigInt(chunk.length);
+      try {
+        const estimated = await registry['executeBatch']!.estimateGas(...call);
+        gasLimit = (estimated * 140n) / 100n;
+      } catch (error) {
+        console.warn(`  ! gas estimation failed, using floor ${gasLimit}: ${describe(error)}`);
+      }
+
+      const tx = (await registry['executeBatch']!(...call, {gasLimit})) as ethers.ContractTransactionResponse;
+      console.log(`  → submitted       ${tx.hash}`);
+      const receipt = await tx.wait();
+      if (receipt === null || receipt.status !== 1) throw new Error(`batch transaction ${tx.hash} reverted`);
+
+      console.log(
+        `  ✓ verified on CC3 block #${receipt.blockNumber} — ${chunk.length} transactions, ` +
+          `${receipt.gasUsed} gas (${receipt.gasUsed / BigInt(chunk.length)} per event)`,
+      );
+
+      for (const event of chunk) {
+        recordSubmitted(state, {
+          sourceTxHash: event.txHash,
+          cc3TxHash: receipt.hash,
+          cc3Block: receipt.blockNumber,
+          gasUsed: (receipt.gasUsed / BigInt(chunk.length)).toString(),
+          at: new Date().toISOString(),
+        });
+      }
+
+      const who = chunk[0]!.borrower;
+      const score = (await registry['scoreOf']!(who)) as bigint;
+      const tier = ['Bronze', 'Silver', 'Gold', 'Platinum'][Number((await registry['tierOf']!(who)) as bigint)];
+      console.log(`  ★ ${who} → score ${score}, tier ${tier}`);
+    }
+
+    state.cursorBlock = head + 1;
+    saveState(state);
+    console.log('\n✓ batch import complete');
     return;
   }
 
