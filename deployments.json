@@ -111,7 +111,9 @@
           },
           "supersedes": "0xB5F3B44113A31B07508464de39d7ddd939184B2c (single-source, LoanBook only)",
           "verification": {
-            "blockscout": "verified"
+            "blockscout": "verified",
+            "verifiedAt": "2026-08-14",
+            "note": "Verified explicitly after an audit found this field had been copy-forwarded onto new addresses on redeploy, asserting a verification that had never been performed for them."
           }
         },
         "EvmV1Decoder": {
@@ -127,7 +129,9 @@
           "standard": "ERC-721 + ERC-5192 (soulbound)",
           "note": "On-chain SVG + metadata. sync(borrower) is permissionless: it derives from the registry, which derives from proofs.",
           "verification": {
-            "blockscout": "verified"
+            "blockscout": "verified",
+            "verifiedAt": "2026-08-14",
+            "note": "Verified explicitly after an audit found this field had been copy-forwarded onto new addresses on redeploy, asserting a verification that had never been performed for them."
           },
           "supersedes": "0x96a68DBe0cC9BD13E92B4730eFfE531F63f4B2F6 (bound to the single-source registry)"
         },
@@ -143,7 +147,9 @@
             "Platinum": "85% / 6% (undercollateralized)"
           },
           "verification": {
-            "blockscout": "verified"
+            "blockscout": "verified",
+            "verifiedAt": "2026-08-14",
+            "note": "Verified explicitly after an audit found this field had been copy-forwarded onto new addresses on redeploy, asserting a verification that had never been performed for them."
           },
           "supersedes": "0xA37a9338b17c20917046E29F23D9d8F796a5FDAb (no capacity cap)",
           "capacityCap": "collateralRequired() applies the tier discount only up to CreditRegistry.demonstratedCapacityOf(borrower). Beyond it, borrowing is fully collateralized regardless of tier."
@@ -355,5 +361,27 @@
       "evidence": "docs/evidence/g5-identity-negative/results.json"
     },
     "evidence": "docs/evidence/g5-mainnet-credit/results.json"
+  },
+  "supersededContracts": {
+    "note": "Retired contracts are PAUSED, not merely undeployed. The Phase 3 LendingPool held 99,900 tUSD and would still quote 850 collateral for a 1,000 tUSD loan to a wallet with zero demonstrated capacity — i.e. the exact vulnerability the current generation exists to close, live at an address published in our own docs. Paused Aug 14 2026; borrow() now reverts. Reversible via unpause().",
+    "paused": [
+      {
+        "name": "LendingPool (Phase 3)",
+        "address": "0xA37a9338b17c20917046E29F23D9d8F796a5FDAb",
+        "pausedAt": "2026-08-14"
+      },
+      {
+        "name": "CreditRegistry (Phase 3)",
+        "address": "0xB5F3B44113A31B07508464de39d7ddd939184B2c",
+        "pausedAt": "2026-08-14"
+      }
+    ],
+    "notPausable": [
+      {
+        "name": "CreditTierSBT (Phase 3)",
+        "address": "0x96a68DBe0cC9BD13E92B4730eFfE531F63f4B2F6",
+        "issue": "No pause(). Its badges are soulbound and unburnable, and their tokenURI reads the superseded registry, so it still renders Platinum/710 for borrowers the current system rates Silver/390. Two contradictory permanent badges now exist per borrower. Disclosed rather than fixable without a burn path."
+      }
+    ]
   }
 }
