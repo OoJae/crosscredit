@@ -8,7 +8,7 @@ Session log. Updated at the end of every session: done / next / blockers / addre
 
 | | |
 |---|---|
-| **Phase** | 4.5 complete → next is **Phase 5 (video, deck, submission)** |
+| **Phase** | 4.6 complete → next is **Phase 5 (video, deck, submission)** |
 | **Day** | 2 of 23 (Aug 14, 2026) |
 | **G0** — real proof round-trip | ✅ **PASSED** — [evidence](docs/evidence/g0-hello-bridge/README.md) |
 | **G1** — seeded history on a public explorer | ✅ **PASSED** — 11 events, verified source |
@@ -16,7 +16,8 @@ Session log. Updated at the end of every session: done / next / blockers / addre
 | **G3** — batch · SBT · pool · negative paths | ✅ **PASSED** — 9 proofs in ONE tx, 3.4× cheaper |
 | **G4** — live app, README runnable by a stranger | ✅ **PASSED** — <https://crosscredit.vercel.app> |
 | **G5** — real mainnet credit + honest threat model | ✅ **PASSED** — a real Aave borrower, 0 → 800/Platinum |
-| **Next gate** | **G6** — demo video · deck PDF · every submission field has a URL |
+| **G6** — post-audit remediation | ✅ **PASSED** — flash-loan capacity closed, age term anchored, 214 tests |
+| **Next gate** | **G7** — demo video · deck PDF · every submission field has a URL |
 | **Repo** | <https://github.com/OoJae/crosscredit> (public, CI green) |
 | **Internal submit target** | **Sep 4, 2026** (deadline disputed — see Open questions) |
 
@@ -29,10 +30,15 @@ Session log. Updated at the end of every session: done / next / blockers / addre
 | Borrower A (clean, targets Platinum) | Sepolia | `0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6` — 9 on-time events |
 | Borrower B (one late repayment) | Sepolia | `0x04163f60FA50519D86AeFB8e450312bAD76CA0B6` — 2 events |
 | **Borrower D — REAL mainnet** | Ethereum | `0x76f30e3f75437fB862B8D2C4D80a671bCeBA5b1A` — 5 real Aave V3 repayments, **800/Platinum**, capacity ~$960k |
-| Borrower C (batch demo) | Sepolia | `0x8C04C28894BADcE63d1F00f356AbB126983522Cf` — 9 events, 390/Silver |
-| CreditRegistry (multi-source) | CC3 | [`0x581A7413e1fCcB767EC8BA9E837df43fbA06b3D2`](https://creditcoin-testnet.blockscout.com/address/0x581A7413e1fCcB767EC8BA9E837df43fbA06b3D2) ✅ **current** |
-| CreditTierSBT | CC3 | [`0xaaA368ccD534a24e7A98C375789598835A83D2F3`](https://creditcoin-testnet.blockscout.com/address/0xaaA368ccD534a24e7A98C375789598835A83D2F3) ✅ current |
-| LendingPool (100k tUSD) | CC3 | [`0x2FC0D783d7240B5814aBc7A6A464248B5b60D90d`](https://creditcoin-testnet.blockscout.com/address/0x2FC0D783d7240B5814aBc7A6A464248B5b60D90d) ✅ current |
+| **Borrower E — REAL, and OLD** | Ethereum | `0xe57D6C07d7DA0066AAC9BaF186CbC298fB57dd00` — **one** Oct-2024 repayment, 423/Silver, **age term maxed** |
+| LoanBook **v2** | Sepolia | [`0x07AdA5C60dFbe5C3A7dC48081B0fa70E14c6d41D`](https://sepolia.etherscan.io/address/0x07AdA5C60dFbe5C3A7dC48081B0fa70E14c6d41D#events) ✅ current |
+| Borrower A | Sepolia | `0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6` — 9 events, 390/Silver |
+| Borrower B (one late) | Sepolia | `0xB82dC3F27d4b72FaF7594C7724Cf43B47FF4b52e` — 2 events, 0/Bronze |
+| Borrower C (batch demo) | Sepolia | `0xaA2871B057D80D92606f0a3eFa84f175F73b55d5` — 9 events, 390/Silver, ephemeral key |
+| CreditRegistry | CC3 | [`0x4C4381dB68a1cAAE46a2E6CFc2f667ad22Dddf81`](https://creditcoin-testnet.blockscout.com/address/0x4C4381dB68a1cAAE46a2E6CFc2f667ad22Dddf81) ✅ **current** |
+| CreditTierSBT | CC3 | [`0x326F8806cBd5ABF413889BfAc0A6622a0AEddD18`](https://creditcoin-testnet.blockscout.com/address/0x326F8806cBd5ABF413889BfAc0A6622a0AEddD18) ✅ current |
+| LendingPool (100k tUSD) | CC3 | [`0xf27877faC13244a4ad959E83cD9E5a15d919029C`](https://creditcoin-testnet.blockscout.com/address/0xf27877faC13244a4ad959E83cD9E5a15d919029C) ✅ current |
+| ~~Phase 4.5 generation~~ | CC3/Sepolia | all superseded and **paused** — see `deployments.json` → `deploymentLineage` |
 | TUSD | CC3 | [`0x26FEEdECb79A69EdC7d3Bdb8Cf4dD96E17a3B051`](https://creditcoin-testnet.blockscout.com/address/0x26FEEdECb79A69EdC7d3Bdb8Cf4dD96E17a3B051) |
 | EvmV1Decoder (ours, linked) | CC3 | [`0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa`](https://creditcoin-testnet.blockscout.com/address/0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa) |
 | ~~CreditRegistry (Phase 3, single-source)~~ | CC3 | ~~`0xB5F3B44113A31B07508464de39d7ddd939184B2c`~~ superseded |
@@ -372,3 +378,81 @@ worthless data. A judge finds that from the public repo in ninety seconds.
 **Blockers**
 - None technical. Operator items are time-critical: DoraHacks registration, the deadline question,
   and the **Aug 18 AMA** — that is Tuesday, four days out, and host approval is needed.
+
+---
+
+### Session 7 — Aug 14, 2026 (Phase 4.6, Gate G6)
+
+An adversarial audit — 10 lenses, **82 findings raised, 49 surviving refutation** — was run against
+every part of the project. It found that the capacity cap the whole thesis rests on could be bought
+for the price of gas.
+
+**The headline: flash-loaned capacity.** Aave V3 permits same-block borrow-and-repay. So one
+transaction — flash-loan, supply, borrow, repay, withdraw, return — emits a completely genuine
+`Repay` for an arbitrary amount with **zero capital at risk for any length of time**. And
+`_ingestTransaction` had no per-transaction cap, so five `Repay` logs in that single transaction
+scored five repayments: 600 points, Platinum, **from one proof**. Our own source comment accepted
+the Aave `Borrow` specifically *"so a borrow-and-repay pair in one transaction does not fail the
+no-recognised-events check"* — which is the exact shape of the attack, written down and not seen.
+
+`THREAT_MODEL.md` had argued that capacity being the *largest single* repayment bounded wash
+lending. That bound only exists if loan size is bounded by the attacker's own capital; a flash loan
+removes it, and largest-single is precisely what a flash loan maximises. The doc now says so.
+
+**The second one: the age term measured the wrong clock.** Aave, ENS and PoH emit no timestamp, and
+the precompile proves transactions rather than block headers — so six of seven ingest paths stamped
+Creditcoin's `block.timestamp`, making "history age" measure *time since import*. It rewarded
+importing early and idling, and gave a decade of genuine Aave history zero points.
+
+**Done**
+- Flash-loan guard (same-tx `Borrow`/`Repay` pairing on reserve + account + pool), one repayment
+  credit per proven transaction, and nine tests covering both the guard and its four specificity
+  controls.
+- `blockHeight` threaded from `execute`/`executeBatch` through the vendored `USCBase` hook
+  (modification #2, attributed in the header) into every decoder, converted by owner-registered
+  per-chain anchors.
+- **LoanBook v2 + full re-seed.** `RepaymentMade` gained an indexed `payer`, so a stranger settling
+  1 wei on a past-due loan can no longer brand the borrower `late`. Added `withdrawCollateral` —
+  collateral was previously unrecoverable. Borrower C was regenerated, so the leaked key is dead.
+- ENS v3 decoded `premium` as `expires`; unregistered reserves burned the queryId forever;
+  `scoreOf`/`tierOf` served a stale cache; `ScoreLib` clamped after penalties, hiding up to 430
+  points of default; `liquidate()` had no default condition and paid `owner()` personally;
+  `setTerms` repriced open loans; the SBT never advertised ERC-5192 and would force-mint to any
+  address. All fixed, all tested. **214 tests green.**
+- Worker: every error log routed through a redactor (ethers embeds the API-keyed RPC URL in
+  `error.message` — same failure class as the committed key); atomic, versioned, registry-scoped
+  state; non-zero exit on a rejected dry run.
+- CI gained `check:abi`, which found two live ABI drifts the moment it ran — one of them mine.
+- Retracted the arXiv:2605.03307 citation in all three places: it formalises *sponsor-delegated*
+  capacity with loss recourse, which we do not have.
+- Redeployed all four contracts, re-imported every borrower, **verified all four on their explorers
+  via API** (that claim had been wrong once), and paused the entire superseded generation.
+
+**Things that went wrong, and what they taught**
+- **The first chain anchors I registered were invented, not measured** — 106 days out on Sepolia
+  and 73 on mainnet. Checking them against real block timestamps took one command. Measured drift
+  is now 3.8 days over 1.8 years (0.55%).
+- **The ABI-parity check passed locally and failed in CI**, because it imported `web/src/abis.ts`
+  and `viem` lives in `web/node_modules`. It now parses the source text instead — no dependency,
+  and it validates the bytes that actually ship.
+- **A backfill started one block too high** and silently missed Borrower A's first `LoanOpened`,
+  leaving them 360 instead of 390 with 2/3 loans closed. Caught by comparing against Borrower C,
+  whose history is identical by construction — which is exactly why that pair exists.
+
+**Best artifact produced this session**
+
+Two real mainnet wallets, same contract, same day:
+
+| Borrower | Proofs | Oldest proven activity | Age points | Score |
+|---|---|---|---|---|
+| `0x76f30e…5b1A` | 5 | 2026-08-09 (~0 months) | 0 | 800 |
+| `0xe57D6C…dd00` | **1** | **2024-10-19 (~22 months)** | **120, maxed** | 423 |
+
+One proof of old history beats five proofs of new history on the one axis nobody can script.
+
+**Next**
+- Phase 5: demo video, deck, DoraHacks submission.
+
+**Blockers**
+- None technical. Operator items unchanged and now urgent: DoraHacks registration, the deadline
+  question, and the **Aug 18 AMA** — Tuesday, host approval needed.
