@@ -24,7 +24,8 @@
     "seed:borrower-c": "tsx scripts/seed-borrower-c.ts",
     "worker:batch": "tsx worker/index.ts batch",
     "negative-paths": "tsx scripts/negative-paths.ts",
-    "prove:mainnet": "tsx scripts/prove-mainnet.ts"
+    "prove:mainnet": "tsx scripts/prove-mainnet.ts",
+    "poh:negative": "tsx scripts/poh-negative.ts"
   },
   "dependencies": {
     "@gluwa/usc-contracts": "0.1.2",

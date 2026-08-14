@@ -1,0 +1,53 @@
+{
+  "capturedAt": "2026-08-14T01:18:40.509Z",
+  "question": "Should undercollateralized credit be gated on proof of personhood?",
+  "answer": "Not with this primitive. Every registration proved successfully; none of the humans are registered today.",
+  "registry": "0xC5E9dDebb09Cd64DfaCab4011A0D5cEDaf7c9BDb",
+  "registryNote": "Proof of Humanity v1 registrations last two years and the registry has accepted none in roughly that long. PoH v2 on mainnet holds ~55 humanities; the real population is on Gnosis, which Creditcoin does not attest.",
+  "sampleSize": 5,
+  "provedToCreditcoin": 5,
+  "stillRegisteredToday": 0,
+  "conclusion": "The precompile proves events, not state. Credit capacity is therefore anchored to demonstrated repayment of third-party capital — a completed fact — rather than to identity.",
+  "findings": [
+    {
+      "humanAddress": "0x8d93471Dfd2A9D9bDc56eDee93f3fc57B8078D68",
+      "registrationTx": "0x993cbcaa534a5ebe2022bfcd177a00e609f8c6ebbd9d7207dae21ce8048009ca",
+      "registrationBlock": 12012815,
+      "provedToCreditcoin": true,
+      "proofDetail": "7 merkle siblings, 186 continuity roots",
+      "registeredOnMainnetToday": false
+    },
+    {
+      "humanAddress": "0xbf5Ab800d1334C987b8d54d23DF03977d9EB13F2",
+      "registrationTx": "0xe371ddf318ce4c051f932b78bb2d32e3c675f5550c48e40d4352efc981c91815",
+      "registrationBlock": 12024968,
+      "provedToCreditcoin": true,
+      "proofDetail": "8 merkle siblings, 33 continuity roots",
+      "registeredOnMainnetToday": false
+    },
+    {
+      "humanAddress": "0x643c0d45e97480c2E4CE7e3ead08Ce1641D70F62",
+      "registrationTx": "0xe32c2f8fb38fa9d1b3439aedf2737b5630d36f2232c25d3ba7d79f06ed400ffb",
+      "registrationBlock": 12025096,
+      "provedToCreditcoin": true,
+      "proofDetail": "8 merkle siblings, 905 continuity roots",
+      "registeredOnMainnetToday": false
+    },
+    {
+      "humanAddress": "0x684dd1F9e5582944a9bDf3712eeE39F0696Ec596",
+      "registrationTx": "0xd1afabfd7d75393f83cc10aed61a8192888f3487e4eeb0e734ad93c3c74cd502",
+      "registrationBlock": 12025100,
+      "provedToCreditcoin": true,
+      "proofDetail": "8 merkle siblings, 901 continuity roots",
+      "registeredOnMainnetToday": false
+    },
+    {
+      "humanAddress": "0x928D9968bC4ED583B86195830F32531543Cf4e84",
+      "registrationTx": "0x83d204f8b752af9006638ec3f6af45bb8a3ebcf4eea73b93e16a82d29e8c3c23",
+      "registrationBlock": 12025151,
+      "provedToCreditcoin": true,
+      "proofDetail": "8 merkle siblings, 850 continuity roots",
+      "registeredOnMainnetToday": false
+    }
+  ]
+}
