@@ -49,7 +49,12 @@ contract MainnetProofTest is Test {
         registry = new CreditRegistry();
         registry.registerSource(MAINNET, AAVE_V3_POOL, SourceKind.AaveV3);
         registry.registerSource(MAINNET, ENS_CONTROLLER_V4, SourceKind.EnsRegistrar);
+        registry.registerReserve(USDT, 6);
     }
+
+    /// @dev The reserve repaid in the captured transaction. USDT has 6 decimals, not 18 — which
+    /// is precisely the trap `registerReserve` exists to avoid.
+    address internal constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
 
     function _txBytes(string memory fixture) internal view returns (bytes memory) {
         return vm.parseJsonBytes(vm.readFile(string.concat("contracts/test/fixtures/", fixture)), ".proof.txBytes");
@@ -235,6 +240,47 @@ contract MainnetProofTest is Test {
         _submit(MAINNET, payload, height, bytes32(uint256(8)));
 
         assertEq(registry.demonstratedCapacityOf(AAVE_BORROWER), capacityAfterFirst);
+    }
+
+    // ─── Reserve decimals ─────────────────────────────────────────────────────────────────
+
+    /// @dev Aave denominates repayments in the reserve's own units. The captured transaction
+    /// repays USDT at 6 decimals; treated naively as 18-decimal wei it would round to zero
+    /// capacity, making a genuine repayment look worthless. This test caught that in production
+    /// output before it reached the demo.
+    function test_mainnet_reserveAmountIsNormalisedToEighteenDecimals() public {
+        _submit(MAINNET, _txBytes("mainnet-aave-repay.json"), _height("mainnet-aave-repay.json"), bytes32(uint256(10)));
+
+        uint256 capacity = registry.demonstratedCapacityOf(AAVE_BORROWER);
+        assertGt(capacity, 1e18, "a ~789 unit repayment must not normalise to dust");
+        assertLt(capacity, 10_000e18, "nor be inflated");
+    }
+
+    /// @dev An unregistered reserve fails closed: the repayment still counts, but it contributes
+    /// no borrowing capacity, because crediting an unknown quantity is worse than crediting none.
+    function test_mainnet_unregisteredReserveGrantsNoCapacity() public {
+        CreditRegistry fresh = new CreditRegistry();
+        fresh.registerSource(MAINNET, AAVE_V3_POOL, SourceKind.AaveV3);
+        // Deliberately no registerReserve call.
+
+        INativeQueryVerifier.MerkleProofEntry[] memory siblings = new INativeQueryVerifier.MerkleProofEntry[](1);
+        siblings[0] = INativeQueryVerifier.MerkleProofEntry({hash: bytes32(uint256(11)), isLeft: true});
+        bytes32[] memory roots = new bytes32[](1);
+        roots[0] = bytes32(uint256(0xc0));
+
+        fresh.execute(
+            0,
+            MAINNET,
+            _height("mainnet-aave-repay.json"),
+            _txBytes("mainnet-aave-repay.json"),
+            bytes32(uint256(11)),
+            siblings,
+            bytes32(uint256(0xab)),
+            roots
+        );
+
+        assertEq(fresh.profileOf(AAVE_BORROWER).mainnetRepayments, 1, "the repayment still counts");
+        assertEq(fresh.demonstratedCapacityOf(AAVE_BORROWER), 0, "but grants no borrowing capacity");
     }
 
     /// @dev Sepolia and mainnet histories accumulate into one profile, which is the whole point of

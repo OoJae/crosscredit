@@ -63,6 +63,16 @@ contract CreditRegistry is USCBase, Ownable, Pausable {
     /// @notice Registered credit sources, keyed by chain then emitting contract.
     mapping(uint64 => mapping(address => SourceKind)) public sources;
 
+    /// @notice Decimals for reserve assets whose repayments count toward demonstrated capacity.
+    /// @dev Aave denominates `Repay` amounts in the **reserve asset's own units** — USDC has 6
+    /// decimals, WBTC 8, WETH 18 — so a raw amount is meaningless without knowing which asset it
+    /// is. Decimals live in contract *state* on the source chain, and the precompile proves
+    /// transactions rather than state, so they cannot be read cross-chain and must be registered.
+    ///
+    /// An unregistered reserve still counts as a repayment; it simply contributes no capacity,
+    /// which fails closed rather than crediting an unknown amount.
+    mapping(address => uint8) public reserveDecimals;
+
     /// @notice Verified credit profile per borrower.
     mapping(address => CreditProfile) public profiles;
 
@@ -70,6 +80,7 @@ contract CreditRegistry is USCBase, Ownable, Pausable {
     mapping(uint256 => LoanRecord) public loans;
 
     event SourceRegistered(uint64 indexed chainKey, address indexed emitter, SourceKind kind);
+    event ReserveRegistered(address indexed reserve, uint8 decimals);
     event SourceRemoved(uint64 indexed chainKey, address indexed emitter);
     event HistoryEventIngested(
         address indexed borrower, bytes32 indexed queryId, bytes32 eventSig, uint64 chainKey, uint256 loanId
@@ -111,6 +122,17 @@ contract CreditRegistry is USCBase, Ownable, Pausable {
     function removeSource(uint64 chainKey, address emitter) external onlyOwner {
         delete sources[chainKey][emitter];
         emit SourceRemoved(chainKey, emitter);
+    }
+
+    /// @notice Declares the decimals of a reserve asset so repayments of it can be normalised.
+    /// @dev Without this, a 789 USDC repayment (789e6) and a 5 ETH repayment (5e18) would be
+    /// compared as raw integers and the USDC one would round to nothing.
+    /// @param reserve The ERC-20 on the source chain.
+    /// @param decimals Its decimals — 6 for USDC/USDT, 8 for WBTC, 18 for WETH/DAI.
+    function registerReserve(address reserve, uint8 decimals) external onlyOwner {
+        if (reserve == address(0)) revert ZeroAddress();
+        reserveDecimals[reserve] = decimals;
+        emit ReserveRegistered(reserve, decimals);
     }
 
     // ─── Views ────────────────────────────────────────────────────────────────────────────
@@ -370,17 +392,24 @@ contract CreditRegistry is USCBase, Ownable, Pausable {
     {
         if (log.topics.length != 4 || log.data.length != 64) return false;
 
+        address reserve = _addressFromTopic(log.topics[1]);
         address borrower = _addressFromTopic(log.topics[2]);
         (uint256 amount,) = abi.decode(log.data, (uint256, bool));
 
         CreditProfile storage profile = profiles[borrower];
         profile.mainnetRepayments += 1;
-        profile.totalRepaidWei += amount;
+
+        // Normalise to 18 decimals before it touches anything comparative. An unregistered reserve
+        // contributes no capacity rather than an unknown quantity — fail closed, since this number
+        // is what gates undercollateralized credit.
+        uint256 normalised = _normalise(reserve, amount);
+        profile.totalRepaidWei += normalised;
+
         // Capacity is the largest single repayment, not the sum: repaying 1 ETH a hundred times
         // demonstrates the ability to handle 1 ETH, not 100.
-        if (amount > profile.demonstratedCapacityWei) {
-            profile.demonstratedCapacityWei = amount;
-            emit CapacityDemonstrated(borrower, amount);
+        if (normalised > profile.demonstratedCapacityWei) {
+            profile.demonstratedCapacityWei = normalised;
+            emit CapacityDemonstrated(borrower, normalised);
         }
 
         _touch(borrower, 0);
@@ -513,6 +542,20 @@ contract CreditRegistry is USCBase, Ownable, Pausable {
         stored.score = newScore;
         snapshot.score = newScore;
         emit ScoreUpdated(borrower, oldScore, newScore, ScoreLib.tierFor(snapshot, newScore));
+    }
+
+    /// @dev Scales a reserve-denominated amount to 18 decimals. Returns zero for an unregistered
+    /// reserve, so an unknown asset can never inflate borrowing capacity.
+    ///
+    /// Note this normalises **units, not value** — one USDC and one DAI are treated alike, and no
+    /// price conversion happens, because a price feed for a foreign chain's assets is exactly the
+    /// oracle dependency this project exists to avoid. Stablecoins dominate Aave borrowing, so
+    /// face value is a reasonable approximation; the limitation is stated in docs/THREAT_MODEL.md.
+    function _normalise(address reserve, uint256 amount) private view returns (uint256) {
+        uint8 decimals = reserveDecimals[reserve];
+        if (decimals == 0) return 0;
+        if (decimals >= 18) return amount;
+        return amount * (10 ** (18 - decimals));
     }
 
     /// @dev An indexed `address` occupies the low 20 bytes of its topic.

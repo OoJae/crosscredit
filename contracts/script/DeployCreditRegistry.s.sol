@@ -36,6 +36,16 @@ contract DeployCreditRegistry is Script {
     /// @dev Proof of Humanity v2 cross-chain proxy, Ethereum mainnet.
     address internal constant POH_V2 = 0xa478095886659168E8812154fB0DE39F103E74b2;
 
+    /// @dev Reserve assets whose Aave repayments count toward borrowing capacity. Decimals must be
+    /// declared because they live in source-chain *state*, which the precompile cannot prove — it
+    /// proves transactions. An unregistered reserve grants no capacity.
+    address internal constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address internal constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
+    address internal constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+    address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address internal constant WBTC = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
+    address internal constant PYUSD = 0x6c3ea9036406852006290770BEdFcAbA0e23A0e8;
+
     function run() external returns (CreditRegistry registry) {
         uint256 deployerKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
         address loanBook = vm.envAddress("LOANBOOK_ADDRESS");
@@ -61,5 +71,12 @@ contract DeployCreditRegistry is Script {
         registry.registerSource(MAINNET, ENS_CONTROLLER_V2, SourceKind.EnsRegistrar);
 
         registry.registerSource(MAINNET, POH_V2, SourceKind.ProofOfHumanity);
+
+        registry.registerReserve(USDC, 6);
+        registry.registerReserve(USDT, 6);
+        registry.registerReserve(PYUSD, 6);
+        registry.registerReserve(WBTC, 8);
+        registry.registerReserve(DAI, 18);
+        registry.registerReserve(WETH, 18);
     }
 }

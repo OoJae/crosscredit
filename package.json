@@ -23,7 +23,8 @@
     "worker:backfill": "tsx worker/index.ts backfill",
     "seed:borrower-c": "tsx scripts/seed-borrower-c.ts",
     "worker:batch": "tsx worker/index.ts batch",
-    "negative-paths": "tsx scripts/negative-paths.ts"
+    "negative-paths": "tsx scripts/negative-paths.ts",
+    "prove:mainnet": "tsx scripts/prove-mainnet.ts"
   },
   "dependencies": {
     "@gluwa/usc-contracts": "0.1.2",
