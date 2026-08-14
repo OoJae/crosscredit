@@ -9,36 +9,126 @@
  *     verified-events table read as "this borrower has no history" for every borrower. No error.
  *   - `UnregisteredSource` was declared where the contract defines `SourceNotRegistered`, so that
  *     revert could never decode into a readable reason.
- *   - `CreditProfile` had to be widened by hand every time the struct changed.
+ *   - `RepaymentMade` kept its pre-`payer` signature after LoanBook v2.
  *
- * A wrong ABI does not throw. It decodes garbage, or silently matches nothing. This compares every
- * function selector and event topic0 in the hand-written file against the compiled artifact, which
- * is the only source of truth either side can agree on.
+ * A wrong ABI does not throw. It decodes garbage, or silently matches nothing.
  *
- * Run: npx tsx scripts/check-abi-parity.ts
+ * @remarks
+ * The signatures are parsed straight out of the source text rather than imported. Importing the
+ * module would drag `viem` into this script, and `viem` lives in `web/node_modules` — so the check
+ * passed locally and failed in CI, where the root job installs only the root dependencies. Reading
+ * the file also means we validate the bytes that actually ship.
+ *
+ * Run: npm run check:abi
  */
 import {readFileSync} from 'node:fs';
-import {id, Interface, type InterfaceAbi} from 'ethers';
-import {registryAbi, sbtAbi, poolAbi, loanBookAbi} from '../web/src/abis.js';
+import {Interface, type InterfaceAbi} from 'ethers';
+
+const ABI_SOURCE = 'web/src/abis.ts';
 
 interface Target {
   label: string;
+  /** The exported const in `abis.ts`. */
+  binding: string;
   artifact: string;
-  abi: readonly unknown[];
 }
 
 const TARGETS: Target[] = [
-  {
-    label: 'CreditRegistry',
-    artifact: 'contracts/out/CreditRegistry.sol/CreditRegistry.json',
-    abi: registryAbi,
-  },
-  {label: 'CreditTierSBT', artifact: 'contracts/out/CreditTierSBT.sol/CreditTierSBT.json', abi: sbtAbi},
-  {label: 'LendingPool', artifact: 'contracts/out/LendingPool.sol/LendingPool.json', abi: poolAbi},
-  {label: 'LoanBook', artifact: 'contracts/out/LoanBook.sol/LoanBook.json', abi: loanBookAbi},
+  {label: 'CreditRegistry', binding: 'registryAbi', artifact: 'contracts/out/CreditRegistry.sol/CreditRegistry.json'},
+  {label: 'CreditTierSBT', binding: 'sbtAbi', artifact: 'contracts/out/CreditTierSBT.sol/CreditTierSBT.json'},
+  {label: 'LendingPool', binding: 'poolAbi', artifact: 'contracts/out/LendingPool.sol/LendingPool.json'},
+  {label: 'LoanBook', binding: 'loanBookAbi', artifact: 'contracts/out/LoanBook.sol/LoanBook.json'},
 ];
 
-/** Every selector/topic0 the compiled contract actually exposes, by name. */
+/** Pulls the quoted human-readable ABI entries out of one `parseAbi([...])` block. */
+function declaredEntries(source: string, binding: string): string[] {
+  const start = source.indexOf(`export const ${binding} = parseAbi([`);
+  if (start === -1) throw new Error(`${ABI_SOURCE}: no export named "${binding}"`);
+  const end = source.indexOf(']);', start);
+  if (end === -1) throw new Error(`${ABI_SOURCE}: unterminated parseAbi for "${binding}"`);
+
+  return [...source.slice(start, end).matchAll(/'((?:[^'\\]|\\.)*)'/g)]
+    .map((match) => match[1] ?? '')
+    .filter((entry) => /^(function|event|error|struct)\s/.test(entry));
+}
+
+/**
+ * Maps `struct Name { t a; u b; }` to the tuple `(t,u)` a signature would use.
+ *
+ * @remarks
+ * Structs nest — `MerkleProof` holds a `MerkleProofEntry[]` — so a single pass leaves a struct
+ * name embedded inside another tuple and every comparison against it fails. Expansion therefore
+ * runs to a fixed point.
+ */
+function structTuples(entries: string[]): Map<string, string> {
+  const tuples = new Map<string, string>();
+
+  for (const entry of entries) {
+    const match = /^struct\s+(\w+)\s*\{(.*)\}$/.exec(entry);
+    if (match === null) continue;
+    const fields = (match[2] ?? '')
+      .split(';')
+      .map((field) => field.trim())
+      .filter(Boolean)
+      .map((field) => field.split(/\s+/)[0] ?? '');
+    tuples.set(match[1] ?? '', `(${fields.join(',')})`);
+  }
+
+  // Substitute struct names inside tuples until nothing changes. Bounded by the number of structs,
+  // so a cyclic definition (which Solidity rejects anyway) cannot spin here.
+  for (let pass = 0; pass <= tuples.size; ++pass) {
+    let changed = false;
+    for (const [name, tuple] of tuples) {
+      const expanded = tuple.replace(/\b([A-Z]\w*)\b/g, (token) => tuples.get(token) ?? token);
+      if (expanded !== tuple) {
+        tuples.set(name, expanded);
+        changed = true;
+      }
+    }
+    if (!changed) break;
+  }
+
+  return tuples;
+}
+
+/** Reduces one declaration to `name(type,type)` with structs expanded and names stripped. */
+function canonical(entry: string, tuples: Map<string, string>): {kind: string; name: string; sig: string} | null {
+  const match = /^(function|event|error)\s+(\w+)\s*\((.*?)\)\s*(?:view|pure|payable|nonpayable)?\s*(?:returns\s*\(.*\))?$/s.exec(
+    entry,
+  );
+  if (match === null) return null;
+
+  const [, kind = '', name = '', params = ''] = match;
+  const types = splitParams(params).map((param) => {
+    const bare = param.trim().replace(/\b(indexed|calldata|memory|storage)\b/g, '').trim();
+    const type = bare.split(/\s+/)[0] ?? '';
+    const suffix = type.endsWith('[]') ? '[]' : '';
+    const base = suffix === '' ? type : type.slice(0, -2);
+    return (tuples.get(base) ?? base) + suffix;
+  });
+
+  return {kind, name, sig: `${name}(${types.join(',')})`};
+}
+
+/** Splits a parameter list on commas that are not inside brackets. */
+function splitParams(params: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let current = '';
+  for (const char of params) {
+    if (char === '(' || char === '[') depth += 1;
+    if (char === ')' || char === ']') depth -= 1;
+    if (char === ',' && depth === 0) {
+      out.push(current);
+      current = '';
+      continue;
+    }
+    current += char;
+  }
+  if (current.trim() !== '') out.push(current);
+  return out;
+}
+
 function compiledSignatures(artifactPath: string): Map<string, Set<string>> {
   const artifact = JSON.parse(readFileSync(artifactPath, 'utf8')) as {abi: InterfaceAbi};
   const iface = new Interface(artifact.abi);
@@ -50,60 +140,50 @@ function compiledSignatures(artifactPath: string): Map<string, Set<string>> {
     byName.set(name, existing);
   };
 
-  iface.forEachFunction((fragment) => add(fragment.name, fragment.format('sighash')));
-  iface.forEachEvent((fragment) => add(fragment.name, fragment.format('sighash')));
-  iface.forEachError((fragment) => add(fragment.name, fragment.format('sighash')));
-
+  iface.forEachFunction((f) => add(f.name, f.format('sighash')));
+  iface.forEachEvent((e) => add(e.name, e.format('sighash')));
+  iface.forEachError((e) => add(e.name, e.format('sighash')));
   return byName;
 }
 
-function check(target: Target): string[] {
-  const compiled = compiledSignatures(target.artifact);
-  const iface = new Interface(target.abi as InterfaceAbi);
-  const problems: string[] = [];
-
-  const verify = (kind: string, name: string, signature: string): void => {
-    const candidates = compiled.get(name);
-    if (candidates === undefined) {
-      problems.push(`${target.label}: ${kind} "${name}" does not exist on the contract`);
-      return;
-    }
-    if (!candidates.has(signature)) {
-      problems.push(
-        `${target.label}: ${kind} "${signature}" (${id(signature).slice(0, 10)}) does not match the ` +
-          `contract, which has ${[...candidates].map((c) => `"${c}"`).join(' or ')}`,
-      );
-    }
-  };
-
-  iface.forEachFunction((f) => verify('function', f.name, f.format('sighash')));
-  iface.forEachEvent((e) => verify('event', e.name, e.format('sighash')));
-  iface.forEachError((e) => verify('error', e.name, e.format('sighash')));
-
-  return problems;
-}
-
 function main(): void {
-  const problems = TARGETS.flatMap((target) => check(target));
+  const source = readFileSync(ABI_SOURCE, 'utf8');
+  const problems: string[] = [];
+  let checked = 0;
+
+  for (const target of TARGETS) {
+    const entries = declaredEntries(source, target.binding);
+    const tuples = structTuples(entries);
+    const compiled = compiledSignatures(target.artifact);
+
+    for (const entry of entries) {
+      const parsed = canonical(entry, tuples);
+      if (parsed === null) continue;
+      checked += 1;
+
+      const candidates = compiled.get(parsed.name);
+      if (candidates === undefined) {
+        problems.push(`${target.label}: ${parsed.kind} "${parsed.name}" does not exist on the contract`);
+        continue;
+      }
+      if (!candidates.has(parsed.sig)) {
+        problems.push(
+          `${target.label}: ${parsed.kind} "${parsed.sig}" does not match the contract, which has ` +
+            [...candidates].map((c) => `"${c}"`).join(' or '),
+        );
+      }
+    }
+  }
 
   if (problems.length > 0) {
-    console.error('✗ web/src/abis.ts has drifted from the compiled contracts:\n');
+    console.error(`✗ ${ABI_SOURCE} has drifted from the compiled contracts:\n`);
     for (const problem of problems) console.error(`  ${problem}`);
     console.error('\nA wrong ABI does not throw — it decodes garbage or matches nothing.');
     process.exitCode = 1;
     return;
   }
 
-  const counted = TARGETS.map((t) => {
-    const iface = new Interface(t.abi as InterfaceAbi);
-    let n = 0;
-    iface.forEachFunction(() => ++n);
-    iface.forEachEvent(() => ++n);
-    iface.forEachError(() => ++n);
-    return `${t.label} (${n})`;
-  });
-
-  console.log(`✓ web ABI matches the compiled contracts — ${counted.join(', ')}`);
+  console.log(`✓ ${ABI_SOURCE} matches the compiled contracts — ${checked} declarations checked`);
 }
 
 main();
