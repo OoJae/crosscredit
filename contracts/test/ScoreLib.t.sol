@@ -55,13 +55,27 @@ contract ScoreLibTest is Test {
     /// @dev And real third-party history does clear it — otherwise the model would be unusable.
     function test_mainnet_realHistoryReachesPlatinum() public pure {
         CreditProfile memory p = _empty();
-        p.mainnetRepayments = 4;
+        p.mainnetRepayments = 5;
         p.demonstratedCapacityWei = 5 ether;
         p.oldestActivity = NOW - 12 * MONTH;
 
-        // 480 repayments + 200 capacity (capped) + 120 age (capped) = 800
+        // 600 repayments + 200 capacity (capped) + 120 age (capped) = 920
         uint16 score = ScoreLib.compute(p, NOW);
-        assertEq(score, 800);
+        assertEq(score, 920);
+        assertEq(uint8(ScoreLib.tierFor(p, score)), uint8(Tier.Platinum));
+    }
+
+    /// @dev Platinum must be reachable from third-party repayment history *alone*, with no age and
+    /// no identity credential — otherwise the tier that requires real evidence could never be
+    /// earned by real evidence. An earlier calibration capped the sum at 680 and made it
+    /// permanently unreachable.
+    function test_mainnet_platinumReachableWithoutAgeOrIdentity() public pure {
+        CreditProfile memory p = _empty();
+        p.mainnetRepayments = 5;
+        p.demonstratedCapacityWei = 2 ether;
+
+        uint16 score = ScoreLib.compute(p, NOW);
+        assertGe(score, ScoreLib.THRESHOLD_PLATINUM, "real history alone must be able to earn Platinum");
         assertEq(uint8(ScoreLib.tierFor(p, score)), uint8(Tier.Platinum));
     }
 

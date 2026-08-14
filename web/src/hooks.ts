@@ -17,11 +17,16 @@ const cc3 = {chainId: creditcoinCC3.id} as const;
 export interface Profile {
   totalRepaidWei: bigint;
   totalCollateralWei: bigint;
+  demonstratedCapacityWei: bigint;
   onTime: number;
   late: number;
+  mainnetRepayments: number;
+  liquidations: number;
   loansOpened: number;
   loansClosed: number;
   firstSeen: bigint;
+  oldestActivity: bigint;
+  identityExpiry: bigint;
   score: number;
 }
 
@@ -49,6 +54,36 @@ export function useTier(address: Address | undefined) {
     abi: registryAbi,
     functionName: 'tierOf',
     args: address === undefined ? undefined : [address],
+    query: {enabled: address !== undefined},
+  });
+}
+
+/**
+ * The borrower's demonstrated capacity — what actually gates undercollateralized borrowing.
+ *
+ * A tier is earned from history; this is earned only from repaying **real third-party capital** on
+ * mainnet. A wallet can hold Platinum and still have zero capacity, in which case it gets the
+ * Platinum rate on a fully collateralized loan and no discount at all. See `docs/THREAT_MODEL.md`.
+ */
+export function useDemonstratedCapacity(address: Address | undefined) {
+  return useReadContract({
+    ...cc3,
+    address: ADDRESSES.registry,
+    abi: registryAbi,
+    functionName: 'demonstratedCapacityOf',
+    args: address === undefined ? undefined : [address],
+    query: {enabled: address !== undefined},
+  });
+}
+
+/** How much of a given borrow would actually be undercollateralized, after the capacity cap. */
+export function useUndercollateralizedPortion(address: Address | undefined, amount: bigint) {
+  return useReadContract({
+    ...cc3,
+    address: ADDRESSES.pool,
+    abi: poolAbi,
+    functionName: 'undercollateralizedPortion',
+    args: address === undefined ? undefined : [address, amount],
     query: {enabled: address !== undefined},
   });
 }

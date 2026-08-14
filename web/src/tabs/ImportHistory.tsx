@@ -2,7 +2,7 @@ import {useState} from 'react';
 import type {Address} from 'viem';
 import {formatEther} from 'viem';
 import {usePublicClient, useWriteContract} from 'wagmi';
-import {ADDRESSES, creditcoinCC3} from '../config';
+import {ADDRESSES, SOURCES, creditcoinCC3} from '../config';
 import {registryAbi} from '../abis';
 import {useSourceHistory, useIngestedEvents, useAttestedHeight, useProfile, useTier} from '../hooks';
 import {fetchBatchProof, dryRunBatch, MAX_BATCH_SIZE} from '../prover';
@@ -91,6 +91,55 @@ export default function ImportHistory({address, canWrite}: {address: Address; ca
 
   return (
     <div className="grid gap-5 lg:grid-cols-3">
+      <Card
+        className="lg:col-span-3"
+        title="Credit sources this registry reads"
+        subtitle="Each row is an (chainKey, contract) pair the registry will accept proofs for. Dispatch is driven by the emitter and topic0 of each proven log — never by anything the caller declares."
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="text-[11px] uppercase tracking-wider text-slate-500">
+              <tr className="border-b border-ink-600">
+                <th className="pb-2 pr-4 font-medium">Chain</th>
+                <th className="pb-2 pr-4 font-medium">Protocol</th>
+                <th className="pb-2 pr-4 font-medium">Contract</th>
+                <th className="pb-2 font-medium">Raises borrowing capacity?</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-ink-700/60">
+              {SOURCES.map((src) => (
+                <tr key={`${src.chainKey}-${src.address}`} className="text-slate-300">
+                  <td className="py-2 pr-4">
+                    <span className="rounded bg-ink-900 px-1.5 py-0.5 font-mono text-xs text-slate-400 ring-1 ring-ink-600">
+                      {src.chain}
+                    </span>
+                  </td>
+                  <td className="py-2 pr-4">{src.name}</td>
+                  <td className="py-2 pr-4 font-mono text-xs text-slate-500">
+                    {src.address.slice(0, 10)}…
+                  </td>
+                  <td className="py-2 text-xs">
+                    {src.raisesCapacity ? (
+                      <span className="text-emerald-300/90">Yes — {src.note}</span>
+                    ) : (
+                      <span className="text-slate-500">No — {src.note}</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 max-w-3xl text-xs leading-relaxed text-slate-500">
+          The split in the last column is the whole design. Our own LoanBook is permissionless and
+          escrows nothing, so anyone can manufacture a perfect record on it for the price of gas —
+          it earns a tier, never a credit line. Aave and Sparklend had real third-party capital at
+          risk, so only they can raise the amount you may borrow above what you post. Mainnet
+          imports run one proof per event: real history spans years, and the prover rejects a batch
+          wider than 1,000 blocks.
+        </p>
+      </Card>
+
       <Card
         className="lg:col-span-2"
         title="History on Ethereum Sepolia"

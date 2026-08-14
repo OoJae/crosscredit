@@ -100,7 +100,8 @@ async function main(): Promise<void> {
   );
   if (aaveLog === undefined) throw new Error('no Aave V3 Repay event in that transaction');
   const borrower = ethers.getAddress(`0x${aaveLog.topics[2]!.slice(-40)}`);
-  const [amount] = ethers.AbiCoder.defaultAbiCoder().decode(['uint256', 'bool'], aaveLog.data) as [bigint, boolean];
+  const decoded = ethers.AbiCoder.defaultAbiCoder().decode(['uint256', 'bool'], aaveLog.data);
+  const amount = decoded[0] as bigint;
 
   console.log(`  block       ${receipt.blockNumber}`);
   console.log(`  borrower    ${borrower}`);
@@ -143,7 +144,7 @@ async function main(): Promise<void> {
 
   let gasLimit = 2_000_000n;
   try {
-    const estimated = (await registry['execute']!.estimateGas(...call)) as bigint;
+    const estimated = await registry['execute']!.estimateGas(...call);
     gasLimit = (estimated * 140n) / 100n;
   } catch (error) {
     console.warn(`  ! gas estimation failed, using floor: ${String(error)}`);

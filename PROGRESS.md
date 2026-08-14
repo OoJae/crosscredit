@@ -8,14 +8,15 @@ Session log. Updated at the end of every session: done / next / blockers / addre
 
 | | |
 |---|---|
-| **Phase** | 4 complete → next is **Phase 5 (video, deck, submission)** |
-| **Day** | 1 of 23 (Aug 13, 2026) |
+| **Phase** | 4.5 complete → next is **Phase 5 (video, deck, submission)** |
+| **Day** | 2 of 23 (Aug 14, 2026) |
 | **G0** — real proof round-trip | ✅ **PASSED** — [evidence](docs/evidence/g0-hello-bridge/README.md) |
 | **G1** — seeded history on a public explorer | ✅ **PASSED** — 11 events, verified source |
 | **G2** — make-or-break credit loop | ✅ **PASSED** — score 0 → 710, Bronze → Platinum, live |
 | **G3** — batch · SBT · pool · negative paths | ✅ **PASSED** — 9 proofs in ONE tx, 3.4× cheaper |
 | **G4** — live app, README runnable by a stranger | ✅ **PASSED** — <https://crosscredit.vercel.app> |
-| **Next gate** | **G5** — demo video · deck PDF · every submission field has a URL |
+| **G5** — real mainnet credit + honest threat model | ✅ **PASSED** — a real Aave borrower, 0 → 800/Platinum |
+| **Next gate** | **G6** — demo video · deck PDF · every submission field has a URL |
 | **Repo** | <https://github.com/OoJae/crosscredit> (public, CI green) |
 | **Internal submit target** | **Sep 4, 2026** (deadline disputed — see Open questions) |
 
@@ -27,16 +28,26 @@ Session log. Updated at the end of every session: done / next / blockers / addre
 | LoanBook | Sepolia | [`0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c`](https://sepolia.etherscan.io/address/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c#events) ✅ verified (Sourcify) |
 | Borrower A (clean, targets Platinum) | Sepolia | `0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6` — 9 on-time events |
 | Borrower B (one late repayment) | Sepolia | `0x04163f60FA50519D86AeFB8e450312bAD76CA0B6` — 2 events |
-| CreditRegistry (batch) | CC3 | [`0xB5F3B44113A31B07508464de39d7ddd939184B2c`](https://creditcoin-testnet.blockscout.com/address/0xB5F3B44113A31B07508464de39d7ddd939184B2c) ✅ **current** |
-| CreditTierSBT | CC3 | [`0x96a68DBe0cC9BD13E92B4730eFfE531F63f4B2F6`](https://creditcoin-testnet.blockscout.com/address/0x96a68DBe0cC9BD13E92B4730eFfE531F63f4B2F6) |
-| LendingPool (100k tUSD) | CC3 | [`0xA37a9338b17c20917046E29F23D9d8F796a5FDAb`](https://creditcoin-testnet.blockscout.com/address/0xA37a9338b17c20917046E29F23D9d8F796a5FDAb) |
+| **Borrower D — REAL mainnet** | Ethereum | `0x76f30e3f75437fB862B8D2C4D80a671bCeBA5b1A` — 5 real Aave V3 repayments, **800/Platinum**, capacity ~$960k |
+| Borrower C (batch demo) | Sepolia | `0x8C04C28894BADcE63d1F00f356AbB126983522Cf` — 9 events, 390/Silver |
+| CreditRegistry (multi-source) | CC3 | [`0x581A7413e1fCcB767EC8BA9E837df43fbA06b3D2`](https://creditcoin-testnet.blockscout.com/address/0x581A7413e1fCcB767EC8BA9E837df43fbA06b3D2) ✅ **current** |
+| CreditTierSBT | CC3 | [`0xaaA368ccD534a24e7A98C375789598835A83D2F3`](https://creditcoin-testnet.blockscout.com/address/0xaaA368ccD534a24e7A98C375789598835A83D2F3) ✅ current |
+| LendingPool (100k tUSD) | CC3 | [`0x2FC0D783d7240B5814aBc7A6A464248B5b60D90d`](https://creditcoin-testnet.blockscout.com/address/0x2FC0D783d7240B5814aBc7A6A464248B5b60D90d) ✅ current |
 | TUSD | CC3 | [`0x26FEEdECb79A69EdC7d3Bdb8Cf4dD96E17a3B051`](https://creditcoin-testnet.blockscout.com/address/0x26FEEdECb79A69EdC7d3Bdb8Cf4dD96E17a3B051) |
-| Borrower C (batch demo) | Sepolia | `0x8C04C28894BADcE63d1F00f356AbB126983522Cf` — 9 events, Platinum |
-| ~~CreditRegistry (Phase 2)~~ | CC3 | ~~`0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c`~~ superseded (no batch) |
 | EvmV1Decoder (ours, linked) | CC3 | [`0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa`](https://creditcoin-testnet.blockscout.com/address/0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa) |
-| CreditTierSBT | CC3 | _not deployed (P3)_ |
-| LendingPool | CC3 | _not deployed (P3)_ |
-| TUSD | CC3 | _not deployed (P3)_ |
+| ~~CreditRegistry (Phase 3, single-source)~~ | CC3 | ~~`0xB5F3B44113A31B07508464de39d7ddd939184B2c`~~ superseded |
+| ~~CreditRegistry (Phase 2)~~ | CC3 | ~~`0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c`~~ superseded (no batch) |
+| ~~CreditTierSBT (Phase 3)~~ | CC3 | ~~`0x96a68DBe0cC9BD13E92B4730eFfE531F63f4B2F6`~~ superseded |
+| ~~LendingPool (Phase 3)~~ | CC3 | ~~`0xA37a9338b17c20917046E29F23D9d8F796a5FDAb`~~ superseded (no capacity cap) |
+
+Read from Ethereum mainnet (chainKey 3) — not ours:
+
+| Protocol | Address |
+|---|---|
+| Aave V3 Pool | `0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2` |
+| Sparklend Pool | `0xC13e21B648A5Ee794902342038FF3aDAB66BE987` |
+| ENS Registrar v4 / v3 | `0x59E16fcCd424Cc24e280Be16E11Bcd56fb0CE547` · `0x253553366Da8546fC250F225fe3d25d0C782303b` |
+| Proof of Humanity v2 | `0xa478095886659168E8812154fB0DE39F103E74b2` |
 
 Protocol-side (not ours, verified live Aug 13):
 
@@ -299,3 +310,65 @@ addresses in `.env.example` — a stranger would have hit that immediately.
 **Blockers**
 - None technical. Operator items are now time-sensitive: DoraHacks registration, the deadline
   question, and the Aug 18 AMA (host approval needed).
+
+---
+
+### Session 6 — Aug 14, 2026 (Phase 4.5, Gate G5)
+
+**The session started by breaking our own product.**
+
+A competitive review asked one question of `LoanBook`: *who is the lender?* There isn't one. It is
+permissionless, escrows nothing, and takes a self-declared `uint256` principal. So
+`openLoan(1 wei) → repay(1 wei)` twelve times, from a single wallet, for six wei, reached
+**Platinum and 85% LTV** under the old model — with every Merkle proof, every continuity proof and
+every precompile call perfectly valid. A rigorous pipeline for the high-integrity delivery of
+worthless data. A judge finds that from the public repo in ninety seconds.
+
+**What fixed it: CC3 attests Ethereum mainnet as chainKey 3.** Undocumented, verified empirically
+(including a February 2016 block). You cannot fake an Aave loan.
+
+**Done**
+- `CreditRegistry` generalised from one hard-coded source to an owner-registered
+  `mapping(chainKey => mapping(emitter => SourceKind))` allowlist with per-protocol decoders —
+  LoanBook, Aave V3 / Sparklend, ENS, Proof of Humanity. The chainKey equality check became a
+  pair lookup, which is strictly stronger: a Sepolia address can no longer impersonate its mainnet
+  namesake.
+- `ScoreLib` rewritten around the distinction that matters. Self-reported signals capped so a
+  *perfect, decade-long, ENS-backed* LoanBook record tops out at **Gold**. Added `liquidations`
+  (−250, worse than a late payment) and an **age term**, the one input an attacker cannot compress.
+- `LendingPool.collateralRequired` caps the undercollateralized portion by
+  `demonstratedCapacityWei`. **The tier sets your rate; real repaid capital sets your credit line.**
+- **Live: a real Ethereum wallet went 0 → 800 / Platinum** on five proven Aave V3 repayments, and
+  now borrows 1,000 tUSD against 850 collateral. It has never sent a transaction to Creditcoin.
+- The three self-dealt borrowers, on the same registry, dropped to 390/390/0 with **zero**
+  undercollateralized credit. That drop is the fix, not a regression.
+- `npm run poh:negative` — 5/5 identities proved, **0/5 still registered**. The precompile proves
+  events, not state.
+- `docs/THREAT_MODEL.md` — names the self-dealing hole, the missing enforcement layer,
+  monotone-positive proofs, sellable addresses, capital-rich sybils, wash lending, and retracts our
+  own "no oracle operator" overclaim.
+- 164 tests, including decoders against **real captured mainnet fixtures** and
+  `test_capacityCap_isInvariantUnderIdentitySplitting`.
+- Frontend: demonstrated capacity shown next to the tier, a registered-sources table, mainnet
+  borrower leading the demo list. Redeployed.
+
+**Things that went wrong, and what they taught**
+- **A real reserve-decimals bug, found in live output.** A capacity of `789498556` looked like dust
+  until we realised it was 789 USDT at 6dp being read as 18dp wei. Added `registerReserve`;
+  unregistered reserves now contribute **zero** capacity, failing closed. The live score moved
+  120 → 320. Unit tests with round 18-decimal numbers would never have caught this.
+- **A genuine calibration error, found the same way.** A mainnet-only borrower stalled at 680/Gold
+  and could not reach Platinum: `CAP_MAINNET_REPAYMENTS(480) + CAP_CAPACITY(200) = 680`, twenty
+  short. The top tier was unreachable by exactly the evidence it is supposed to require. Cap raised
+  to 600, and a test now pins it.
+- **Solidity memory struct assignment is a reference, not a copy** — a test was mutating both sides
+  of its own comparison.
+- **Continuity proofs expire.** Stored fixtures are decoder-only; live paths fetch fresh.
+
+**Next**
+- Phase 5: demo video (opens on real mainnet data, batch import as the technical flex), deck, and
+  the DoraHacks submission.
+
+**Blockers**
+- None technical. Operator items are time-critical: DoraHacks registration, the deadline question,
+  and the **Aug 18 AMA** — that is Tuesday, four days out, and host approval is needed.

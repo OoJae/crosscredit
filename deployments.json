@@ -5,7 +5,7 @@
       "chainId": 11155111,
       "attestcoinChainKey": 1,
       "explorer": "https://sepolia.etherscan.io",
-      "role": "Source chain \u2014 where borrowers build the credit history that gets proven to Creditcoin",
+      "role": "Source chain — where borrowers build the credit history that gets proven to Creditcoin",
       "contracts": {
         "LoanBook": {
           "address": "0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c",
@@ -46,7 +46,7 @@
       "chainId": 102031,
       "explorer": "https://creditcoin-testnet.blockscout.com",
       "rpc": "https://rpc.cc3-testnet.creditcoin.network",
-      "role": "Destination chain \u2014 CrossCredit's Attestcoin Smart Contract, scoring, SBT and lending pool",
+      "role": "Destination chain — CrossCredit's Attestcoin Smart Contract, scoring, SBT and lending pool",
       "protocolContracts": {
         "BlockProverPrecompile": "0x0000000000000000000000000000000000000FD2",
         "ChainInfoPrecompile": "0x0000000000000000000000000000000000000fd3",
@@ -54,21 +54,62 @@
       },
       "contracts": {
         "CreditRegistry": {
-          "address": "0xB5F3B44113A31B07508464de39d7ddd939184B2c",
+          "address": "0x581A7413e1fCcB767EC8BA9E837df43fbA06b3D2",
           "deployedAt": "2026-08-14",
-          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0xB5F3B44113A31B07508464de39d7ddd939184B2c",
-          "constructorArgs": {
-            "sourceChainKey": 1,
-            "loanBook": "0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c (Sepolia)"
-          },
+          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0x581A7413e1fCcB767EC8BA9E837df43fbA06b3D2",
           "linkedLibraries": {
             "EvmV1Decoder": "0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa"
           },
           "features": [
-            "single-proof execute",
-            "batch executeBatch (<=10, one shared continuity proof)"
+            "multi-source: owner-registered (chainKey, emitter) -> SourceKind allowlist",
+            "reads Ethereum mainnet (chainKey 3) and Sepolia (chainKey 1)",
+            "decoders for LoanBook, Aave V3 / Sparklend, ENS, Proof of Humanity",
+            "demonstratedCapacityOf(address) — caps undercollateralized borrowing",
+            "reserve decimal normalisation via registerReserve",
+            "single-proof execute + batch executeBatch (<=10, one shared continuity proof)"
           ],
-          "supersedes": "0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c (Phase 2, no batch support)",
+          "registeredSources": [
+            {
+              "chainKey": 1,
+              "emitter": "0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c",
+              "kind": "LoanBook"
+            },
+            {
+              "chainKey": 3,
+              "emitter": "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
+              "kind": "AaveV3"
+            },
+            {
+              "chainKey": 3,
+              "emitter": "0xC13e21B648A5Ee794902342038FF3aDAB66BE987",
+              "kind": "AaveV3"
+            },
+            {
+              "chainKey": 3,
+              "emitter": "0x59E16fcCd424Cc24e280Be16E11Bcd56fb0CE547",
+              "kind": "EnsRegistrar"
+            },
+            {
+              "chainKey": 3,
+              "emitter": "0x253553366Da8546fC250F225fe3d25d0C782303b",
+              "kind": "EnsRegistrar"
+            },
+            {
+              "chainKey": 3,
+              "emitter": "0xa478095886659168E8812154fB0DE39F103E74b2",
+              "kind": "ProofOfHumanity"
+            }
+          ],
+          "registeredReserves": {
+            "note": "Decimals, so a 6dp USDC repayment and an 18dp WETH one are comparable. Unregistered reserves contribute zero capacity — fails closed.",
+            "USDC": 6,
+            "USDT": 6,
+            "PYUSD": 6,
+            "WBTC": 8,
+            "DAI": 18,
+            "WETH": 18
+          },
+          "supersedes": "0xB5F3B44113A31B07508464de39d7ddd939184B2c (single-source, LoanBook only)",
           "verification": {
             "blockscout": "verified"
           }
@@ -77,22 +118,23 @@
           "address": "0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa",
           "deployedAt": "2026-08-13",
           "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa",
-          "note": "Our own build of @gluwa/usc-contracts@0.1.2 (solc 0.8.30). External library \u2014 its public functions force delegatecall linking. Deliberately NOT the pre-existing 0x731c345d... instance, which is a different build (9,598 B, solc 0.8.23) of unverified provenance."
+          "note": "Our own build of @gluwa/usc-contracts@0.1.2 (solc 0.8.30). External library — its public functions force delegatecall linking. Deliberately NOT the pre-existing 0x731c345d... instance, which is a different build (9,598 B, solc 0.8.23) of unverified provenance."
         },
         "CreditTierSBT": {
-          "address": "0x96a68DBe0cC9BD13E92B4730eFfE531F63f4B2F6",
+          "address": "0xaaA368ccD534a24e7A98C375789598835A83D2F3",
           "deployedAt": "2026-08-14",
-          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0x96a68DBe0cC9BD13E92B4730eFfE531F63f4B2F6",
+          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0xaaA368ccD534a24e7A98C375789598835A83D2F3",
           "standard": "ERC-721 + ERC-5192 (soulbound)",
           "note": "On-chain SVG + metadata. sync(borrower) is permissionless: it derives from the registry, which derives from proofs.",
           "verification": {
             "blockscout": "verified"
-          }
+          },
+          "supersedes": "0x96a68DBe0cC9BD13E92B4730eFfE531F63f4B2F6 (bound to the single-source registry)"
         },
         "LendingPool": {
-          "address": "0xA37a9338b17c20917046E29F23D9d8F796a5FDAb",
+          "address": "0x2FC0D783d7240B5814aBc7A6A464248B5b60D90d",
           "deployedAt": "2026-08-14",
-          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0xA37a9338b17c20917046E29F23D9d8F796a5FDAb",
+          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0x2FC0D783d7240B5814aBc7A6A464248B5b60D90d",
           "liquidity": "100000 tUSD",
           "terms": {
             "Bronze": "150% / 14%",
@@ -102,7 +144,9 @@
           },
           "verification": {
             "blockscout": "verified"
-          }
+          },
+          "supersedes": "0xA37a9338b17c20917046E29F23D9d8F796a5FDAb (no capacity cap)",
+          "capacityCap": "collateralRequired() applies the tier discount only up to CreditRegistry.demonstratedCapacityOf(borrower). Beyond it, borrowing is fully collateralized regardless of tier."
         },
         "TUSD": {
           "address": "0x26FEEdECb79A69EdC7d3Bdb8Cf4dD96E17a3B051",
@@ -111,6 +155,39 @@
           "verification": {
             "blockscout": "verified"
           }
+        }
+      }
+    },
+    "ethereum-mainnet": {
+      "chainId": 1,
+      "attestcoinChainKey": 3,
+      "explorer": "https://etherscan.io",
+      "role": "Source chain — real, third-party credit history. CC3 testnet attests Ethereum mainnet as chainKey 3, verified empirically back to a February 2016 block.",
+      "readContracts": {
+        "AaveV3Pool": {
+          "address": "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
+          "sourceKind": "AaveV3",
+          "eventTopics": {
+            "Repay(address,address,address,uint256,bool)": "0xa534c8dbe71f871f9f3530e97a74601fea17b426cae02e1c5aee42c96c784051",
+            "Borrow(address,address,address,uint256,uint8,uint256,uint16)": "0xb3d084820fb1a9decffb176436bd02558d15fac9b0ddfed8c465bc7359d7dce0",
+            "LiquidationCall(address,address,address,uint256,uint256,address,bool)": "0xe413a321e8681d831f4dbccbca790d2952b56f977908e45be37335533e005286"
+          },
+          "note": "Borrower is always read from an indexed topic (user = topic2 on Repay/Borrow, topic3 on LiquidationCall), never from msg.sender or any caller-supplied field."
+        },
+        "SparklendPool": {
+          "address": "0xC13e21B648A5Ee794902342038FF3aDAB66BE987",
+          "sourceKind": "AaveV3",
+          "note": "Aave V3 fork with identical topic0s — a second protocol for no extra decoder."
+        },
+        "ENSRegistrarControllerV4": {
+          "address": "0x59E16fcCd424Cc24e280Be16E11Bcd56fb0CE547",
+          "sourceKind": "EnsRegistrar",
+          "note": "NameRegistered. Expiry enforced at ingest, so a lapsed name cannot be replayed as current."
+        },
+        "ProofOfHumanityV2": {
+          "address": "0xa478095886659168E8812154fB0DE39F103E74b2",
+          "sourceKind": "ProofOfHumanity",
+          "note": "Implemented and honest about being decorative — 55 humanities on mainnet. See docs/evidence/g5-identity-negative/."
         }
       }
     }
@@ -224,6 +301,59 @@
   "liveApp": {
     "url": "https://crosscredit.vercel.app",
     "hosting": "Vercel",
-    "note": "Read-only by default \u2014 no wallet or testnet funds needed to view any borrower."
+    "note": "Read-only by default — no wallet or testnet funds needed to view any borrower."
+  },
+  "gateG5": {
+    "status": "PASSED",
+    "date": "2026-08-14",
+    "description": "A real Ethereum mainnet wallet, with no prior relationship to Creditcoin, reached Platinum and a live undercollateralized quote purely from its genuine Aave V3 repayment history.",
+    "borrower": "0x76f30e3f75437fB862B8D2C4D80a671bCeBA5b1A",
+    "sourceChainKey": 3,
+    "sourceProtocol": "Aave V3, Ethereum mainnet",
+    "proofsSubmitted": 5,
+    "scoreProgression": [
+      0,
+      320,
+      440,
+      560,
+      680,
+      800
+    ],
+    "tierAfter": "Platinum",
+    "demonstratedCapacityWei": "960145200000000000000000",
+    "liveQuote": {
+      "borrow": "1000 tUSD",
+      "collateralRequired": "850 tUSD",
+      "undercollateralizedPortion": "1000 tUSD",
+      "note": "Capacity far exceeds the borrow, so the whole amount qualifies."
+    },
+    "controlGroup": {
+      "note": "The three self-dealt Sepolia borrowers, on the same registry, have zero demonstrated capacity and therefore an undercollateralized portion of exactly zero — whatever their tier.",
+      "0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6": {
+        "score": 390,
+        "tier": "Silver",
+        "capacity": "0",
+        "collateralFor1000": "1300"
+      },
+      "0x8C04C28894BADcE63d1F00f356AbB126983522Cf": {
+        "score": 390,
+        "tier": "Silver",
+        "capacity": "0",
+        "collateralFor1000": "1300"
+      },
+      "0x04163f60FA50519D86AeFB8e450312bAD76CA0B6": {
+        "score": 0,
+        "tier": "Bronze",
+        "capacity": "0",
+        "collateralFor1000": "1500"
+      }
+    },
+    "identityNegativeFinding": {
+      "claim": "The precompile proves that an EVENT OCCURRED, not that a STATE HOLDS.",
+      "measurement": "5/5 real 2021 Proof of Humanity registrations proved to Creditcoin successfully; 0/5 of those humans are registered today.",
+      "consequence": "Credit capacity is anchored to demonstrated repayment of third-party capital — a completed fact — rather than to identity, which the precompile can only prove as a stale one.",
+      "evidence": "docs/evidence/g5-identity-negative/results.json"
+    },
+    "evidence": "docs/evidence/g5-mainnet-credit/results.json"
   }
 }

@@ -38,7 +38,7 @@ export default function App() {
           <div>
             <h1 className="text-lg font-bold tracking-tight text-slate-100">CrossCredit</h1>
             <p className="text-xs text-slate-500">
-              Portable credit reputation, verified across chains on Creditcoin
+              Your real Ethereum credit history, proven to Creditcoin and priced as a loan
             </p>
           </div>
 
@@ -178,6 +178,14 @@ export default function App() {
             </ExplorerLink>
           </span>
           <a
+            href="https://github.com/OoJae/crosscredit/blob/main/docs/THREAT_MODEL.md"
+            target="_blank"
+            rel="noreferrer"
+            className="text-sky-400/70 hover:text-sky-400"
+          >
+            What this does not solve
+          </a>
+          <a
             href="https://github.com/OoJae/crosscredit"
             target="_blank"
             rel="noreferrer"
@@ -187,10 +195,12 @@ export default function App() {
           </a>
         </div>
         <p className="mt-3 max-w-3xl leading-relaxed">
-          Testnet only. Credit history is proven from Ethereum Sepolia to Creditcoin CC3 by the
-          Attestcoin Protocol&rsquo;s native block-prover precompile — a Merkle inclusion proof plus
-          a chain-continuity proof, verified inside a single Creditcoin block. No oracle operator,
-          no bridge multisig.
+          Testnet deployment, real mainnet data. History is proven from Ethereum mainnet and Sepolia
+          to Creditcoin CC3 by the Attestcoin Protocol&rsquo;s native block-prover precompile — a
+          Merkle inclusion proof plus a chain-continuity proof, verified inside a single Creditcoin
+          block. There is no oracle we run, no multisig we control and no bridge holding funds;
+          Creditcoin&rsquo;s attestor set is in the trust path, which is to say this needs no trust
+          beyond the chain you are already settling on.
         </p>
       </footer>
     </div>

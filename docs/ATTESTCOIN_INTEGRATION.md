@@ -5,9 +5,15 @@
 > grows with every integration step; each entry is written while the work is fresh.
 
 CrossCredit's premise is that the Attestcoin Protocol is **load-bearing, not decorative**. Remove
-it and there is no product: the entire credit score derives from Ethereum Sepolia transactions
-that a Creditcoin contract verified for itself, with no oracle operator and no bridge multisig in
-the trust path.
+it and there is no product: the entire credit score derives from Ethereum transactions that a
+Creditcoin contract verified for itself.
+
+The depth is not that we call the precompile — anyone's tutorial does that. It is that we discovered
+**CC3 attests Ethereum mainnet as chainKey 3**, verified it empirically back to a February 2016
+block, and used it to underwrite loans against real Aave V3 borrowing history that no oracle,
+indexer or API touches. A wallet that has never sent a transaction to Creditcoin
+[goes from 0 to Platinum](evidence/g5-mainnet-credit/results.json) on five proven mainnet
+repayments.
 
 ---
 
@@ -94,13 +100,18 @@ sequence before a single point of credit score moves:
 | # | Check | Attack it stops |
 |---|---|---|
 | 1 | Replay guard on the derived query id | Resubmitting one genuine repayment to farm score |
-| 2 | `chainKey == SOURCE_CHAIN_KEY` | A look-alike contract on Ethereum Mainnet (chainKey 3, also attested by CC3) forging history |
+| 2 | `sources[chainKey][log.address_] != None` | A look-alike contract forging history. Because the allowlist is keyed on the **pair**, a Sepolia address cannot impersonate its mainnet namesake even when both chains are attested |
 | 3 | `receipt.receiptStatus == 1` | A **reverted** loan repayment counting as a successful one — the precompile does not check this |
-| 4 | Emitting contract `== LOANBOOK` | Any other contract emitting an identically-shaped event |
-| 5 | `topic0 ∈ {LoanOpened, RepaymentMade, CollateralAdded}` | Unrelated events from our own contract being misread |
+| 4 | Dispatch on the log's own emitter → `SourceKind` | Any other contract emitting an identically-shaped event. Aave's `Repay` and our `RepaymentMade` are decoded by different code paths chosen by *the proven log*, never by the caller |
+| 5 | `topic0` must match that source kind's known signatures | Unrelated events from a registered contract being misread |
 
 Checks 2 and 3 are the ones that require actually understanding the protocol, and both are
 demonstrated on camera as rejected transactions.
+
+**Check 2 got strictly stronger when we went multi-source.** It began as `chainKey == 1`, a single
+equality. It is now a lookup in `mapping(uint64 chainKey => mapping(address emitter => SourceKind))`
+that must return a non-`None` kind, and that kind decides which decoder runs. Widening the set of
+readable chains narrowed what any individual proof is allowed to mean.
 
 **All five are implemented and live** in
 [`CreditRegistry.sol`](../contracts/src/creditcoin/CreditRegistry.sol), each with a test that
@@ -114,11 +125,75 @@ not an event. Gluwa's examples route on the caller-supplied `action` and ingest 
 matching log — which means a transaction emitting two credit events could only ever be submitted
 once, and the second event would be lost forever behind the replay guard.
 
-CrossCredit instead ingests **every** recognised `LoanBook` log in the proven transaction,
-dispatching each on its own `topic0`. One query id then corresponds exactly to "all credit events
+CrossCredit instead ingests **every** recognised log in the proven transaction, dispatching each on
+its own emitter and `topic0`. This matters far more on mainnet than on our own contract: a real
+Aave repayment sits in a transaction with a dozen logs from unrelated protocols, and the router has
+to pick out exactly the ones it is entitled to read. One query id then corresponds exactly to "all credit events
 in that transaction": complete, and still perfectly replay-protected. `action` is validated as a
 known enum and otherwise unused, because it arrives from the caller and is **not covered by the
 proof** — routing on it would mean trusting unattested data.
+
+### Reading Ethereum mainnet — the finding this project turns on
+
+`ChainInfo` reports that **CC3 testnet attests Ethereum mainnet as chainKey 3**, alongside Sepolia
+as chainKey 1. This is not in any documentation or example we could find, and it is the single most
+consequential thing we learned about the protocol. Everything downstream follows from it:
+
+| What we established, empirically | How |
+|---|---|
+| Mainnet proofs verify on CC3 today | `verify(chainKey=3, …)` returns `true` for a real Aave V3 `Repay` |
+| History goes back at least to **February 2016** | Proved a 2016-era block successfully |
+| Attestation lag is ~8.8 min, same as Sepolia | Measured against `attested-height` |
+| A mainnet proof cannot be replayed as Sepolia | Same proof, `chainKey=1` → `Continuity proof does not match attestation or checkpoint` |
+| Tampering is caught | Mutated `txBytes` → `Merkle proof validation failed` |
+| **Batching does not carry over to mainnet** | Real history spans years; a >1000-block span → `BatchSpanTooLarge`. Mainnet is one `execute` per event; Sepolia keeps the batch path |
+
+`chainKey` is **not** an EVM chain id — Ethereum mainnet is chainKey 3, not 1. Conflating them is
+the easiest way to write a check that silently never fires, which is why check 2 above keys on the
+`(chainKey, emitter)` pair rather than either alone.
+
+### Three protocol behaviours worth writing down
+
+**`verify` reverts; it never returns `false`.** The signature says `returns (bool)`, which invites
+`require(prover.verify(...))`. In practice a bad proof reverts with a typed reason and the boolean
+is always `true` when you receive it. Code written against the return value looks correct and is
+untested.
+
+**Continuity proofs expire.** A proof anchors to attestation state at generation time and stops
+verifying once attestation advances past its anchor — even though the underlying transaction is
+untouched. We found this the hard way: a negative-path script failed its own *baseline* using a
+proof captured hours earlier. Operationally, fetch proofs fresh and submit promptly; stored
+fixtures are only good for decoder tests. Documented nowhere we could find.
+
+**`getBatchProof` returns a nested `Map` in ascending block-height order, not input order.** Zipping
+its results against your input array silently mis-attributes proofs. We key on `entry.txHash` and
+assert nothing was dropped.
+
+### The identity experiment, and its negative result
+
+We implemented personhood — the registry ingests Proof of Humanity events from mainnet — and then
+measured whether it means anything. `npm run poh:negative` proves five real 2021 registrations to
+Creditcoin and asks mainnet whether those people are registered today:
+
+```
+5/5 registrations proved to Creditcoin successfully.
+0/5 of those humans are still registered today.
+```
+
+The precompile **proves that an event occurred, not that a state holds.** For a repayment those
+coincide; for an identity they do not, and no proof of the original registration can tell you
+whether it has since expired. This is a property of the primitive, not a defect in it — and it is
+precisely why CrossCredit anchors credit to demonstrated repayment of third-party capital, which
+is a completed fact. Full reasoning in [`THREAT_MODEL.md`](THREAT_MODEL.md#why-not-proof-of-personhood).
+
+### A correction to our own earlier claim
+
+Earlier versions of this document said "no oracle operator" in the trust path. That was an
+overclaim, and we are retracting it rather than leaving it for a judge to catch. The Attestcoin
+Protocol has a **decentralized attestor network** reaching consensus on source-chain histories, and
+the precompile verifies against their attestations. The accurate claim is narrower and still
+strong: **no additional trust beyond the chain you are already settling on** — no oracle we run, no
+multisig we control, no bridge holding funds.
 
 ---
 
@@ -249,7 +324,17 @@ a naive full-range query fails outright.
 npm install
 cp .env.example .env          # fill in SEPOLIA_RPC_URL and a test-only DEPLOYER_PRIVATE_KEY
 npm run check:chains          # re-derives docs/evidence/supported-chains.json from live CC3
-forge test -vvv               # contract suite
+forge test -vvv               # 164 tests, including decoders run against real captured
+                              # mainnet Aave/ENS fixtures
+```
+
+Against the live network, all free:
+
+```bash
+npm run negative-paths                      # 5 attacks rejected by the real precompile
+npm run poh:negative                        # the identity finding, end to end
+npm run prove:mainnet -- --find-aave        # find an attested mainnet Aave repayment
+npm run prove:mainnet -- 0x<mainnetTxHash>  # turn it into credit history on CC3
 ```
 
 Deployed addresses land in `deployments.json` and in the README as each phase ships.

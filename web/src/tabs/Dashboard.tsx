@@ -10,8 +10,28 @@ import {
   useBadgeMetadata,
   useIngestedEvents,
   useScoreHistory,
+  useDemonstratedCapacity,
 } from '../hooks';
 import {Card, ScoreDial, Stat, TierPill, ExplorerLink, Button, Spinner, Banner, readableError} from '../components/ui';
+
+/** Renders a proven-history span in whole months — the one input an attacker cannot compress. */
+function formatSpan(oldestActivity: bigint): string {
+  if (oldestActivity === 0n) return '—';
+  const months = Math.floor((Date.now() / 1000 - Number(oldestActivity)) / (30 * 86_400));
+  if (months < 1) return '< 1 month';
+  if (months < 24) return `${months} months`;
+  return `${Math.floor(months / 12)} years`;
+}
+
+/**
+ * Capacity is stored 18-decimal normalised, so `formatEther` gives the face value. Rendered with a
+ * dollar sign because Aave borrowing is stablecoin-dominated — an approximation we state plainly
+ * in `docs/THREAT_MODEL.md` rather than hide behind a price feed we do not have.
+ */
+function formatUsd(wei: bigint): string {
+  const whole = Number(formatEther(wei));
+  return `$${whole.toLocaleString('en-US', {maximumFractionDigits: 0})}`;
+}
 
 export default function Dashboard({address, canWrite}: {address: Address; canWrite: boolean}) {
   const {data: profile, isLoading} = useProfile(address);
@@ -20,12 +40,17 @@ export default function Dashboard({address, canWrite}: {address: Address; canWri
   const {metadata} = useBadgeMetadata(tokenId);
   const {data: ingested} = useIngestedEvents(address);
   const {data: history} = useScoreHistory(address);
+  const {data: capacity} = useDemonstratedCapacity(address);
   const {writeContract, isPending, error} = useWriteContract();
 
   const score = Number(profile?.score ?? 0);
   const tierIndex = Number(tier ?? 0);
   const hasBadge = tokenId !== undefined && tokenId !== 0n;
-  const hasHistory = (profile?.loansOpened ?? 0) > 0 || (profile?.onTime ?? 0) > 0;
+  const hasHistory =
+    (profile?.loansOpened ?? 0) > 0 ||
+    (profile?.onTime ?? 0) > 0 ||
+    (profile?.mainnetRepayments ?? 0) > 0;
+  const hasCapacity = (capacity ?? 0n) > 0n;
 
   if (isLoading) return <Card><Spinner label="Reading the registry on Creditcoin…" /></Card>;
 
@@ -37,23 +62,63 @@ export default function Dashboard({address, canWrite}: {address: Address; canWri
           <div className="flex-1 space-y-3">
             <div className="flex items-center gap-3">
               <TierPill tier={tierIndex} />
-              {profile?.late === 0 && score >= 700 && (
-                <span className="text-xs text-slate-500">spotless record — unlocks undercollateralized borrowing</span>
-              )}
               {(profile?.late ?? 0) > 0 && (
                 <span className="text-xs text-rose-300/80">
                   {profile!.late} late repayment{profile!.late === 1 ? '' : 's'} — Platinum requires none
                 </span>
               )}
+              {(profile?.liquidations ?? 0) > 0 && (
+                <span className="text-xs text-rose-300/80">
+                  {profile!.liquidations} mainnet liquidation{profile!.liquidations === 1 ? '' : 's'}
+                </span>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              <Stat label="On time" value={profile?.onTime ?? 0} />
-              <Stat label="Late" value={profile?.late ?? 0} />
+              <Stat label="Mainnet repayments" value={profile?.mainnetRepayments ?? 0} />
+              <Stat label="Liquidations" value={profile?.liquidations ?? 0} />
+              <Stat label="On time (Sepolia)" value={`${profile?.onTime ?? 0} / ${(profile?.onTime ?? 0) + (profile?.late ?? 0)}`} />
               <Stat label="Loans closed" value={`${profile?.loansClosed ?? 0} / ${profile?.loansOpened ?? 0}`} />
-              <Stat label="Repaid" value={`${formatEther(profile?.totalRepaidWei ?? 0n)} ETH`} />
-              <Stat label="Collateral" value={`${formatEther(profile?.totalCollateralWei ?? 0n)} ETH`} />
+              <Stat label="History spans" value={formatSpan(profile?.oldestActivity ?? 0n)} />
               <Stat label="Events verified" value={ingested?.length ?? 0} />
+            </div>
+
+            {/*
+              The number that actually gates undercollateralized credit. Shown next to the tier
+              rather than buried, because a Platinum tier with zero capacity gets no discount and
+              the UI should not imply otherwise.
+            */}
+            <div
+              className={`rounded-xl px-4 py-3 ring-1 ${
+                hasCapacity ? 'bg-emerald-500/5 ring-emerald-500/30' : 'bg-ink-900 ring-ink-600'
+              }`}
+            >
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-[11px] uppercase tracking-wider text-slate-500">
+                  Demonstrated capacity
+                </span>
+                <span
+                  className={`font-mono text-lg ${hasCapacity ? 'text-emerald-300' : 'text-slate-500'}`}
+                >
+                  {hasCapacity ? formatUsd(capacity!) : '$0'}
+                </span>
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                {hasCapacity ? (
+                  <>
+                    The largest single amount this address has provably repaid to a real
+                    third-party protocol on Ethereum mainnet. This — not the tier — is the ceiling
+                    on how much it can borrow <em>above</em> what it posts as collateral.
+                  </>
+                ) : (
+                  <>
+                    No third-party capital has been repaid by this address, so it earns{' '}
+                    <strong className="text-slate-400">no undercollateralized credit</strong>{' '}
+                    whatever its tier. Self-reported history sets a rate; only real history sets a
+                    limit.
+                  </>
+                )}
+              </p>
             </div>
           </div>
         </div>
@@ -135,7 +200,7 @@ export default function Dashboard({address, canWrite}: {address: Address; canWri
         {ingested === undefined || ingested.length === 0 ? (
           <p className="text-sm text-slate-500">
             Nothing verified yet. Head to <span className="text-slate-300">Import history</span> to
-            prove this address&rsquo;s Sepolia record.
+            prove this address&rsquo;s record on Sepolia or Ethereum mainnet.
           </p>
         ) : (
           <div className="overflow-x-auto">

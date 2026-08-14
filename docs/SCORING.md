@@ -1,42 +1,85 @@
 # The CrossCredit scoring model
 
 Implementation: [`contracts/src/creditcoin/ScoreLib.sol`](../contracts/src/creditcoin/ScoreLib.sol) ·
-Tests: [`contracts/test/ScoreLib.t.sol`](../contracts/test/ScoreLib.t.sol)
+Tests: [`contracts/test/ScoreLib.t.sol`](../contracts/test/ScoreLib.t.sol) ·
+Limits: [`THREAT_MODEL.md`](THREAT_MODEL.md)
 
-A credit score is only as trustworthy as the data underneath it. CrossCredit's differentiator is
-that **every input has been cryptographically verified** — each number below traces back to a
-Sepolia transaction that Creditcoin's block-prover precompile confirmed for itself. So the model
+A credit score is only as trustworthy as the data underneath it. Every input below traces back to
+an Ethereum transaction that Creditcoin's block-prover precompile verified for itself, so the model
 on top can afford to be simple, transparent and fully on-chain rather than a black box.
 
 Three properties are deliberate:
 
 - **Deterministic.** No oracle, no off-chain model, no owner-tunable weights. Identical history
-  always produces an identical score, and anyone can recompute it from public data.
-- **Auditable in under a minute.** Five constants, one subtraction, one floor.
-- **Predictable for the borrower.** You can work out in advance what repaying on time will do to
-  your terms — the opposite of an opaque bureau score.
+  always produces an identical score, and anyone can recompute it from public data. Every
+  comparable system — Spectral, Cred, Nomis, RociFi — computes off-chain and delivers a number by
+  API. This one computes inside the EVM of the chain that verified the evidence.
+- **Auditable in under a minute.** Eight constants, one subtraction, one floor.
+- **Predictable for the borrower.** You can work out in advance what repaying will do to your terms.
+
+## The one distinction the model is built around
+
+**Who was the lender?**
+
+CrossCredit reads two kinds of source and refuses to treat them as equivalent evidence:
+
+| | Our `LoanBook` (Sepolia) | Aave V3 / Sparklend (Ethereum mainnet) |
+|---|---|---|
+| Counterparty | **None.** Permissionless, escrows nothing, self-declared `uint256` principal | A real pool with real capital at risk |
+| Cost to fabricate a perfect record | Gas | The loan |
+| Has due dates | Yes → `onTime` / `late` | No — Aave has no due dates |
+| Real negative signal | `late` | `LiquidationCall` |
+| Can raise borrowing capacity | **No** | **Yes** |
+
+An earlier version of this project read only the first column. `openLoan(1 wei) → repay(1 wei)`
+six times reached Platinum and unlocked 85% LTV, for six wei, from one wallet — with every proof
+cryptographically valid. The model below exists to make that impossible.
 
 ## The model
 
 Range **0–1000**.
 
-| Component | Points | Cap | Why |
-|---|---|---|---|
-| On-time repayment | **+100** each | 600 | The dominant signal. Repaying on time, repeatedly, *is* creditworthiness |
-| Loan fully repaid | **+40** each | 120 | Rewards finishing, not just servicing — a borrower who closes loans is a better risk than one who pays indefinitely |
-| Volume repaid | **+1** per 0.0001 ETH | 200 | Size matters, but capped so a single large repayment cannot buy a tier that conduct should earn |
-| Collateral posted | **+1** per 0.0001 ETH | 80 | Skin in the game — but it is capital, not behaviour, so it is weighted well below repayment history |
-| **Late repayment** | **−150** each | — | Deliberately larger than the on-time reward |
+### Self-reported signals — capped below the top on purpose
+
+| Component | Points | Cap |
+|---|---|---|
+| On-time repayment (`LoanBook`) | **+60** each | 360 |
+| Loan fully repaid | **+30** each | 90 |
+| **Late repayment** | **−150** each | — |
+
+### Mainnet signals — where the weight sits
+
+| Component | Points | Cap |
+|---|---|---|
+| Repayment to a real third-party protocol | **+120** each | 600 |
+| Demonstrated capacity | **+1** per 0.01 ETH-equivalent repaid | 200 |
+| **Liquidation** | **−250** each | — |
+
+### Time and identity
+
+| Component | Points | Cap |
+|---|---|---|
+| Age of proven history | **+10** per 30 days | 120 |
+| Live ENS name or PoH humanity | **+60** | 60 |
 
 Positive components are capped individually, summed, then penalties are subtracted with a
 **saturating floor at zero** (never underflows, never wraps).
 
-### Why one default costs more than one success earns
+## Three load-bearing properties
 
-If a late repayment cost the same as an on-time one gained, a borrower could farm a high score by
-borrowing recklessly and repaying often — volume would drown out reliability. At −150 against
-+100, a single default wipes out the credit earned by the repayment that caused it *and* some of
-the record before it. This is exactly what Borrower B's real profile shows below.
+**1. A perfect self-dealt record cannot reach Platinum.** Ceiling for a `LoanBook`-only borrower:
+360 + 90 + 120 (a decade of age) + 60 (ENS) = **630**, against a Platinum threshold of 700. Our
+own seeded Borrower A dropped from 710/Platinum to **390/Silver** when this landed, and that drop
+is the fix, not a regression. `test_selfDealtHistoryCannotReachPlatinum` fails if any cap is
+loosened enough to undo it.
+
+**2. Time cannot be compressed.** Six repayments in six blocks and six over six months scored
+identically before the age term existed. Wall-clock age is the single input a scripted attacker
+cannot fabricate.
+
+**3. A liquidation costs more than a late payment.** −250 against −150: being liquidated means a
+third party lost patience and seized collateral, which is materially worse than paying our toy
+contract late.
 
 ## Tiers
 
@@ -45,61 +88,86 @@ the record before it. This is exactly what Borrower B's real profile shows below
 | Bronze | < 250 | 150% | 14% |
 | Silver | ≥ 250 | 130% | 11% |
 | Gold | ≥ 500 | 110% | 8% |
-| **Platinum** | ≥ 700 **and `late == 0`** | **85% — undercollateralized** | 6% |
+| **Platinum** | ≥ 700 **and `late == 0` and `liquidations == 0`** | **85%** | 6% |
 
-Platinum carries an extra rule because it is the one tier that lends more than the borrower posts.
-A borrower can accumulate enough points to clear 700 despite a historical default; that earns
-Gold, not uncollateralized credit. *(Collateral ratios and rates are enforced by `LendingPool` in
-Phase 3; the tiers themselves are live now.)*
+Platinum carries the extra rule because it is the one tier that lends more than the borrower posts.
+A borrower can clear 700 points despite a historical default; that earns Gold.
+
+## The tier is not the credit line
+
+This is the part that matters most, and it lives in
+[`LendingPool.collateralRequired`](../contracts/src/creditcoin/LendingPool.sol):
+
+> The tier sets your **rate**. `demonstratedCapacityWei` — the largest single amount you have
+> provably repaid to a real third-party protocol — sets the **ceiling on how much you may borrow
+> above what you post**. Everything beyond it is fully collateralized.
+
+A wallet holding Platinum with zero demonstrated capacity gets the Platinum *rate* on a fully
+collateralized loan and **no discount at all**. Live, right now, that is exactly what the three
+Sepolia demo borrowers show: Silver tiers, zero capacity, zero undercollateralized portion.
+
+It also gives sybil resistance an arithmetic rather than an identity answer. Capacity is the
+*largest single* repayment, not the sum, so splitting a history across a thousand wallets divides
+capacity instead of multiplying it — the conservation result formalised in
+[arXiv:2605.03307](https://arxiv.org/pdf/2605.03307), asserted by
+`test_capacityCap_isInvariantUnderIdentitySplitting`. We tried the identity route first and
+measured it failing; see [`THREAT_MODEL.md`](THREAT_MODEL.md#why-not-proof-of-personhood).
 
 ## Calibration against real history
 
-The original spec scored volume per 0.01 ETH. Against the 0.001–0.002 ETH loans a faucet-funded
-testnet demo can afford, that rounds to **zero** — the volume term would have been decorative.
-Rescaling to per-0.0001 ETH keeps the component meaningful at demo scale while preserving its
-shape.
+Constants are calibrated against **live on-chain profiles**, not hypotheticals.
 
-Constants were then calibrated against the **actual seeded history** on Sepolia
-([`evidence/seeded-history.json`](evidence/seeded-history.json)), not against hypotheticals:
+### A real Ethereum wallet — `0x76f30e…5b1A`
 
-### Borrower A — `0x8ce707…89c6`, a clean record
-
-3 loans opened and closed · 5 on-time repayments · 0 late · 0.006 ETH repaid · 0.003 ETH collateral
+This address has never interacted with Creditcoin. Its entire profile was built by proving five of
+its genuine Aave V3 repayments from Ethereum mainnet, one `execute` each:
 
 ```
-on-time     min(5 × 100, 600) = 500
-closed      min(3 ×  40, 120) = 120
-volume      min(0.006e18 / 1e14, 200) =  60
-collateral  min(0.003e18 / 1e14,  80) =  30
-penalty     0 × 150            =   0
-                                 ─────
-                                   710   →  Platinum (≥700, late == 0)
+score  0 → 320 → 440 → 560 → 680 → 800     tier Bronze → Silver → Gold → Platinum
+
+mainnet repayments  min(5 × 120, 600) = 600
+capacity            min(960145e18 / 1e16, 200) = 200
+                                        ─────
+                                          800   →  Platinum, and a real credit line
+```
+
+Its quote from the live pool: **850 collateral to borrow 1000**, with the full 1000 counted as
+undercollateralized because capacity (~$960k) far exceeds it.
+
+### Borrower A — `0x8ce707…89c6`, self-dealt but spotless
+
+3 loans closed · 5 on-time · 0 late · imported by 11 separate proofs
+
+```
+on-time     min(5 × 60, 360) = 300
+closed      min(3 × 30,  90) =  90
+capacity                        0     ← no third party was ever involved
+                              ─────
+                                390   →  Silver, and zero undercollateralized credit
 ```
 
 ### Borrower B — `0x04163f…A0B6`, one default
 
-1 loan opened and closed · 0 on-time · **1 late** · 0.002 ETH repaid · no collateral
-
 ```
-closed 40 + volume 20 = 60
-penalty                 150
-                        ────
-                     −90 → floors at 0   →  Bronze
+closed 30 − penalty 150 = −120 → floors at 0   →  Bronze
 ```
 
-**Both figures are asserted on-chain and in the test suite.** `test_calibration_borrowerAReachesPlatinum`
-requires exactly 710; the live CC3 registry returns exactly 710. Retuning any constant fails that
-test, so the demo narrative cannot silently drift out from under the model.
+### A calibration error this caught
 
-## Deliberately not scored (yet)
+The mainnet repayment cap was originally 480. With the capacity cap at 200 that puts a
+mainnet-only borrower's ceiling at **680** — permanently twenty points short of Platinum, making
+the top tier unreachable by exactly the evidence it is supposed to require. Found by watching a
+real borrower stall at 680/Gold on the live registry, not in a test. The cap is now 600 and
+`test_mainnet_platinumReachableWithoutAgeOrIdentity` pins it.
 
-- **Longevity.** The profile records `firstSeen`, and mature credit systems reward account age —
-  but a history seeded inside a hackathon window cannot demonstrate it honestly, so it contributes
-  nothing rather than contributing a rigged constant.
-- **Utilisation, delinquency depth, recency weighting.** Real underwriting weights a default from
-  last month differently from one three years ago. That belongs in a system with real history
-  behind it; claiming it here would be theatre.
+## Deliberately not scored
 
-The interesting claim CrossCredit makes is not that this model is sophisticated. It is that the
-**inputs are trustless** — and a simple model over verified data is far more defensible than a
-sophisticated one over data you were asked to take on faith.
+- **Price.** Aave denominates repayments in each reserve's own units. `registerReserve` records
+  decimals so USDC (6dp) and WETH (18dp) are comparable — a real bug caught on the first live run,
+  where a genuine 789 USDT repayment was rounding to zero capacity. But no *price* conversion
+  happens: one USDC and one WETH count alike. A price feed for a foreign chain's assets is
+  precisely the oracle dependency this project exists to avoid.
+- **Duration of exposure.** Capacity should scale with the integral of debt held over time, which
+  would close wash lending (borrow and instantly repay) properly. Capping on the largest single
+  repayment blunts it; it does not close it. This is the first thing we would build next.
+- **Recency decay.** Belongs in a system with years of history, not a hackathon window.

@@ -12,14 +12,16 @@ import {parseAbi} from 'viem';
 
 export const registryAbi = parseAbi([
   // The credit profile, returned as a named struct rather than the flat tuple `profiles()` gives.
-  'struct CreditProfile { uint256 totalRepaidWei; uint256 totalCollateralWei; uint32 onTime; uint32 late; uint32 loansOpened; uint32 loansClosed; uint64 firstSeen; uint16 score; }',
+  'struct CreditProfile { uint256 totalRepaidWei; uint256 totalCollateralWei; uint256 demonstratedCapacityWei; uint32 onTime; uint32 late; uint32 mainnetRepayments; uint32 liquidations; uint32 loansOpened; uint32 loansClosed; uint64 firstSeen; uint64 oldestActivity; uint64 identityExpiry; uint16 score; }',
   'function profileOf(address borrower) view returns (CreditProfile)',
   'function scoreOf(address borrower) view returns (uint16)',
   'function tierOf(address borrower) view returns (uint8)',
   'function processedQueries(bytes32 queryId) view returns (bool)',
   'function MAX_BATCH_SIZE() view returns (uint256)',
-  'function SOURCE_CHAIN_KEY() view returns (uint64)',
-  'function LOANBOOK() view returns (address)',
+  // The cap on undercollateralized borrowing: the largest single amount this address has provably
+  // repaid to a real third-party protocol on mainnet. Zero for a purely self-reported history.
+  'function demonstratedCapacityOf(address borrower) view returns (uint256)',
+  'function sources(uint64 chainKey, address emitter) view returns (uint8)',
   'function paused() view returns (bool)',
 
   // Batch verification — the whole-history import.
@@ -33,7 +35,7 @@ export const registryAbi = parseAbi([
   'event LoanClosed(address indexed borrower, uint256 indexed loanId)',
 
   // Typed errors, so a failed simulation surfaces a real reason rather than a hex blob.
-  'error WrongSourceChain(uint64 expected, uint64 received)',
+  'error UnregisteredSource(uint64 chainKey, address emitter)',
   'error SourceTransactionFailed(uint8 receiptStatus)',
   'error UnsupportedTransactionType(uint8 txType)',
   'error NoRecognisedEvents()',
@@ -59,6 +61,7 @@ export const poolAbi = parseAbi([
   'function quote(address borrower) view returns (uint8 tier, Terms terms)',
   'function termsFor(uint8 tier) view returns (uint16 collateralRatioBps, uint16 aprBps, uint256 maxBorrow)',
   'function collateralRequired(address borrower, uint256 amount) view returns (uint256)',
+  'function undercollateralizedPortion(address borrower, uint256 amount) view returns (uint256)',
   'function loans(address borrower) view returns (uint256 principal, uint256 collateral, uint64 openedAt, uint8 tierAtOrigination, bool active)',
   'function totalOwed(address borrower) view returns (uint256)',
   'function interestDue(address borrower) view returns (uint256)',

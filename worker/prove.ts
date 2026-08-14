@@ -22,8 +22,15 @@ export interface ExecuteArgs {
   continuityRoots: string[];
 }
 
-/** Declared intent accompanying a proof. Unattested, so the registry validates but never trusts it. */
-export const ACTION_REPAYMENT_MADE = 1;
+/**
+ * Declared intent accompanying a proof.
+ *
+ * @remarks
+ * The registry ignores this for routing — dispatch is driven by each log's own emitter and topic0,
+ * because `action` comes from the caller and is not covered by the proof. Only `Generic` (0) is a
+ * valid enum member, so anything else reverts with `UnknownAction`.
+ */
+export const ACTION_GENERIC = 0;
 
 /**
  * Blocks until a source block has been attested on Creditcoin.
@@ -100,7 +107,7 @@ export async function submitProof(
   args: ExecuteArgs,
 ): Promise<ethers.ContractTransactionReceipt> {
   const call = [
-    ACTION_REPAYMENT_MADE,
+    ACTION_GENERIC,
     args.chainKey,
     args.height,
     args.encodedTransaction,

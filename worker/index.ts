@@ -19,7 +19,7 @@ import registryArtifact from '../contracts/out/CreditRegistry.sol/CreditRegistry
 import {loadConfig, POLL_INTERVAL_MS, type WorkerConfig} from './config.js';
 import {loadState, isSubmitted, recordSubmitted, recordFailure, saveState, type WorkerState} from './state.js';
 import {scanEvents, groupByTransaction, type SourceEvent} from './scan.js';
-import {fetchProof, submitProof, describe, waitForAttestation, ACTION_REPAYMENT_MADE} from './prove.js';
+import {fetchProof, submitProof, describe, waitForAttestation, ACTION_GENERIC} from './prove.js';
 import {fetchBatchProof, dryRunBatch, MAX_BATCH_SIZE} from './batch.js';
 import {GAS_LIMIT_FLOOR} from './config.js';
 
@@ -153,7 +153,7 @@ async function main(): Promise<void> {
         return;
       }
 
-      const actions = args.sourceTxHashes.map(() => ACTION_REPAYMENT_MADE);
+      const actions = args.sourceTxHashes.map(() => ACTION_GENERIC);
       const call = [
         actions,
         args.chainKey,

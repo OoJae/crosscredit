@@ -96,8 +96,13 @@ library ScoreLib {
     // ─── Ethereum mainnet signals — where the real weight sits ────────────────────────────
 
     /// @notice Points per repayment proven against a real mainnet lending protocol.
+    /// @dev The cap must leave Platinum reachable from real history *alone*. With the capacity cap
+    /// at 200, a mainnet-only borrower tops out at `CAP_MAINNET_REPAYMENTS + 200`, so a cap of 480
+    /// would put the ceiling at 680 — permanently twenty points short of Platinum, which would
+    /// make the top tier unreachable by exactly the evidence it is supposed to require. Five
+    /// genuine third-party repayments clear it.
     uint256 internal constant POINTS_PER_MAINNET_REPAYMENT = 120;
-    uint256 internal constant CAP_MAINNET_REPAYMENTS = 480;
+    uint256 internal constant CAP_MAINNET_REPAYMENTS = 600;
 
     /// @notice Wei of demonstrated third-party capacity worth one point, and its cap.
     /// @dev 0.01 ETH per point. Scaled for mainnet amounts, unlike the testnet-scale volume term.
