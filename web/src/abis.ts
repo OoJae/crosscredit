@@ -30,7 +30,11 @@ export const registryAbi = parseAbi([
   'struct ContinuityProof { bytes32 lowerEndpointDigest; bytes32[] roots; }',
   'function executeBatch(uint8[] actions, uint64 chainKey, uint64[] heights, bytes[] encodedTransactions, MerkleProof[] merkleProofs, ContinuityProof sharedContinuityProof) returns (bool)',
 
-  'event HistoryEventIngested(address indexed borrower, bytes32 indexed queryId, bytes32 eventSig, uint256 loanId)',
+  // `chainKey` is load-bearing here, not decorative: viem derives the topic0 filter from this
+  // signature, so omitting a parameter produces a topic0 that matches nothing and the event feed
+  // silently reads as "this borrower has no verified history". It did exactly that until an audit
+  // caught it — the live registry emits 0xf96bf5eb…, the four-parameter form computes 0x67b31bbe….
+  'event HistoryEventIngested(address indexed borrower, bytes32 indexed queryId, bytes32 eventSig, uint64 chainKey, uint256 loanId)',
   'event ScoreUpdated(address indexed borrower, uint16 oldScore, uint16 newScore, uint8 tier)',
   'event LoanClosed(address indexed borrower, uint256 indexed loanId)',
 
@@ -101,7 +105,16 @@ export const blockProverAbi = parseAbi([
 
 /** topic0 of each LoanBook event, so ingested history can be labelled without a second lookup. */
 export const EVENT_SIGS = {
+  // Sepolia LoanBook — self-reported.
   '0x0d7f8e19afd65be70c0b9ff46dab1702a44ca0e8fcd33448375d7c2690e5866b': 'Loan opened',
   '0x7d64aa0e099ec7ce5a5e95941014b245cf86dd8cd1115dd1ee421d8ec4d04206': 'Repayment',
   '0x7dba1be544024070cd5eebfa8bdd80a8b198cea8058c7d3cc1f8dd36e41ab2f7': 'Collateral added',
+  // Ethereum mainnet — real third-party capital. Absent until an audit pointed out that the
+  // flagship mainnet borrower's five Aave repayments all rendered as "Unknown", which undersold
+  // the one thing the demo exists to show.
+  '0xa534c8dbe71f871f9f3530e97a74601fea17b426cae02e1c5aee42c96c784051': 'Aave repayment',
+  '0xb3d084820fb1a9decffb176436bd02558d15fac9b0ddfed8c465bc7359d7dce0': 'Aave borrow',
+  '0xe413a321e8681d831f4dbccbca790d2952b56f977908e45be37335533e005286': 'Aave liquidation',
+  '0xc2240194853531f1ae318dcef227de79c6ad0fd9d1b0e4fe08568415be2e08a5': 'ENS name registered',
+  '0x69e37f151eb98a09618ddaa80c8cfaf1ce5996867c489f45b555b412271ebf27': 'ENS name registered',
 } as const;

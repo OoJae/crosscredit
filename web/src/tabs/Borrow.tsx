@@ -4,7 +4,15 @@ import {formatEther, parseEther} from 'viem';
 import {usePublicClient, useWriteContract} from 'wagmi';
 import {ADDRESSES, TIER_NAMES, TIER_STYLES, creditcoinCC3} from '../config';
 import {poolAbi, erc20Abi} from '../abis';
-import {useTier, useAllTerms, useActiveLoan, useTotalOwed} from '../hooks';
+import {
+  useTier,
+  useAllTerms,
+  useActiveLoan,
+  useTotalOwed,
+  useCollateralRequired,
+  useUndercollateralizedPortion,
+  useDemonstratedCapacity,
+} from '../hooks';
 import {Card, Button, Banner, Spinner, TierPill, ExplorerLink, readableError} from '../components/ui';
 
 export default function Borrow({address, canWrite}: {address: Address; canWrite: boolean}) {
@@ -31,12 +39,22 @@ export default function Borrow({address, canWrite}: {address: Address; canWrite:
       return 0n;
     }
   })();
-  const requiredCollateral =
-    myTerms === undefined ? 0n : (parsedAmount * BigInt(myTerms.collateralRatioBps)) / 10_000n;
+  // Asked of the pool, never recomputed from the tier ratio — the ratio is capped by demonstrated
+  // capacity, so the naive formula both misquotes and produces a reverting transaction.
+  const {data: quotedCollateral} = useCollateralRequired(address, parsedAmount);
+  const {data: underPortion} = useUndercollateralizedPortion(address, parsedAmount);
+  const {data: capacity} = useDemonstratedCapacity(address);
+  const requiredCollateral = quotedCollateral ?? 0n;
+
   const bronzeTerms = terms?.find((t) => t.tier === 0);
   const bronzeCollateral =
     bronzeTerms === undefined ? 0n : (parsedAmount * BigInt(bronzeTerms.collateralRatioBps)) / 10_000n;
-  const saving = bronzeCollateral - requiredCollateral;
+  const saving = bronzeCollateral > requiredCollateral ? bronzeCollateral - requiredCollateral : 0n;
+
+  // A tier earns a rate; only real repaid third-party capital earns a credit line. When those
+  // disagree, the UI has to say so rather than advertise a discount the pool will not honour.
+  const tierImpliesDiscount = myTerms !== undefined && myTerms.collateralRatioBps < 10_000;
+  const cappedByCapacity = tierImpliesDiscount && (underPortion ?? 0n) < parsedAmount;
 
   async function doBorrow() {
     if (client === undefined) return;
@@ -199,8 +217,18 @@ export default function Borrow({address, canWrite}: {address: Address; canWrite:
             {requiredCollateral < parsedAmount && parsedAmount > 0n && (
               <Banner tone="success">
                 You are borrowing more than you post — {formatEther(requiredCollateral)} tCTC for{' '}
-                {formatEther(parsedAmount)} tUSD. That is only possible because your repayment
-                history on Ethereum was proven, not claimed.
+                {formatEther(parsedAmount)} tUSD. That is only possible because you repaid{' '}
+                {Number(formatEther(capacity ?? 0n)).toLocaleString()} of a real third party&rsquo;s
+                capital on Ethereum, and that repayment was proven here rather than claimed.
+              </Banner>
+            )}
+
+            {cappedByCapacity && parsedAmount > 0n && (
+              <Banner tone="info">
+                Your {TIER_NAMES[tierIndex]} tier prices this loan, but it does not size it. Only{' '}
+                {Number(formatEther(underPortion ?? 0n)).toLocaleString()} tUSD of it can be
+                undercollateralized, because that is all the third-party capital this address has
+                provably repaid. The remainder is fully collateralized whatever the tier says.
               </Banner>
             )}
 

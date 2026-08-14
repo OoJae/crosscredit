@@ -121,8 +121,11 @@ async function main(): Promise<void> {
     loanBook: loanBookAddress,
     borrower: {
       address: borrowerC.address,
-      // Test-only, generated for this demo and funded with faucet ETH.
-      privateKey: borrowerC.privateKey,
+      // The private key is deliberately NOT recorded here. An earlier version of this script wrote
+      // it into this payload, and this payload is a committed evidence artifact — so a throwaway
+      // demo key was published to a public repository. Evidence files are for things we want the
+      // world to read; a key belongs in `.env` and nowhere else.
+      keyLocation: 'BORROWER_C_PRIVATE_KEY in .env (gitignored, test-only)',
     },
     expected: {score: 710, tier: 'Platinum', onTime: 5, late: 0, loansClosed: 3},
     batchConstraints: {

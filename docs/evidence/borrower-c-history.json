@@ -5,7 +5,8 @@
   "loanBook": "0xe53a54489aec265337f6f8fa3ee6e08ecba5cf9c",
   "borrower": {
     "address": "0x8C04C28894BADcE63d1F00f356AbB126983522Cf",
-    "privateKey": "0xb20c9ce81ff6132fd9be8d7ab8cd02d0d12213a6a864d9607f43eb2d78bd8b16"
+    "keyLocation": "BORROWER_C_PRIVATE_KEY in .env (gitignored, test-only)",
+    "keyRotationNote": "An earlier revision of this file recorded this address's private key, and that revision was committed and pushed to a public repository on 2026-08-13. The key must be treated as compromised. It controls only this testnet demo address, never the deployer."
   },
   "expected": {
     "score": 710,

@@ -6,6 +6,37 @@ on:
   pull_request:
 
 jobs:
+  # Runs first and gates nothing else, deliberately: a leaked key is worth knowing about even if
+  # the build is broken. Added after a throwaway demo key reached this public repo inside a
+  # committed evidence JSON (docs/evidence/borrower-c-history.json, Aug 13 2026). The lesson was
+  # that evidence files are published artifacts, and nothing had ever checked them.
+  secrets:
+    name: secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: no secret-shaped field names in tracked files
+        run: |
+          # A 32-byte hex string is indistinguishable from a transaction hash, so scanning for
+          # 0x+64hex is useless here (this repo legitimately contains hundreds). Gate on the
+          # thing that is never legitimate: a field or variable NAMED like a secret with a value.
+          if git grep -InE '"(privateKey|private_key|secret|mnemonic|seedPhrase|apiKey|api_key|password)"[[:space:]]*:[[:space:]]*"[^"]+"' -- . ; then
+            echo "::error::A secret-shaped field with a value is committed. Remove it and rotate the credential."
+            exit 1
+          fi
+          if git grep -InE '(PRIVATE_KEY|API_KEY|SECRET|MNEMONIC)[[:space:]]*=[[:space:]]*["'"'"']?(0x)?[A-Za-z0-9_/+-]{16,}' -- . ':!.env.example' ; then
+            echo "::error::A credential assignment with a real-looking value is committed."
+            exit 1
+          fi
+          echo "No secret-shaped assignments in tracked files."
+      - name: .env must never be tracked
+        run: |
+          if git ls-files --error-unmatch .env >/dev/null 2>&1; then
+            echo "::error::.env is tracked. It must be gitignored."
+            exit 1
+          fi
+          echo ".env is not tracked."
+
   solidity:
     name: contracts
     runs-on: ubuntu-latest

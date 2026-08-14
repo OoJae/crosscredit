@@ -26,3 +26,7 @@ web/dist/
 .DS_Store
 .idea/
 .vscode/
+
+# Scratch output from browser automation and one-off state backups — never artifacts.
+.playwright-mcp/
+*.bak

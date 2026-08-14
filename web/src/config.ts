@@ -64,8 +64,17 @@ export const ADDRESSES = {
 
 /** Block LoanBook was deployed at — CC3's `eth_getLogs` times out over wide spans. */
 export const LOANBOOK_DEPLOY_BLOCK = 11_482_838n;
-/** Block CreditRegistry was deployed at. */
-export const REGISTRY_DEPLOY_BLOCK = 5_305_700n;
+/**
+ * Block the current `CreditRegistry` was deployed at, established by binary search on
+ * `eth_getCode` rather than by hand.
+ *
+ * Every `getContractEvents` call below starts here, because CC3's `eth_getLogs` times out over
+ * wide spans. That makes this constant load-bearing and silently dangerous: set it even slightly
+ * **too high** and the UI shows an empty event table and no score history for every borrower, with
+ * no error — the reads succeed and return nothing. A hand-typed value of 5,305,700 did exactly
+ * that, 22 blocks above the registry and 78 above its first ingest.
+ */
+export const REGISTRY_DEPLOY_BLOCK = 5_305_625n;
 
 /** Creditcoin-internal id for Sepolia. Not the EVM chainId — see docs/evidence/supported-chains.json. */
 export const SOURCE_CHAIN_KEY = 1;
@@ -152,7 +161,9 @@ export const DEMO_BORROWERS = [
   {
     label: 'Silver — imported proof by proof',
     address: '0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6',
-    note: '11 separate verifications, same result',
+    // 9, verified against the live registry. The old copy said 11, counting proofs submitted
+    // rather than credit events ingested — two of them carried no scoreable log.
+    note: '9 separate verifications, same result as one batch',
     real: false,
   },
   {

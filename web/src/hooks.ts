@@ -76,6 +76,27 @@ export function useDemonstratedCapacity(address: Address | undefined) {
   });
 }
 
+/**
+ * Collateral the pool will actually demand, read from the pool rather than recomputed.
+ *
+ * @remarks
+ * Deriving this in the UI as `amount * collateralRatioBps / 10_000` looks right and is wrong: the
+ * tier ratio is only applied up to `demonstratedCapacityWei`, and everything beyond it is fully
+ * collateralized. The UI did exactly that, so a Platinum wallet with no real mainnet history was
+ * quoted 85% and its borrow reverted for insufficient collateral — while also misrepresenting the
+ * one mechanism the product is built on. There is one source of truth and it is the contract.
+ */
+export function useCollateralRequired(address: Address | undefined, amount: bigint) {
+  return useReadContract({
+    ...cc3,
+    address: ADDRESSES.pool,
+    abi: poolAbi,
+    functionName: 'collateralRequired',
+    args: address === undefined ? undefined : [address, amount],
+    query: {enabled: address !== undefined},
+  });
+}
+
 /** How much of a given borrow would actually be undercollateralized, after the capacity cap. */
 export function useUndercollateralizedPortion(address: Address | undefined, amount: bigint) {
   return useReadContract({
@@ -255,6 +276,29 @@ export function useScoreHistory(address: Address | undefined) {
   });
 }
 
+/**
+ * Widest span we ask a public endpoint for in one `eth_getLogs`. Chosen to sit under the smallest
+ * cap we have seen in the wild rather than at the largest we could get away with.
+ */
+const LOG_WINDOW = 9_000n;
+
+/**
+ * Splits deploy-block-to-head into windows the endpoint will accept.
+ *
+ * @remarks
+ * Returned as ranges rather than as a generic fetch helper on purpose: viem infers each event's
+ * `args` type from a *literal* `eventName`, so funnelling all three through one parameterised
+ * function widens them into a union and loses `principal`, `amount` and `onTime`.
+ */
+function logWindows(head: bigint): {fromBlock: bigint; toBlock: bigint}[] {
+  const ranges: {fromBlock: bigint; toBlock: bigint}[] = [];
+  for (let from = LOANBOOK_DEPLOY_BLOCK; from <= head; from += LOG_WINDOW) {
+    const to = from + LOG_WINDOW - 1n;
+    ranges.push({fromBlock: from, toBlock: to > head ? head : to});
+  }
+  return ranges;
+}
+
 export interface SourceEvent {
   kind: string;
   txHash: Hex;
@@ -275,28 +319,25 @@ export function useSourceHistory(address: Address | undefined) {
     enabled: client !== undefined && address !== undefined,
     staleTime: 30_000,
     queryFn: async (): Promise<SourceEvent[]> => {
+      // Paginated, not because the history is large but because the WINDOW grows: the span from
+      // the LoanBook deploy block to Sepolia's head widens by ~7,200 blocks a day, and public
+      // endpoints reject `eth_getLogs` past a fixed range (commonly 10k-50k). An unpaginated query
+      // therefore works for a week or two and then starts failing on its own, with no code change
+      // — which would have taken the demo down around Aug 21, before the submission date.
+      const head = await client!.getBlockNumber();
+      const windows = logWindows(head);
+      const base = {address: ADDRESSES.loanBook, abi: loanBookAbi, args: {borrower: address!}} as const;
+
       const [opened, repaid, collateral] = await Promise.all([
-        client!.getContractEvents({
-          address: ADDRESSES.loanBook,
-          abi: loanBookAbi,
-          eventName: 'LoanOpened',
-          args: {borrower: address!},
-          fromBlock: LOANBOOK_DEPLOY_BLOCK,
-        }),
-        client!.getContractEvents({
-          address: ADDRESSES.loanBook,
-          abi: loanBookAbi,
-          eventName: 'RepaymentMade',
-          args: {borrower: address!},
-          fromBlock: LOANBOOK_DEPLOY_BLOCK,
-        }),
-        client!.getContractEvents({
-          address: ADDRESSES.loanBook,
-          abi: loanBookAbi,
-          eventName: 'CollateralAdded',
-          args: {borrower: address!},
-          fromBlock: LOANBOOK_DEPLOY_BLOCK,
-        }),
+        Promise.all(
+          windows.map((w) => client!.getContractEvents({...base, eventName: 'LoanOpened', ...w})),
+        ).then((p) => p.flat()),
+        Promise.all(
+          windows.map((w) => client!.getContractEvents({...base, eventName: 'RepaymentMade', ...w})),
+        ).then((p) => p.flat()),
+        Promise.all(
+          windows.map((w) => client!.getContractEvents({...base, eventName: 'CollateralAdded', ...w})),
+        ).then((p) => p.flat()),
       ]);
 
       const events: SourceEvent[] = [

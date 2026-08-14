@@ -67,7 +67,11 @@ export default function ImportHistory({address, canWrite}: {address: Address; ca
         abi: registryAbi,
         functionName: 'executeBatch',
         args: [
-          args.sourceTxHashes.map(() => 1),
+          // ACTION_GENERIC. `action` is a declared hint only — the registry routes on each proven
+          // log's own emitter and topic0 — and `Generic` (0) is the sole valid enum member, so
+          // anything else reverts with `UnknownAction`. This passed 1 (a stale value from when
+          // actions were per-event), which made every batch import from the UI revert.
+          args.sourceTxHashes.map(() => 0),
           BigInt(args.chainKey),
           args.heights,
           args.encodedTransactions,
