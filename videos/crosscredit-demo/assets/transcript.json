@@ -1,0 +1,1812 @@
+[
+  {
+    "text": "This",
+    "start": 0.2,
+    "end": 0.27
+  },
+  {
+    "text": "wallet",
+    "start": 0.27,
+    "end": 0.68
+  },
+  {
+    "text": "has",
+    "start": 0.68,
+    "end": 0.88
+  },
+  {
+    "text": "never",
+    "start": 0.88,
+    "end": 1.22
+  },
+  {
+    "text": "sent",
+    "start": 1.22,
+    "end": 1.49
+  },
+  {
+    "text": "a",
+    "start": 1.49,
+    "end": 1.52
+  },
+  {
+    "text": "transaction",
+    "start": 1.56,
+    "end": 2.3
+  },
+  {
+    "text": "to",
+    "start": 2.37,
+    "end": 2.45
+  },
+  {
+    "text": "credit",
+    "start": 2.45,
+    "end": 2.85
+  },
+  {
+    "text": "coin.",
+    "start": 2.85,
+    "end": 3.41
+  },
+  {
+    "text": "It",
+    "start": 3.43,
+    "end": 3.55
+  },
+  {
+    "text": "has",
+    "start": 3.55,
+    "end": 3.76
+  },
+  {
+    "text": "never",
+    "start": 3.76,
+    "end": 4.11
+  },
+  {
+    "text": "heard",
+    "start": 4.11,
+    "end": 4.47
+  },
+  {
+    "text": "of",
+    "start": 4.47,
+    "end": 4.49
+  },
+  {
+    "text": "us.",
+    "start": 4.49,
+    "end": 4.745
+  },
+  {
+    "text": "It",
+    "start": 4.745,
+    "end": 5
+  },
+  {
+    "text": "did",
+    "start": 5,
+    "end": 5.16
+  },
+  {
+    "text": "not",
+    "start": 5.22,
+    "end": 5.44
+  },
+  {
+    "text": "sign",
+    "start": 5.44,
+    "end": 5.77
+  },
+  {
+    "text": "up,",
+    "start": 5.77,
+    "end": 6.08
+  },
+  {
+    "text": "did",
+    "start": 6.08,
+    "end": 6.31
+  },
+  {
+    "text": "not",
+    "start": 6.36,
+    "end": 6.57
+  },
+  {
+    "text": "opt",
+    "start": 6.57,
+    "end": 6.76
+  },
+  {
+    "text": "in,",
+    "start": 6.82,
+    "end": 7.2
+  },
+  {
+    "text": "and",
+    "start": 7.2,
+    "end": 7.33
+  },
+  {
+    "text": "could",
+    "start": 7.42,
+    "end": 7.68
+  },
+  {
+    "text": "not",
+    "start": 7.68,
+    "end": 7.74
+  },
+  {
+    "text": "have",
+    "start": 7.86,
+    "end": 7.87
+  },
+  {
+    "text": "stopped",
+    "start": 8.23,
+    "end": 8.51
+  },
+  {
+    "text": "what",
+    "start": 8.51,
+    "end": 8.75
+  },
+  {
+    "text": "happens",
+    "start": 8.75,
+    "end": 9.15
+  },
+  {
+    "text": "next.",
+    "start": 9.15,
+    "end": 9.6
+  },
+  {
+    "text": "Everything",
+    "start": 9.8,
+    "end": 10.23
+  },
+  {
+    "text": "a",
+    "start": 10.23,
+    "end": 10.29
+  },
+  {
+    "text": "lender",
+    "start": 10.29,
+    "end": 10.66
+  },
+  {
+    "text": "needs",
+    "start": 10.66,
+    "end": 10.97
+  },
+  {
+    "text": "to",
+    "start": 10.97,
+    "end": 11.09
+  },
+  {
+    "text": "know",
+    "start": 11.09,
+    "end": 11.34
+  },
+  {
+    "text": "about",
+    "start": 11.34,
+    "end": 11.65
+  },
+  {
+    "text": "it",
+    "start": 11.65,
+    "end": 11.77
+  },
+  {
+    "text": "already",
+    "start": 11.77,
+    "end": 12.12
+  },
+  {
+    "text": "exists,",
+    "start": 12.22,
+    "end": 12.81
+  },
+  {
+    "text": "on",
+    "start": 12.81,
+    "end": 13.03
+  },
+  {
+    "text": "Ethereum.",
+    "start": 13.03,
+    "end": 13.84
+  },
+  {
+    "text": "Five",
+    "start": 14.12,
+    "end": 14.22
+  },
+  {
+    "text": "loans",
+    "start": 14.22,
+    "end": 14.59
+  },
+  {
+    "text": "from",
+    "start": 14.59,
+    "end": 14.89
+  },
+  {
+    "text": "Aave,",
+    "start": 14.89,
+    "end": 15.35
+  },
+  {
+    "text": "everyone",
+    "start": 15.37,
+    "end": 15.99
+  },
+  {
+    "text": "repaid.",
+    "start": 15.99,
+    "end": 16.72
+  },
+  {
+    "text": "But",
+    "start": 16.72,
+    "end": 16.85
+  },
+  {
+    "text": "credit",
+    "start": 16.85,
+    "end": 17.35
+  },
+  {
+    "text": "history",
+    "start": 17.35,
+    "end": 17.81
+  },
+  {
+    "text": "does",
+    "start": 17.81,
+    "end": 18.04
+  },
+  {
+    "text": "not",
+    "start": 18.09,
+    "end": 18.31
+  },
+  {
+    "text": "travel.",
+    "start": 18.31,
+    "end": 18.96
+  },
+  {
+    "text": "So",
+    "start": 18.96,
+    "end": 19.16
+  },
+  {
+    "text": "on",
+    "start": 19.16,
+    "end": 19.26
+  },
+  {
+    "text": "every",
+    "start": 19.26,
+    "end": 19.64
+  },
+  {
+    "text": "other",
+    "start": 19.64,
+    "end": 20.02
+  },
+  {
+    "text": "chain,",
+    "start": 20.02,
+    "end": 20.55
+  },
+  {
+    "text": "this",
+    "start": 20.55,
+    "end": 20.89
+  },
+  {
+    "text": "borrower",
+    "start": 20.89,
+    "end": 21.48
+  },
+  {
+    "text": "is",
+    "start": 21.58,
+    "end": 21.71
+  },
+  {
+    "text": "a",
+    "start": 21.71,
+    "end": 21.79
+  },
+  {
+    "text": "stranger,",
+    "start": 21.79,
+    "end": 22.6
+  },
+  {
+    "text": "and",
+    "start": 22.6,
+    "end": 22.78
+  },
+  {
+    "text": "a",
+    "start": 22.78,
+    "end": 22.84
+  },
+  {
+    "text": "stranger",
+    "start": 22.84,
+    "end": 23.33
+  },
+  {
+    "text": "posts",
+    "start": 23.33,
+    "end": 23.45
+  },
+  {
+    "text": "150%",
+    "start": 23.96,
+    "end": 24.79
+  },
+  {
+    "text": "collateral.",
+    "start": 25.14,
+    "end": 25.84
+  },
+  {
+    "text": "There",
+    "start": 26.04,
+    "end": 26.16
+  },
+  {
+    "text": "is",
+    "start": 26.16,
+    "end": 26.29
+  },
+  {
+    "text": "an",
+    "start": 26.29,
+    "end": 26.42
+  },
+  {
+    "text": "easy",
+    "start": 26.42,
+    "end": 26.68
+  },
+  {
+    "text": "version",
+    "start": 26.68,
+    "end": 27.13
+  },
+  {
+    "text": "of",
+    "start": 27.13,
+    "end": 27.26
+  },
+  {
+    "text": "this",
+    "start": 27.26,
+    "end": 27.52
+  },
+  {
+    "text": "that",
+    "start": 27.52,
+    "end": 27.78
+  },
+  {
+    "text": "does",
+    "start": 27.78,
+    "end": 28.04
+  },
+  {
+    "text": "not",
+    "start": 28.04,
+    "end": 28.23
+  },
+  {
+    "text": "work.",
+    "start": 28.23,
+    "end": 28.72
+  },
+  {
+    "text": "Our",
+    "start": 28.72,
+    "end": 28.92
+  },
+  {
+    "text": "first",
+    "start": 28.92,
+    "end": 29.23
+  },
+  {
+    "text": "billed",
+    "start": 29.23,
+    "end": 29.6
+  },
+  {
+    "text": "read",
+    "start": 29.63,
+    "end": 29.88
+  },
+  {
+    "text": "repayments",
+    "start": 29.88,
+    "end": 30.49
+  },
+  {
+    "text": "from",
+    "start": 30.52,
+    "end": 30.78
+  },
+  {
+    "text": "our",
+    "start": 30.78,
+    "end": 30.96
+  },
+  {
+    "text": "own",
+    "start": 31.01,
+    "end": 31.16
+  },
+  {
+    "text": "contract.",
+    "start": 31.16,
+    "end": 31.72
+  },
+  {
+    "text": "It",
+    "start": 31.72,
+    "end": 32.12
+  },
+  {
+    "text": "had",
+    "start": 32.12,
+    "end": 32.34
+  },
+  {
+    "text": "no",
+    "start": 32.34,
+    "end": 32.51
+  },
+  {
+    "text": "lender.",
+    "start": 32.51,
+    "end": 33.28
+  },
+  {
+    "text": "So",
+    "start": 33.28,
+    "end": 33.51
+  },
+  {
+    "text": "six-way,",
+    "start": 33.51,
+    "end": 34.55
+  },
+  {
+    "text": "12",
+    "start": 34.55,
+    "end": 34.86
+  },
+  {
+    "text": "transactions,",
+    "start": 35.35,
+    "end": 35.68
+  },
+  {
+    "text": "and",
+    "start": 35.69,
+    "end": 35.8
+  },
+  {
+    "text": "one",
+    "start": 35.83,
+    "end": 36
+  },
+  {
+    "text": "wallet",
+    "start": 36,
+    "end": 36.39
+  },
+  {
+    "text": "reached",
+    "start": 36.39,
+    "end": 36.41
+  },
+  {
+    "text": "the",
+    "start": 36.41,
+    "end": 36.92
+  },
+  {
+    "text": "top",
+    "start": 36.92,
+    "end": 37.17
+  },
+  {
+    "text": "tier,",
+    "start": 37.17,
+    "end": 37.68
+  },
+  {
+    "text": "and",
+    "start": 37.68,
+    "end": 37.88
+  },
+  {
+    "text": "every",
+    "start": 37.88,
+    "end": 38.17
+  },
+  {
+    "text": "proof",
+    "start": 38.17,
+    "end": 38.37
+  },
+  {
+    "text": "was",
+    "start": 38.48,
+    "end": 38.66
+  },
+  {
+    "text": "cryptographically",
+    "start": 38.66,
+    "end": 39.71
+  },
+  {
+    "text": "valid.",
+    "start": 39.71,
+    "end": 40.21
+  },
+  {
+    "text": "We",
+    "start": 40.21,
+    "end": 40.44
+  },
+  {
+    "text": "had",
+    "start": 40.44,
+    "end": 40.52
+  },
+  {
+    "text": "built",
+    "start": 40.52,
+    "end": 40.8
+  },
+  {
+    "text": "a",
+    "start": 40.8,
+    "end": 40.85
+  },
+  {
+    "text": "rigorous",
+    "start": 40.85,
+    "end": 41.3
+  },
+  {
+    "text": "pipeline",
+    "start": 41.3,
+    "end": 41.74
+  },
+  {
+    "text": "for",
+    "start": 41.74,
+    "end": 41.92
+  },
+  {
+    "text": "the",
+    "start": 41.92,
+    "end": 42.09
+  },
+  {
+    "text": "high-integrity",
+    "start": 42.09,
+    "end": 42.77
+  },
+  {
+    "text": "delivery",
+    "start": 42.86,
+    "end": 43.18
+  },
+  {
+    "text": "of",
+    "start": 43.18,
+    "end": 43.67
+  },
+  {
+    "text": "worthless",
+    "start": 43.67,
+    "end": 44.18
+  },
+  {
+    "text": "data.",
+    "start": 44.18,
+    "end": 44.72
+  },
+  {
+    "text": "The",
+    "start": 44.92,
+    "end": 44.93
+  },
+  {
+    "text": "question",
+    "start": 44.93,
+    "end": 45.41
+  },
+  {
+    "text": "that",
+    "start": 45.52,
+    "end": 45.78
+  },
+  {
+    "text": "exposes",
+    "start": 45.78,
+    "end": 46.23
+  },
+  {
+    "text": "it",
+    "start": 46.28,
+    "end": 46.42
+  },
+  {
+    "text": "is",
+    "start": 46.42,
+    "end": 46.55
+  },
+  {
+    "text": "one",
+    "start": 46.56,
+    "end": 46.77
+  },
+  {
+    "text": "sentence.",
+    "start": 46.77,
+    "end": 47.6
+  },
+  {
+    "text": "Who",
+    "start": 47.8,
+    "end": 47.82
+  },
+  {
+    "text": "is",
+    "start": 47.82,
+    "end": 47.96
+  },
+  {
+    "text": "the",
+    "start": 48.02,
+    "end": 48.19
+  },
+  {
+    "text": "lender?",
+    "start": 48.19,
+    "end": 48.88
+  },
+  {
+    "text": "You",
+    "start": 48.88,
+    "end": 49.09
+  },
+  {
+    "text": "cannot",
+    "start": 49.09,
+    "end": 49.51
+  },
+  {
+    "text": "fake",
+    "start": 49.51,
+    "end": 49.78
+  },
+  {
+    "text": "an",
+    "start": 49.79,
+    "end": 49.9
+  },
+  {
+    "text": "Aave",
+    "start": 49.97,
+    "end": 50.13
+  },
+  {
+    "text": "loan.",
+    "start": 50.22,
+    "end": 50.54
+  },
+  {
+    "text": "So",
+    "start": 50.54,
+    "end": 50.92
+  },
+  {
+    "text": "we",
+    "start": 50.92,
+    "end": 50.96
+  },
+  {
+    "text": "read",
+    "start": 50.96,
+    "end": 51.21
+  },
+  {
+    "text": "the",
+    "start": 51.21,
+    "end": 51.39
+  },
+  {
+    "text": "chain",
+    "start": 51.39,
+    "end": 51.7
+  },
+  {
+    "text": "where",
+    "start": 51.7,
+    "end": 52
+  },
+  {
+    "text": "the",
+    "start": 52,
+    "end": 52.19
+  },
+  {
+    "text": "lenders",
+    "start": 52.19,
+    "end": 52.62
+  },
+  {
+    "text": "are.",
+    "start": 52.62,
+    "end": 53.02
+  },
+  {
+    "text": "Credit",
+    "start": 53.24,
+    "end": 53.4
+  },
+  {
+    "text": "coin",
+    "start": 53.46,
+    "end": 53.71
+  },
+  {
+    "text": "attests",
+    "start": 53.71,
+    "end": 54.18
+  },
+  {
+    "text": "Ethereum",
+    "start": 54.18,
+    "end": 54.72
+  },
+  {
+    "text": "mainnet,",
+    "start": 54.72,
+    "end": 55.34
+  },
+  {
+    "text": "undocumented,",
+    "start": 55.36,
+    "end": 56.4
+  },
+  {
+    "text": "and",
+    "start": 56.47,
+    "end": 56.55
+  },
+  {
+    "text": "the",
+    "start": 56.55,
+    "end": 56.7
+  },
+  {
+    "text": "thing",
+    "start": 56.7,
+    "end": 56.96
+  },
+  {
+    "text": "this",
+    "start": 56.96,
+    "end": 57.16
+  },
+  {
+    "text": "project",
+    "start": 57.16,
+    "end": 57.51
+  },
+  {
+    "text": "turns",
+    "start": 57.51,
+    "end": 57.53
+  },
+  {
+    "text": "on.",
+    "start": 57.89,
+    "end": 58.08
+  },
+  {
+    "text": "A",
+    "start": 58.08,
+    "end": 58.92
+  },
+  {
+    "text": "Merkle",
+    "start": 58.92,
+    "end": 59.16
+  },
+  {
+    "text": "inclusion",
+    "start": 59.16,
+    "end": 59.74
+  },
+  {
+    "text": "proof",
+    "start": 59.74,
+    "end": 60.06
+  },
+  {
+    "text": "says",
+    "start": 60.06,
+    "end": 60.31
+  },
+  {
+    "text": "the",
+    "start": 60.31,
+    "end": 60.49
+  },
+  {
+    "text": "transaction",
+    "start": 60.51,
+    "end": 61.22
+  },
+  {
+    "text": "is",
+    "start": 61.22,
+    "end": 61.35
+  },
+  {
+    "text": "in",
+    "start": 61.35,
+    "end": 61.48
+  },
+  {
+    "text": "the",
+    "start": 61.48,
+    "end": 61.65
+  },
+  {
+    "text": "block.",
+    "start": 61.67,
+    "end": 62.24
+  },
+  {
+    "text": "A",
+    "start": 62.24,
+    "end": 62.44
+  },
+  {
+    "text": "continuity",
+    "start": 62.44,
+    "end": 62.93
+  },
+  {
+    "text": "proof",
+    "start": 63.04,
+    "end": 63.37
+  },
+  {
+    "text": "says",
+    "start": 63.37,
+    "end": 63.65
+  },
+  {
+    "text": "the",
+    "start": 63.65,
+    "end": 63.83
+  },
+  {
+    "text": "block",
+    "start": 63.88,
+    "end": 64.2
+  },
+  {
+    "text": "is",
+    "start": 64.26,
+    "end": 64.35
+  },
+  {
+    "text": "really",
+    "start": 64.35,
+    "end": 64.76
+  },
+  {
+    "text": "on",
+    "start": 64.86,
+    "end": 64.89
+  },
+  {
+    "text": "Ethereum.",
+    "start": 64.91,
+    "end": 65.76
+  },
+  {
+    "text": "Credit",
+    "start": 65.96,
+    "end": 66.18
+  },
+  {
+    "text": "coin's",
+    "start": 66.18,
+    "end": 66.6
+  },
+  {
+    "text": "own",
+    "start": 66.6,
+    "end": 66.81
+  },
+  {
+    "text": "precompile",
+    "start": 66.81,
+    "end": 67.51
+  },
+  {
+    "text": "checks",
+    "start": 67.51,
+    "end": 67.93
+  },
+  {
+    "text": "both",
+    "start": 67.93,
+    "end": 68.21
+  },
+  {
+    "text": "inside",
+    "start": 68.21,
+    "end": 68.63
+  },
+  {
+    "text": "one",
+    "start": 68.63,
+    "end": 68.7
+  },
+  {
+    "text": "block",
+    "start": 69.18,
+    "end": 69.19
+  },
+  {
+    "text": "in",
+    "start": 69.19,
+    "end": 69.33
+  },
+  {
+    "text": "the",
+    "start": 69.33,
+    "end": 69.53
+  },
+  {
+    "text": "contract.",
+    "start": 69.53,
+    "end": 70.25
+  },
+  {
+    "text": "No",
+    "start": 70.25,
+    "end": 70.52
+  },
+  {
+    "text": "oracle",
+    "start": 70.52,
+    "end": 71.01
+  },
+  {
+    "text": "we",
+    "start": 71.12,
+    "end": 71.25
+  },
+  {
+    "text": "run.",
+    "start": 71.26,
+    "end": 71.83
+  },
+  {
+    "text": "No",
+    "start": 71.83,
+    "end": 72
+  },
+  {
+    "text": "multisig",
+    "start": 72,
+    "end": 72.62
+  },
+  {
+    "text": "we",
+    "start": 72.68,
+    "end": 72.81
+  },
+  {
+    "text": "control.",
+    "start": 72.81,
+    "end": 73.68
+  },
+  {
+    "text": "No",
+    "start": 73.75,
+    "end": 73.84
+  },
+  {
+    "text": "bridge",
+    "start": 73.84,
+    "end": 74.31
+  },
+  {
+    "text": "holding",
+    "start": 74.31,
+    "end": 74.79
+  },
+  {
+    "text": "funds.",
+    "start": 75.26,
+    "end": 75.52
+  },
+  {
+    "text": "Then",
+    "start": 75.72,
+    "end": 75.8
+  },
+  {
+    "text": "five",
+    "start": 75.8,
+    "end": 76.08
+  },
+  {
+    "text": "more",
+    "start": 76.08,
+    "end": 76.36
+  },
+  {
+    "text": "checks",
+    "start": 76.36,
+    "end": 76.78
+  },
+  {
+    "text": "run",
+    "start": 76.78,
+    "end": 76.99
+  },
+  {
+    "text": "before",
+    "start": 76.99,
+    "end": 77.41
+  },
+  {
+    "text": "a",
+    "start": 77.41,
+    "end": 77.48
+  },
+  {
+    "text": "single",
+    "start": 77.48,
+    "end": 77.9
+  },
+  {
+    "text": "point",
+    "start": 77.9,
+    "end": 78.25
+  },
+  {
+    "text": "of",
+    "start": 78.25,
+    "end": 78.39
+  },
+  {
+    "text": "score",
+    "start": 78.39,
+    "end": 78.51
+  },
+  {
+    "text": "moves,",
+    "start": 78.95,
+    "end": 79.12
+  },
+  {
+    "text": "because",
+    "start": 79.32,
+    "end": 79.59
+  },
+  {
+    "text": "a",
+    "start": 79.59,
+    "end": 79.65
+  },
+  {
+    "text": "valid",
+    "start": 79.65,
+    "end": 79.97
+  },
+  {
+    "text": "proof",
+    "start": 79.97,
+    "end": 80.31
+  },
+  {
+    "text": "of",
+    "start": 80.31,
+    "end": 80.44
+  },
+  {
+    "text": "the",
+    "start": 80.44,
+    "end": 80.63
+  },
+  {
+    "text": "wrong",
+    "start": 80.63,
+    "end": 80.97
+  },
+  {
+    "text": "thing",
+    "start": 80.97,
+    "end": 81.3
+  },
+  {
+    "text": "is",
+    "start": 81.3,
+    "end": 81.42
+  },
+  {
+    "text": "still",
+    "start": 81.48,
+    "end": 81.75
+  },
+  {
+    "text": "worthless.",
+    "start": 81.75,
+    "end": 82.64
+  },
+  {
+    "text": "Nine",
+    "start": 82.84,
+    "end": 82.93
+  },
+  {
+    "text": "Sepolia",
+    "start": 82.93,
+    "end": 83.33
+  },
+  {
+    "text": "transactions,",
+    "start": 83.44,
+    "end": 84.46
+  },
+  {
+    "text": "verified",
+    "start": 84.46,
+    "end": 85.04
+  },
+  {
+    "text": "in",
+    "start": 85.04,
+    "end": 85.17
+  },
+  {
+    "text": "a",
+    "start": 85.17,
+    "end": 85.26
+  },
+  {
+    "text": "single",
+    "start": 85.26,
+    "end": 85.57
+  },
+  {
+    "text": "credit",
+    "start": 86.06,
+    "end": 86.13
+  },
+  {
+    "text": "coin",
+    "start": 86.13,
+    "end": 86.41
+  },
+  {
+    "text": "transaction,",
+    "start": 86.41,
+    "end": 87.36
+  },
+  {
+    "text": "for",
+    "start": 87.36,
+    "end": 87.64
+  },
+  {
+    "text": "134,000",
+    "start": 87.64,
+    "end": 89.12
+  },
+  {
+    "text": "gas",
+    "start": 89.12,
+    "end": 89.26
+  },
+  {
+    "text": "each.",
+    "start": 89.38,
+    "end": 89.68
+  },
+  {
+    "text": "Five",
+    "start": 89.68,
+    "end": 90.06
+  },
+  {
+    "text": "real",
+    "start": 90.06,
+    "end": 90.44
+  },
+  {
+    "text": "Aave",
+    "start": 90.44,
+    "end": 90.68
+  },
+  {
+    "text": "repayments,",
+    "start": 90.73,
+    "end": 91.73
+  },
+  {
+    "text": "proven",
+    "start": 91.73,
+    "end": 92.25
+  },
+  {
+    "text": "one",
+    "start": 92.25,
+    "end": 92.5
+  },
+  {
+    "text": "at",
+    "start": 92.51,
+    "end": 92.62
+  },
+  {
+    "text": "a",
+    "start": 92.69,
+    "end": 92.76
+  },
+  {
+    "text": "time.",
+    "start": 92.76,
+    "end": 93.26
+  },
+  {
+    "text": "Zero.",
+    "start": 93.64,
+    "end": 94.52
+  },
+  {
+    "text": "320.",
+    "start": 94.52,
+    "end": 95.36
+  },
+  {
+    "text": "440.",
+    "start": 95.36,
+    "end": 96.37
+  },
+  {
+    "text": "560.",
+    "start": 96.87,
+    "end": 97.56
+  },
+  {
+    "text": "680.",
+    "start": 97.6,
+    "end": 98.64
+  },
+  {
+    "text": "800.",
+    "start": 98.64,
+    "end": 99.45
+  },
+  {
+    "text": "Platinum.",
+    "start": 99.8,
+    "end": 100.29
+  },
+  {
+    "text": "Assembled",
+    "start": 100.4,
+    "end": 100.92
+  },
+  {
+    "text": "entirely",
+    "start": 100.92,
+    "end": 101.45
+  },
+  {
+    "text": "from",
+    "start": 101.45,
+    "end": 101.71
+  },
+  {
+    "text": "transactions",
+    "start": 101.71,
+    "end": 102.53
+  },
+  {
+    "text": "made",
+    "start": 102.56,
+    "end": 102.6
+  },
+  {
+    "text": "somewhere",
+    "start": 103.03,
+    "end": 103.48
+  },
+  {
+    "text": "else.",
+    "start": 103.48,
+    "end": 104
+  },
+  {
+    "text": "Which",
+    "start": 104.2,
+    "end": 104.36
+  },
+  {
+    "text": "buys",
+    "start": 104.42,
+    "end": 104.69
+  },
+  {
+    "text": "this.",
+    "start": 104.8,
+    "end": 105.28
+  },
+  {
+    "text": "850",
+    "start": 105.28,
+    "end": 105.96
+  },
+  {
+    "text": "of",
+    "start": 106.02,
+    "end": 106.15
+  },
+  {
+    "text": "collateral",
+    "start": 106.15,
+    "end": 106.93
+  },
+  {
+    "text": "to",
+    "start": 106.93,
+    "end": 106.99
+  },
+  {
+    "text": "borrow",
+    "start": 107.43,
+    "end": 107.57
+  },
+  {
+    "text": "a",
+    "start": 107.57,
+    "end": 107.65
+  },
+  {
+    "text": "thousand.",
+    "start": 107.65,
+    "end": 108.48
+  },
+  {
+    "text": "And",
+    "start": 108.48,
+    "end": 108.76
+  },
+  {
+    "text": "the",
+    "start": 108.76,
+    "end": 108.92
+  },
+  {
+    "text": "same",
+    "start": 108.98,
+    "end": 109.2
+  },
+  {
+    "text": "call",
+    "start": 109.2,
+    "end": 109.44
+  },
+  {
+    "text": "for",
+    "start": 109.48,
+    "end": 109.64
+  },
+  {
+    "text": "a",
+    "start": 109.66,
+    "end": 109.71
+  },
+  {
+    "text": "wallet",
+    "start": 109.71,
+    "end": 110.07
+  },
+  {
+    "text": "whose",
+    "start": 110.12,
+    "end": 110.42
+  },
+  {
+    "text": "history",
+    "start": 110.42,
+    "end": 110.86
+  },
+  {
+    "text": "it",
+    "start": 110.93,
+    "end": 111.04
+  },
+  {
+    "text": "dealt",
+    "start": 111.04,
+    "end": 111.32
+  },
+  {
+    "text": "to",
+    "start": 111.32,
+    "end": 111.44
+  },
+  {
+    "text": "itself,",
+    "start": 111.47,
+    "end": 112.32
+  },
+  {
+    "text": "returns",
+    "start": 112.52,
+    "end": 112.81
+  },
+  {
+    "text": "1,300.",
+    "start": 112.81,
+    "end": 114
+  },
+  {
+    "text": "Their",
+    "start": 114,
+    "end": 114.28
+  },
+  {
+    "text": "proofs",
+    "start": 114.32,
+    "end": 114.71
+  },
+  {
+    "text": "are",
+    "start": 114.71,
+    "end": 114.85
+  },
+  {
+    "text": "just",
+    "start": 114.94,
+    "end": 115.16
+  },
+  {
+    "text": "as",
+    "start": 115.16,
+    "end": 115.25
+  },
+  {
+    "text": "valid.",
+    "start": 115.29,
+    "end": 115.84
+  },
+  {
+    "text": "Their",
+    "start": 116.04,
+    "end": 116.18
+  },
+  {
+    "text": "evidence",
+    "start": 116.18,
+    "end": 116.71
+  },
+  {
+    "text": "is",
+    "start": 116.71,
+    "end": 116.85
+  },
+  {
+    "text": "not.",
+    "start": 116.85,
+    "end": 117.27
+  },
+  {
+    "text": "An",
+    "start": 117.29,
+    "end": 117.41
+  },
+  {
+    "text": "audit",
+    "start": 117.41,
+    "end": 117.74
+  },
+  {
+    "text": "found",
+    "start": 117.74,
+    "end": 118.08
+  },
+  {
+    "text": "that",
+    "start": 118.08,
+    "end": 118.24
+  },
+  {
+    "text": "a",
+    "start": 118.24,
+    "end": 118.32
+  },
+  {
+    "text": "flash",
+    "start": 118.32,
+    "end": 118.72
+  },
+  {
+    "text": "loan",
+    "start": 118.92,
+    "end": 118.95
+  },
+  {
+    "text": "could",
+    "start": 118.95,
+    "end": 119.23
+  },
+  {
+    "text": "buy",
+    "start": 119.23,
+    "end": 119.4
+  },
+  {
+    "text": "that",
+    "start": 119.4,
+    "end": 119.6
+  },
+  {
+    "text": "capacity",
+    "start": 119.63,
+    "end": 120.09
+  },
+  {
+    "text": "for",
+    "start": 120.09,
+    "end": 120.24
+  },
+  {
+    "text": "the",
+    "start": 120.28,
+    "end": 120.43
+  },
+  {
+    "text": "price",
+    "start": 120.43,
+    "end": 120.68
+  },
+  {
+    "text": "of",
+    "start": 120.74,
+    "end": 120.8
+  },
+  {
+    "text": "gas.",
+    "start": 120.81,
+    "end": 121.2
+  },
+  {
+    "text": "It",
+    "start": 121.2,
+    "end": 121.58
+  },
+  {
+    "text": "is",
+    "start": 121.58,
+    "end": 121.96
+  },
+  {
+    "text": "closed,",
+    "start": 121.96,
+    "end": 122.34
+  },
+  {
+    "text": "it",
+    "start": 122.34,
+    "end": 122.45
+  },
+  {
+    "text": "is",
+    "start": 122.56,
+    "end": 122.72
+  },
+  {
+    "text": "tested,",
+    "start": 122.72,
+    "end": 123.52
+  },
+  {
+    "text": "and",
+    "start": 123.52,
+    "end": 123.67
+  },
+  {
+    "text": "it",
+    "start": 123.67,
+    "end": 123.72
+  },
+  {
+    "text": "is",
+    "start": 123.78,
+    "end": 123.87
+  },
+  {
+    "text": "written",
+    "start": 123.87,
+    "end": 124.24
+  },
+  {
+    "text": "down,",
+    "start": 124.24,
+    "end": 124.96
+  },
+  {
+    "text": "along",
+    "start": 125.16,
+    "end": 125.26
+  },
+  {
+    "text": "with",
+    "start": 125.26,
+    "end": 125.5
+  },
+  {
+    "text": "11",
+    "start": 125.5,
+    "end": 125.83
+  },
+  {
+    "text": "other",
+    "start": 125.88,
+    "end": 126.17
+  },
+  {
+    "text": "things",
+    "start": 126.17,
+    "end": 126.54
+  },
+  {
+    "text": "we",
+    "start": 126.54,
+    "end": 126.66
+  },
+  {
+    "text": "have",
+    "start": 126.66,
+    "end": 126.9
+  },
+  {
+    "text": "not",
+    "start": 126.9,
+    "end": 127.08
+  },
+  {
+    "text": "solved.",
+    "start": 127.08,
+    "end": 127.68
+  },
+  {
+    "text": "Every",
+    "start": 127.88,
+    "end": 128.03
+  },
+  {
+    "text": "number",
+    "start": 128.03,
+    "end": 128.37
+  },
+  {
+    "text": "you",
+    "start": 128.48,
+    "end": 128.66
+  },
+  {
+    "text": "just",
+    "start": 128.66,
+    "end": 128.94
+  },
+  {
+    "text": "saw",
+    "start": 128.94,
+    "end": 129.15
+  },
+  {
+    "text": "is",
+    "start": 129.15,
+    "end": 129.27
+  },
+  {
+    "text": "live",
+    "start": 129.32,
+    "end": 129.57
+  },
+  {
+    "text": "on",
+    "start": 129.57,
+    "end": 129.71
+  },
+  {
+    "text": "testnet",
+    "start": 129.71,
+    "end": 130.21
+  },
+  {
+    "text": "from",
+    "start": 130.3,
+    "end": 130.52
+  },
+  {
+    "text": "real",
+    "start": 130.52,
+    "end": 130.62
+  },
+  {
+    "text": "mainnet",
+    "start": 131.08,
+    "end": 131.29
+  },
+  {
+    "text": "history.",
+    "start": 131.29,
+    "end": 131.93
+  },
+  {
+    "text": "Cross",
+    "start": 132.2,
+    "end": 132.36
+  },
+  {
+    "text": "credit.",
+    "start": 132.41,
+    "end": 133.12
+  },
+  {
+    "text": "Proof",
+    "start": 133.12,
+    "end": 133.43
+  },
+  {
+    "text": "punched",
+    "start": 133.45,
+    "end": 133.91
+  },
+  {
+    "text": "into",
+    "start": 133.91,
+    "end": 134.17
+  },
+  {
+    "text": "metal.",
+    "start": 134.17,
+    "end": 134.72
+  }
+]

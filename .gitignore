@@ -33,5 +33,7 @@ web/dist/
 
 # Rendered video output and snapshot scratch — large binaries, regenerable from the composition.
 videos/*/renders/
+demo/*.mp4
+demo/*.m4a
 videos/*/snaps/
 videos/*/capture/

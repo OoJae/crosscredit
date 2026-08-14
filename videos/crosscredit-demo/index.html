@@ -100,17 +100,17 @@
       data-start="0"
       data-width="1920"
       data-height="1080"
-      data-duration="170"
+      data-duration="137"
       data-fps="30"
     >
       <!-- Track 0 — the bench. One continuous ground for the whole film. -->
-      <div id="ground" class="clip" data-start="0" data-duration="170" data-track-index="0">
+      <div id="ground" class="clip" data-start="0" data-duration="137" data-track-index="0">
         <div class="ground"></div>
         <div class="grain"></div>
       </div>
 
       <!-- ── 01 · Cold open · the strike ────────────────────────────────────────────────── -->
-      <section id="s1" class="clip" data-start="0" data-duration="18" data-track-index="1">
+      <section id="s1" class="clip" data-start="0" data-duration="9.8" data-track-index="1">
         <div class="pad">
           <div id="s1-addr" class="mono" style="position:absolute;left:160px;top:150px;font-size:30px;color:var(--ash);letter-spacing:0.06em">
             0x76f30e3f75437fB862B8D2C4D80a671bCeBA5b1A
@@ -132,7 +132,7 @@
       </section>
 
       <!-- ── 02 · The problem ───────────────────────────────────────────────────────────── -->
-      <section id="s2" class="clip" data-start="18" data-duration="22" data-track-index="1">
+      <section id="s2" class="clip" data-start="9.8" data-duration="16.24" data-track-index="1">
         <div class="pad">
           <div class="label" id="s2-l1" style="position:absolute;left:160px;top:196px">Ethereum</div>
           <div class="rule" style="position:absolute;left:160px;top:246px;width:1600px"></div>
@@ -156,7 +156,7 @@
       </section>
 
       <!-- ── 03 · The easy version that fails ───────────────────────────────────────────── -->
-      <section id="s3" class="clip" data-start="40" data-duration="22" data-track-index="1">
+      <section id="s3" class="clip" data-start="26.04" data-duration="18.88" data-track-index="1">
         <div class="pad">
           <div class="label" style="position:absolute;left:160px;top:180px">Our first build</div>
           <div id="s3-code" class="term" style="position:absolute;left:160px;top:250px">openLoan(<i>1 wei</i>) → repay{value: <i>1 wei</i>}(loanId)   <b>× 6</b></div>
@@ -174,22 +174,22 @@
       </section>
 
       <!-- ── 04 · Who was the lender? ───────────────────────────────────────────────────── -->
-      <section id="s4" class="clip" data-start="62" data-duration="20" data-track-index="1">
+      <section id="s4" class="clip" data-start="44.92" data-duration="13.16" data-track-index="1">
         <div class="pad">
           <div id="s4-q" data-layout-allow-overflow data-layout-allow-overlap class="serif h1" style="position:absolute;left:160px;top:400px">
             <span class="maskrow"><span>Who was the <em>lender?</em></span></span>
           </div>
-          <div id="s4-ans" style="position:absolute;left:160px;top:640px">
-            <div class="body" style="max-width:1180px">You cannot fake an Aave loan. So we read the chain where the lenders are.</div>
-            <div class="mono" style="margin-top:38px;font-size:34px;color:var(--vellum)">
-              Creditcoin attests Ethereum mainnet <span class="accent">· chainKey 3</span>
-            </div>
+          <div id="s4-ans" class="body" style="position:absolute;left:160px;top:640px;max-width:1180px">
+            You cannot fake an Aave loan. So we read the chain where the lenders are.
+          </div>
+          <div id="s4-key" class="mono" style="position:absolute;left:160px;top:740px;font-size:34px;color:var(--vellum)">
+            Creditcoin attests Ethereum mainnet <span class="accent">· chainKey 3</span>
           </div>
         </div>
       </section>
 
       <!-- ── 05 · How it verifies ───────────────────────────────────────────────────────── -->
-      <section id="s5" class="clip" data-start="82" data-duration="28" data-track-index="1">
+      <section id="s5" class="clip" data-start="58.08" data-duration="24.76" data-track-index="1">
         <div class="pad">
           <div id="s5-proofs" style="position:absolute;left:160px;top:170px;display:flex;gap:40px">
             <div style="width:760px;border:1px solid var(--line);padding:34px">
@@ -216,7 +216,7 @@
       </section>
 
       <!-- ── 06 · The live demo ─────────────────────────────────────────────────────────── -->
-      <section id="s6" class="clip" data-start="110" data-duration="24" data-track-index="1">
+      <section id="s6" class="clip" data-start="82.84" data-duration="21.36" data-track-index="1">
         <div class="pad">
           <div class="label" style="position:absolute;left:160px;top:160px">Batch import · one Creditcoin transaction</div>
           <div id="s6-hash" class="mono" style="position:absolute;left:160px;top:210px;font-size:29px;color:var(--vellum)">
@@ -242,7 +242,7 @@
       </section>
 
       <!-- ── 07 · The payoff ────────────────────────────────────────────────────────────── -->
-      <section id="s7" class="clip" data-start="134" data-duration="20" data-track-index="1">
+      <section id="s7" class="clip" data-start="104.2" data-duration="13.09" data-track-index="1">
         <div class="pad">
           <div class="label" style="position:absolute;left:160px;top:160px">
             collateralRequired(borrower, 1,000 tUSD) · read live from the deployed pool
@@ -270,7 +270,7 @@
       </section>
 
       <!-- ── 08 · Honesty and sign-off ──────────────────────────────────────────────────── -->
-      <section id="s8" class="clip" data-start="154" data-duration="16" data-track-index="1">
+      <section id="s8" class="clip" data-start="117.29" data-duration="19.71" data-track-index="1">
         <div class="pad">
           <div class="label" id="s8-l" style="position:absolute;left:160px;top:150px">What this does not solve</div>
           <div id="s8-list" style="position:absolute;left:160px;top:210px;width:1600px">
@@ -296,8 +296,11 @@
         </div>
       </section>
 
-      <!-- Track 2 — burned-in captions. -->
-      <div id="cap" class="clip" data-start="0" data-duration="170" data-track-index="2">
+      <!-- The recorded voiceover. Every timing in the script below is read off this take. -->
+      <audio id="vo" src="assets/vo.m4a" data-start="0" data-duration="137" data-track-index="3"></audio>
+
+      <!-- Track 2 — burned-in captions, generated from the take rather than from the script. -->
+      <div id="cap" class="clip" data-start="0" data-duration="137" data-track-index="2">
         <div class="caption"><span id="cap-text"></span></div>
       </div>
     </div>
@@ -306,17 +309,40 @@
       window.__timelines = window.__timelines || {};
 
       /*
-        ── The one place timing lives ──────────────────────────────────────────────────────────
-        Beat in-points, in seconds. When the recorded voiceover arrives, change these numbers and
-        the whole film re-times: clip windows are authored to match, and every tween below is
-        positioned relative to a beat rather than to an absolute second.
+        ── Timing is read off the recorded take, not estimated ────────────────────────────────
+        Every number in T is a real timestamp from `assets/transcript.json`, produced by
+        transcribing the voiceover. Nothing here is a guess about where a word lands: the
+        composition is cut to the performance.
+
+        The take runs 2:15, not the 2:50 the script estimated at 150wpm — it was read nearer 190.
+        Re-timing meant moving cues onto the words rather than squeezing the old spacing.
       */
-      const B = { s1: 0, s2: 18, s3: 40, s4: 62, s5: 82, s6: 110, s7: 134, s8: 154, end: 170 };
+      const T = {
+        // 01 — cold open
+        s1: 0.0,      strike: 8.51,
+        // 02 — the problem
+        s2: 9.8,      aave: 13.4,    rail2: 16.72,   collat: 22.78,
+        // 03 — the easy version that fails
+        s3: 26.04,    topTier: 32.6, cost: 34.4,     admission: 40.8,
+        // 04 — who was the lender
+        s4: 44.92,    question: 47.6, answer: 48.9,  chainKey: 53.24,
+        // 05 — how it verifies
+        s5: 58.08,    merkle: 58.1,  continuity: 61.9, precompile: 65.96, checks: 75.72,
+        // 06 — the live demo
+        s6: 82.84,    gas: 84.4,     ladderLabel: 89.68,
+        steps: [93.64, 94.52, 95.36, 96.87, 97.6, 98.64],
+        platinum: 99.8,
+        // 07 — the payoff. The read introduces 850 first and 1,300 seven seconds later, so the
+        // two cards arrive apart. The storyboard had them landing together; the take wins.
+        s7: 104.2,    n850: 105.1,   n1300: 112.3,   closing: 114.0,
+        // 08 — honesty and sign-off
+        s8: 117.29,   listOut: 126.2, mark: 128.0,   end: 137.0,
+      };
 
       const EASE = 'expo.out';
       const tl = gsap.timeline({ paused: true });
 
-      /* ── Build the punch: eight faces around a vertical axis. ───────────────────────────── */
+      /* Build the punch: eight faces around a vertical axis. */
       (function buildPrism() {
         const host = document.getElementById('s1-prism');
         const FACES = 8, W = 62;
@@ -340,112 +366,148 @@
         host.appendChild(cap);
       })();
 
-      /* ── 01 · The strike ───────────────────────────────────────────────────────────────── */
-      tl.fromTo('#s1-addr', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 1.1, ease: EASE }, B.s1 + 0.6)
-        .fromTo('#s1-sub', { opacity: 0 }, { opacity: 1, duration: 0.9, ease: EASE }, B.s1 + 1.3)
-        // Poised above frame, turned away, then it falls.
-        .fromTo(
-          '#s1-prism',
-          { y: -430, rotateY: 150, rotateX: -8 },
-          { y: 0, rotateY: 0, rotateX: -8, duration: 2.6, ease: 'power3.in' },
-          B.s1 + 5.2
-        )
-        // Impact: the recoil is short and the blank takes the hit.
-        .to('#s1-prism', { y: -26, duration: 0.16, ease: 'power2.out', overwrite: 'auto' }, B.s1 + 7.8)
-        .to('#s1-prism', { y: 0, duration: 0.5, ease: 'bounce.out' }, B.s1 + 7.96)
-        .fromTo('#s1-blank', { scaleX: 1 }, { scaleX: 1.06, duration: 0.12, ease: 'power2.out' }, B.s1 + 7.8)
-        .to('#s1-blank', { scaleX: 1, duration: 0.5, ease: EASE }, B.s1 + 7.92)
-        // The mark is struck — it does not fly in. It was not there, then it is.
-        .fromTo('#s1-mark', { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.55, ease: EASE }, B.s1 + 7.84)
-        // The punch withdraws and leaves the mark behind.
-        .to('#s1-prism', { y: -470, opacity: 0, duration: 2.4, ease: 'power2.inOut' }, B.s1 + 9.4)
-        .to(['#s1-addr', '#s1-sub', '#s1-mark', '#s1-blank'], { opacity: 0, duration: 0.7, ease: 'power2.in' }, B.s2 - 0.9);
+      /* ── 01 · The strike falls through the whole cold open and lands on "what happens next" ── */
+      const fall = T.strike - 4.5;
+      tl.fromTo('#s1-addr', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 1.0, ease: EASE }, 0.15)
+        .fromTo('#s1-sub', { opacity: 0 }, { opacity: 1, duration: 0.8, ease: EASE }, 0.9)
+        .fromTo('#s1-prism', { y: -430, rotateY: 150, rotateX: -8 },
+                { y: 0, rotateY: 0, rotateX: -8, duration: fall, ease: 'power3.in' }, 4.5)
+        .to('#s1-prism', { y: -22, duration: 0.14, ease: 'power2.out', overwrite: 'auto' }, T.strike)
+        .to('#s1-prism', { y: 0, duration: 0.46, ease: 'bounce.out' }, T.strike + 0.14)
+        .fromTo('#s1-blank', { scaleX: 1 }, { scaleX: 1.06, duration: 0.12, ease: 'power2.out' }, T.strike)
+        .to('#s1-blank', { scaleX: 1, duration: 0.5, ease: EASE }, T.strike + 0.12)
+        // Struck, not animated in: it was not there, then it is.
+        .fromTo('#s1-mark', { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.5, ease: EASE }, T.strike + 0.04)
+        .to('#s1 .pad', { opacity: 0, duration: 0.6, ease: 'power2.in' }, T.s2 - 0.65);
 
-      /* ── 02 · The problem ──────────────────────────────────────────────────────────────── */
-      tl.fromTo('#s2-l1', { opacity: 0 }, { opacity: 1, duration: 0.6 }, B.s2 + 0.4)
-        .fromTo('.s2-mark', { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.16, ease: EASE }, B.s2 + 1.1)
-        // The second rail arrives with nothing on it, and is held a beat too long on purpose.
-        .fromTo('#s2-l2', { opacity: 0 }, { opacity: 1, duration: 0.6 }, B.s2 + 8.4)
-        .fromTo('#s2-empty', { opacity: 0 }, { opacity: 1, duration: 0.8 }, B.s2 + 9.4)
-        .fromTo('#s2-collat', { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.9, ease: EASE }, B.s2 + 13.6)
-        .to('#s2 .pad', { opacity: 0, duration: 0.7, ease: 'power2.in' }, B.s3 - 0.9);
+      /* ── 02 · The problem ───────────────────────────────────────────────────────────────── */
+      tl.fromTo('#s2-l1', { opacity: 0 }, { opacity: 1, duration: 0.5 }, T.s2 + 0.2)
+        .fromTo('.s2-mark', { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, stagger: 0.42, ease: EASE }, T.aave)
+        .fromTo('#s2-l2', { opacity: 0 }, { opacity: 1, duration: 0.5 }, T.rail2)
+        .fromTo('#s2-empty', { opacity: 0 }, { opacity: 1, duration: 0.7 }, T.rail2 + 0.8)
+        .fromTo('#s2-collat', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.8, ease: EASE }, T.collat)
+        .to('#s2 .pad', { opacity: 0, duration: 0.6, ease: 'power2.in' }, T.s3 - 0.65);
 
       /* ── 03 · The easy version that fails ──────────────────────────────────────────────── */
-      tl.fromTo('#s3-code', { opacity: 0 }, { opacity: 1, duration: 0.7 }, B.s3 + 0.6)
-        .fromTo('#s3-ladder', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.7, ease: EASE }, B.s3 + 3.0)
-        .fromTo('#s3-cost', { opacity: 0 }, { opacity: 1, duration: 0.6 }, B.s3 + 4.2)
-        // Everything drains, and the admission is left alone in the frame.
-        .to(['#s3-code', '#s3-ladder', '#s3-cost'], { opacity: 0.18, duration: 1.0, ease: 'power2.inOut' }, B.s3 + 11.5)
-        .fromTo('#s3-admit .maskrow > span', { yPercent: 108 }, { yPercent: 0, duration: 1.0, stagger: 0.09, ease: EASE }, B.s3 + 12.0)
-        .to('#s3 .pad', { opacity: 0, duration: 0.7, ease: 'power2.in' }, B.s4 - 0.9);
+      tl.fromTo('#s3-code', { opacity: 0 }, { opacity: 1, duration: 0.6 }, T.s3 + 0.4)
+        .fromTo('#s3-ladder', { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, ease: EASE }, T.topTier)
+        .fromTo('#s3-cost', { opacity: 0 }, { opacity: 1, duration: 0.5 }, T.cost)
+        // Everything drains and the admission is left alone in the frame.
+        .to(['#s3-code', '#s3-ladder', '#s3-cost'], { opacity: 0.18, duration: 0.9, ease: 'power2.inOut' }, T.admission - 0.6)
+        .fromTo('#s3-admit .maskrow > span', { yPercent: 108 }, { yPercent: 0, duration: 0.95, stagger: 0.085, ease: EASE }, T.admission)
+        .to('#s3 .pad', { opacity: 0, duration: 0.6, ease: 'power2.in' }, T.s4 - 0.65);
 
       /* ── 04 · Who was the lender? ──────────────────────────────────────────────────────── */
-      tl.fromTo('#s4-q .maskrow > span', { yPercent: 108 }, { yPercent: 0, duration: 1.1, ease: EASE }, B.s4 + 0.5)
-        // Held in silence — the answer does not arrive for six seconds.
-        .fromTo('#s4-ans', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 1.0, ease: EASE }, B.s4 + 8.2)
-        .to('#s4 .pad', { opacity: 0, duration: 0.7, ease: 'power2.in' }, B.s5 - 0.9);
+      tl.fromTo('#s4-q .maskrow > span', { yPercent: 108 }, { yPercent: 0, duration: 1.0, ease: EASE }, T.question)
+        .fromTo('#s4-ans', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.85, ease: EASE }, T.answer)
+        .fromTo('#s4-key', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.85, ease: EASE }, T.chainKey)
+        .to('#s4 .pad', { opacity: 0, duration: 0.6, ease: 'power2.in' }, T.s5 - 0.65);
 
       /* ── 05 · How it verifies ──────────────────────────────────────────────────────────── */
-      tl.fromTo('#s5-proofs > div', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.8, stagger: 0.18, ease: EASE }, B.s5 + 0.5)
-        .fromTo('#s5-note', { opacity: 0 }, { opacity: 1, duration: 0.8 }, B.s5 + 3.4)
-        // The five checks arrive in order, on the read. They are a sequence, so they behave like one.
-        .fromTo('.s5-row', { opacity: 0, x: -22 }, { opacity: 1, x: 0, duration: 0.6, stagger: 0.85, ease: EASE }, B.s5 + 12.5)
-        .to('#s5 .pad', { opacity: 0, duration: 0.7, ease: 'power2.in' }, B.s6 - 0.9);
+      tl.fromTo('#s5-proofs > div:nth-child(1)', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.7, ease: EASE }, T.merkle + 0.2)
+        .fromTo('#s5-proofs > div:nth-child(2)', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.7, ease: EASE }, T.continuity)
+        .fromTo('#s5-note', { opacity: 0 }, { opacity: 1, duration: 0.7 }, T.precompile)
+        // Five checks over the ~6.5s they are spoken across. They are a sequence; they behave like one.
+        .fromTo('.s5-row', { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5, stagger: 1.25, ease: EASE }, T.checks + 0.25)
+        .to('#s5 .pad', { opacity: 0, duration: 0.6, ease: 'power2.in' }, T.s6 - 0.65);
 
       /* ── 06 · The live demo ────────────────────────────────────────────────────────────── */
-      tl.fromTo('#s6-hash', { opacity: 0 }, { opacity: 1, duration: 0.7 }, B.s6 + 0.5)
-        .fromTo('#s6-gas', { opacity: 0 }, { opacity: 1, duration: 0.7 }, B.s6 + 1.4)
-        // One step per number spoken. The ladder is the beat.
-        .fromTo('.s6-step', { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.45, stagger: 1.5, ease: EASE }, B.s6 + 8.6)
-        .fromTo('#s6-tail', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.8, ease: EASE }, B.s6 + 18.6)
-        .to('#s6 .pad', { opacity: 0, duration: 0.7, ease: 'power2.in' }, B.s7 - 0.9);
+      tl.fromTo('#s6-hash', { opacity: 0 }, { opacity: 1, duration: 0.6 }, T.s6 + 0.3)
+        .fromTo('#s6-gas', { opacity: 0 }, { opacity: 1, duration: 0.6 }, T.gas)
+        .fromTo('#s6-ladder', { opacity: 1 }, { opacity: 1, duration: 0.01 }, T.ladderLabel);
+      // One step per number spoken — placed individually, because the read is not evenly spaced.
+      T.steps.forEach(function (t, i) {
+        tl.fromTo('.s6-step:nth-child(' + (i + 1) + ')',
+          { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.38, ease: EASE }, t);
+      });
+      tl.fromTo('#s6-tail', { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.7, ease: EASE }, T.platinum)
+        .to('#s6 .pad', { opacity: 0, duration: 0.6, ease: 'power2.in' }, T.s7 - 0.65);
 
       /* ── 07 · The payoff ───────────────────────────────────────────────────────────────── */
-      // Both figures land together on one cut. Staggering them would turn a comparison into a list.
-      tl.fromTo(['#s7-a', '#s7-b'], { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.75, ease: EASE }, B.s7 + 1.4)
-        .fromTo('#s7-line .maskrow > span', { yPercent: 108 }, { yPercent: 0, duration: 1.0, stagger: 0.1, ease: EASE }, B.s7 + 11.0)
-        .to('#s7 .pad', { opacity: 0, duration: 0.7, ease: 'power2.in' }, B.s8 - 0.9);
+      tl.fromTo('#s7-a', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.7, ease: EASE }, T.n850)
+        .fromTo('#s7-b', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.7, ease: EASE }, T.n1300)
+        .fromTo('#s7-line .maskrow > span', { yPercent: 108 }, { yPercent: 0, duration: 0.95, stagger: 0.09, ease: EASE }, T.closing)
+        .to('#s7 .pad', { opacity: 0, duration: 0.6, ease: 'power2.in' }, T.s8 - 0.65);
 
       /* ── 08 · Honesty and sign-off ─────────────────────────────────────────────────────── */
-      tl.fromTo('#s8-l', { opacity: 0 }, { opacity: 1, duration: 0.6 }, B.s8 + 0.4)
-        .fromTo('.s8-item', { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.4, stagger: 0.13, ease: EASE }, B.s8 + 0.9)
-        // The list rises out of frame and the mark is what is left.
-        .to('#s8-list', { y: -300, opacity: 0, duration: 1.6, ease: 'power2.inOut' }, B.s8 + 7.6)
-        .to('#s8-l', { opacity: 0, duration: 0.6 }, B.s8 + 7.6)
-        .fromTo('#s8-end', { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 1.2, ease: EASE }, B.s8 + 8.8);
+      tl.fromTo('#s8-l', { opacity: 0 }, { opacity: 1, duration: 0.5 }, T.s8 + 0.3)
+        .fromTo('.s8-item', { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.35, stagger: 0.4, ease: EASE }, T.s8 + 0.45)
+        .to('#s8-list', { y: -280, opacity: 0, duration: 1.4, ease: 'power2.inOut' }, T.listOut)
+        .to('#s8-l', { opacity: 0, duration: 0.5 }, T.listOut)
+        .fromTo('#s8-end', { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 1.1, ease: EASE }, T.mark);
 
       /* ── Captions ──────────────────────────────────────────────────────────────────────────
-         Burned in, because the build guide notes judges skim muted. Driven off the same beat map,
-         so a re-time moves them with everything else. */
+         Generated from the take's own transcript, so they say what was actually said. Whisper's
+         mishearings of the domain terms ("credit coin", "six-way") are corrected. */
       const CAPTIONS = [
-        [B.s1 + 0.6,  6.0, 'This wallet has never sent a transaction to Creditcoin.'],
-        [B.s1 + 7.0,  9.6, 'It did not sign up, and could not have stopped what happens next.'],
-        [B.s2 + 0.4,  8.6, 'Everything a lender needs already exists — on Ethereum. Five loans from Aave, every one repaid.'],
-        [B.s2 + 9.2, 12.0, 'But credit history does not travel. Everywhere else, this borrower is a stranger.'],
-        [B.s3 + 0.4,  6.0, 'There is an easy version of this that does not work.'],
-        [B.s3 + 6.6,  5.2, 'Our first build read repayments from our own contract. It had no lender.'],
-        [B.s3 + 12.0, 9.0, 'A rigorous pipeline for the high-integrity delivery of worthless data.'],
-        [B.s4 + 0.5,  7.4, 'The question that exposes it is one sentence. Who was the lender?'],
-        [B.s4 + 8.2, 10.8, 'Creditcoin attests Ethereum mainnet — the finding this project turns on.'],
-        [B.s5 + 0.5,  6.0, 'A Merkle proof says the transaction is in the block. A continuity proof says the block is really on Ethereum.'],
-        [B.s5 + 6.8,  5.4, 'Checked by Creditcoin’s own precompile, in-contract, inside one block.'],
-        [B.s5 + 12.4,  4.0, 'No oracle we run. No multisig we control. No bridge holding funds.'],
-        [B.s5 + 16.6, 10.8, 'Then five more checks run — because a valid proof of the wrong thing is still worthless.'],
-        [B.s6 + 0.5,  7.8, 'Nine Sepolia transactions, verified in a single Creditcoin transaction.'],
-        [B.s6 + 8.6,  9.6, 'Five real Aave repayments, proven one at a time.'],
-        [B.s6 + 18.4,  5.0, 'Platinum, assembled entirely from transactions made somewhere else.'],
-        [B.s7 + 0.6,  9.8, 'Which buys this. Eight hundred and fifty of collateral, to borrow a thousand.'],
-        [B.s8 + 0.4,  7.0, 'An audit found a flash loan could buy that capacity. It is closed, tested, and written down.'],
-        [B.s8 + 7.4,  3.2, 'Along with eleven other things we have not solved.'],
-        [B.s8 + 11.8,  3.6, 'Every number is live on testnet, from real mainnet history.'],
+        [0.2, 3.21, "This wallet has never sent a transaction to Creditcoin."],
+        [3.43, 1.32, "It has never heard of us."],
+        [4.75, 2.45, "It did not sign up, did not opt in,"],
+        [7.2, 2.4, "and could not have stopped what happens next."],
+        [9.8, 4.04, "Everything a lender needs to know about it already exists, on Ethereum."],
+        [14.12, 2.6, "Five loans from Aave, every one repaid."],
+        [16.72, 2.24, "But credit history does not travel."],
+        [18.96, 2.83, "So on every other chain, this borrower is a"],
+        [21.79, 4.05, "stranger, and a stranger posts 150% collateral."],
+        [26.04, 2.68, "There is an easy version of this that does not work."],
+        [28.72, 3.0, "Our first build read repayments from our own contract."],
+        [31.72, 1.56, "It had no lender."],
+        [33.28, 3.64, "So six wei, 12 transactions, and one wallet reached the"],
+        [36.92, 3.29, "top tier, and every proof was cryptographically valid."],
+        [40.21, 2.56, "We had built a rigorous pipeline for the high-integrity"],
+        [42.86, 1.86, "delivery of worthless data."],
+        [44.92, 2.68, "The question that exposes it is one sentence."],
+        [47.8, 1.08, "Who was the lender?"],
+        [48.88, 1.66, "You cannot fake an Aave loan."],
+        [50.54, 2.48, "So we read the chain where the lenders are."],
+        [53.24, 3.72, "Creditcoin attests Ethereum mainnet, undocumented, and the thing"],
+        [56.96, 1.12, "this project turns on."],
+        [58.08, 4.16, "A Merkle inclusion proof says the transaction is in the block."],
+        [62.24, 3.52, "A continuity proof says the block is really on Ethereum."],
+        [65.96, 4.29, "Creditcoin's own precompile checks both inside one block in the contract."],
+        [70.25, 1.58, "No oracle we run."],
+        [71.83, 1.85, "No multisig we control."],
+        [73.75, 1.77, "No bridge holding funds."],
+        [75.72, 2.53, "Then five more checks run before a single point"],
+        [78.25, 2.38, "of score moves, because a valid proof of the"],
+        [80.63, 2.01, "wrong thing is still worthless."],
+        [82.84, 3.57, "Nine Sepolia transactions, verified in a single Creditcoin"],
+        [86.41, 3.27, "transaction, for 134,000 gas each."],
+        [89.68, 6.69, "Five real Aave repayments, proven one at a time. Zero. 320. 440."],
+        [96.87, 3.42, "560. 680. 800. Platinum."],
+        [100.4, 4.88, "Assembled entirely from transactions made somewhere else. Which buys this."],
+        [105.28, 3.2, "850 of collateral to borrow a thousand."],
+        [108.48, 2.38, "And the same call for a wallet whose history"],
+        [110.93, 3.07, "it dealt to itself, returns 1,300."],
+        [114, 1.84, "Their proofs are just as valid."],
+        [116.04, 1.23, "Their evidence is not."],
+        [117.29, 2.11, "An audit found that a flash loan could buy"],
+        [119.4, 1.8, "that capacity for the price of gas."],
+        [121.2, 2.67, "It is closed, it is tested, and it is"],
+        [123.87, 3.81, "written down, along with 11 other things we have not solved."],
+        [127.88, 2.33, "Every number you just saw is live on testnet"],
+        [130.3, 2.82, "from real mainnet history. CrossCredit."],
+        [133.12, 1.6, "Proof punched into metal."]
       ];
 
       const capEl = document.getElementById('cap-text');
-      CAPTIONS.forEach(function (c, i) {
-        const at = c[0], dur = c[1], text = c[2];
-        tl.call(function () { capEl.textContent = text; capEl.style.opacity = '1'; }, null, at);
-        tl.call(function () { capEl.style.opacity = '0'; }, null, at + dur);
+      CAPTIONS.forEach(function (c) {
+        tl.call(function () { capEl.textContent = c[2]; capEl.style.opacity = '1'; }, null, c[0]);
+        tl.call(function () { capEl.style.opacity = '0'; }, null, c[0] + c[1]);
       });
+
+      /*
+        Hard kills on every scene exit. A fade that finishes at a clip boundary is fine played
+        forward, but the renderer seeks — land a frame after the tween and the element can still
+        be carrying stale visibility. A zero-duration set at the boundary makes the exit absolute.
+      */
+      tl.set('#s1 .pad', { opacity: 0 }, 9.8);
+      tl.set('#s2 .pad', { opacity: 0 }, 26.04);
+      tl.set('#s3 .pad', { opacity: 0 }, 44.92);
+      tl.set('#s4 .pad', { opacity: 0 }, 58.08);
+      tl.set('#s5 .pad', { opacity: 0 }, 82.84);
+      tl.set('#s6 .pad', { opacity: 0 }, 104.2);
+      tl.set('#s7 .pad', { opacity: 0 }, 117.29);
 
       window.__timelines['main'] = tl;
     </script>

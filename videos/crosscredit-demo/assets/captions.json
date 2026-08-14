@@ -1,0 +1,242 @@
+[
+ {
+  "t": 0.2,
+  "e": 3.41,
+  "x": "This wallet has never sent a transaction to Creditcoin."
+ },
+ {
+  "t": 3.43,
+  "e": 4.75,
+  "x": "It has never heard of us."
+ },
+ {
+  "t": 4.75,
+  "e": 7.2,
+  "x": "It did not sign up, did not opt in,"
+ },
+ {
+  "t": 7.2,
+  "e": 9.6,
+  "x": "and could not have stopped what happens next."
+ },
+ {
+  "t": 9.8,
+  "e": 13.84,
+  "x": "Everything a lender needs to know about it already exists, on Ethereum."
+ },
+ {
+  "t": 14.12,
+  "e": 16.72,
+  "x": "Five loans from Aave, every one repaid."
+ },
+ {
+  "t": 16.72,
+  "e": 18.96,
+  "x": "But credit history does not travel."
+ },
+ {
+  "t": 18.96,
+  "e": 21.79,
+  "x": "So on every other chain, this borrower is a"
+ },
+ {
+  "t": 21.79,
+  "e": 25.84,
+  "x": "stranger, and a stranger posts 150% collateral."
+ },
+ {
+  "t": 26.04,
+  "e": 28.72,
+  "x": "There is an easy version of this that does not work."
+ },
+ {
+  "t": 28.72,
+  "e": 31.72,
+  "x": "Our first build read repayments from our own contract."
+ },
+ {
+  "t": 31.72,
+  "e": 33.28,
+  "x": "It had no lender."
+ },
+ {
+  "t": 33.28,
+  "e": 36.92,
+  "x": "So six wei, 12 transactions, and one wallet reached the"
+ },
+ {
+  "t": 36.92,
+  "e": 40.21,
+  "x": "top tier, and every proof was cryptographically valid."
+ },
+ {
+  "t": 40.21,
+  "e": 42.77,
+  "x": "We had built a rigorous pipeline for the high-integrity"
+ },
+ {
+  "t": 42.86,
+  "e": 44.72,
+  "x": "delivery of worthless data."
+ },
+ {
+  "t": 44.92,
+  "e": 47.6,
+  "x": "The question that exposes it is one sentence."
+ },
+ {
+  "t": 47.8,
+  "e": 48.88,
+  "x": "Who is the lender?"
+ },
+ {
+  "t": 48.88,
+  "e": 50.54,
+  "x": "You cannot fake an Aave loan."
+ },
+ {
+  "t": 50.54,
+  "e": 53.02,
+  "x": "So we read the chain where the lenders are."
+ },
+ {
+  "t": 53.24,
+  "e": 56.96,
+  "x": "Creditcoin attests Ethereum mainnet, undocumented, and the thing"
+ },
+ {
+  "t": 56.96,
+  "e": 58.08,
+  "x": "this project turns on."
+ },
+ {
+  "t": 58.08,
+  "e": 62.24,
+  "x": "A Merkle inclusion proof says the transaction is in the block."
+ },
+ {
+  "t": 62.24,
+  "e": 65.76,
+  "x": "A continuity proof says the block is really on Ethereum."
+ },
+ {
+  "t": 65.96,
+  "e": 70.25,
+  "x": "Creditcoin's own precompile checks both inside one block in the contract."
+ },
+ {
+  "t": 70.25,
+  "e": 71.83,
+  "x": "No oracle we run."
+ },
+ {
+  "t": 71.83,
+  "e": 73.68,
+  "x": "No multisig we control."
+ },
+ {
+  "t": 73.75,
+  "e": 75.52,
+  "x": "No bridge holding funds."
+ },
+ {
+  "t": 75.72,
+  "e": 78.25,
+  "x": "Then five more checks run before a single point"
+ },
+ {
+  "t": 78.25,
+  "e": 80.63,
+  "x": "of score moves, because a valid proof of the"
+ },
+ {
+  "t": 80.63,
+  "e": 82.64,
+  "x": "wrong thing is still worthless."
+ },
+ {
+  "t": 82.84,
+  "e": 86.41,
+  "x": "Nine Sepolia transactions, verified in a single Creditcoin"
+ },
+ {
+  "t": 86.41,
+  "e": 89.68,
+  "x": "transaction, for 134,000 gas each."
+ },
+ {
+  "t": 89.68,
+  "e": 96.37,
+  "x": "Five real Aave repayments, proven one at a time. Zero. 320. 440."
+ },
+ {
+  "t": 96.87,
+  "e": 100.29,
+  "x": "560. 680. 800. Platinum."
+ },
+ {
+  "t": 100.4,
+  "e": 105.28,
+  "x": "Assembled entirely from transactions made somewhere else. Which buys this."
+ },
+ {
+  "t": 105.28,
+  "e": 108.48,
+  "x": "850 of collateral to borrow a thousand."
+ },
+ {
+  "t": 108.48,
+  "e": 110.86,
+  "x": "And the same call for a wallet whose history"
+ },
+ {
+  "t": 110.93,
+  "e": 114,
+  "x": "it dealt to itself, returns 1,300."
+ },
+ {
+  "t": 114,
+  "e": 115.84,
+  "x": "Their proofs are just as valid."
+ },
+ {
+  "t": 116.04,
+  "e": 117.27,
+  "x": "Their evidence is not."
+ },
+ {
+  "t": 117.29,
+  "e": 119.4,
+  "x": "An audit found that a flash loan could buy"
+ },
+ {
+  "t": 119.4,
+  "e": 121.2,
+  "x": "that capacity for the price of gas."
+ },
+ {
+  "t": 121.2,
+  "e": 123.87,
+  "x": "It is closed, it is tested, and it is"
+ },
+ {
+  "t": 123.87,
+  "e": 127.68,
+  "x": "written down, along with 11 other things we have not solved."
+ },
+ {
+  "t": 127.88,
+  "e": 130.21,
+  "x": "Every number you just saw is live on testnet"
+ },
+ {
+  "t": 130.3,
+  "e": 133.12,
+  "x": "from real mainnet history. CrossCredit."
+ },
+ {
+  "t": 133.12,
+  "e": 134.72,
+  "x": "Proof punched into metal."
+ }
+]

@@ -1,7 +1,12 @@
 # CrossCredit — voiceover script
 
-**Target: 2:50.** Under the 3:30 cap in `BUILD_GUIDE.md` §9, because judges skim and a tight film
-reads as confidence. 16:9, 1080p, captions burned in.
+**Recorded: 2:15.** Under the 3:30 cap in `BUILD_GUIDE.md` §9. 16:9, 1080p, captions burned in.
+
+> **This take is locked and the film is cut to it.** The read came in at ~190 wpm rather than the
+> 150 this script estimated, so the delivered film is 2:17, not the 2:50 planned below. Every cue in
+> the composition is positioned on a real timestamp from `videos/crosscredit-demo/assets/transcript.json`.
+> If you re-record, re-run `npx hyperframes transcribe` and update the `T` map in `index.html` —
+> nothing else needs touching.
 
 **How to record this.** Read at roughly 150 words per minute — unhurried, low, closer to a
 documentary narrator than a product ad. The silences are written in and they are load-bearing:
