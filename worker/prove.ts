@@ -152,7 +152,26 @@ export async function submitProof(
   return receipt;
 }
 
+/**
+ * Turns an error into a log line with no credentials in it.
+ *
+ * @remarks
+ * ethers embeds the full RPC endpoint in `error.message` for any transport failure, and our
+ * endpoint carries an Alchemy API key. So the obvious `console.error(describe(error))` quietly
+ * printed a live credential on every network hiccup — into terminal scrollback, into CI logs, and
+ * into the demo video. Same failure class as the key that reached a committed evidence file: not
+ * malice, just a value travelling somewhere nobody looked.
+ *
+ * Prefers ethers' `shortMessage` (the human-readable reason, no transport detail), then strips any
+ * surviving URL and any 64-hex run. Never pass a raw error object to a logger.
+ */
 export function describe(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  return String(error);
+  const raw =
+    error instanceof Error
+      ? ((error as {shortMessage?: string}).shortMessage ?? error.message)
+      : String(error);
+
+  return raw
+    .replace(/https?:\/\/\S+/gi, '<rpc-url redacted>')
+    .replace(/\b(?:0x)?[0-9a-fA-F]{64}\b/g, (match) => `${match.slice(0, 10)}…`);
 }

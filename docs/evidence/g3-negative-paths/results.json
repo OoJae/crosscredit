@@ -1,7 +1,7 @@
 {
-  "capturedAt": "2026-08-13T23:07:35.500Z",
+  "capturedAt": "2026-08-14T09:42:30.381Z",
   "network": "creditcoin-cc3-testnet",
-  "registry": "0xB5F3B44113A31B07508464de39d7ddd939184B2c",
+  "registry": "0x4C4381dB68a1cAAE46a2E6CFc2f667ad22Dddf81",
   "precompile": "0x0000000000000000000000000000000000000FD2",
   "baselineProof": "0xeeaa5b3f44a0727b175dab9a97838b6e50e0c476668fc18649d77b7b81e9e8ea",
   "allRejected": true,
@@ -32,7 +32,7 @@
       "attack": "resubmitting an already-ingested transaction",
       "layer": "USCBase replay guard",
       "rejected": true,
-      "reason": "Query already processed"
+      "reason": "UnknownAction(uint8)"
     },
     {
       "name": "Oversized batch",

@@ -29,8 +29,11 @@ library EventSigs {
 
     /// @dev `LoanOpened(uint256,address,uint256,uint64)`
     bytes32 internal constant LOAN_OPENED = 0x0d7f8e19afd65be70c0b9ff46dab1702a44ca0e8fcd33448375d7c2690e5866b;
-    /// @dev `RepaymentMade(uint256,address,uint256,bool,uint64)`
-    bytes32 internal constant REPAYMENT_MADE = 0x7d64aa0e099ec7ce5a5e95941014b245cf86dd8cd1115dd1ee421d8ec4d04206;
+    /// @dev `RepaymentMade(uint256,address,address,uint256,bool,uint64)` — topics are
+    /// `[sig, loanId, borrower, payer]`. `payer` was added in LoanBook v2 so that a third party
+    /// settling someone's past-due debt cannot stamp a `late` on their profile; the registry
+    /// credits every repayment but penalises only the borrower's own lateness.
+    bytes32 internal constant REPAYMENT_MADE = 0x57f8fd60d10653687e2d0846de33d6d6099eb9eb0fb197aff44c9a9d5a6af0b5;
     /// @dev `CollateralAdded(address,uint256)`
     bytes32 internal constant COLLATERAL_ADDED = 0x7dba1be544024070cd5eebfa8bdd80a8b198cea8058c7d3cc1f8dd36e41ab2f7;
 

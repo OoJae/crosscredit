@@ -50,7 +50,15 @@ contract MainnetProofTest is Test {
         registry.registerSource(MAINNET, AAVE_V3_POOL, SourceKind.AaveV3);
         registry.registerSource(MAINNET, ENS_CONTROLLER_V4, SourceKind.EnsRegistrar);
         registry.registerReserve(USDT, 6);
+
+        // Without this, `block.timestamp` is 1 and every `expires <= block.timestamp` gate in the
+        // registry is trivially satisfied — so the ENS and Proof of Humanity expiry checks, and the
+        // test that claims to prove a lapsed identity stops counting, all assert nothing at all.
+        vm.warp(NOW);
     }
+
+    /// @dev The same clock the other suites use, so profiles are comparable across them.
+    uint64 internal constant NOW = 1_786_000_000;
 
     /// @dev The reserve repaid in the captured transaction. USDT has 6 decimals, not 18 — which
     /// is precisely the trap `registerReserve` exists to avoid.
@@ -256,31 +264,50 @@ contract MainnetProofTest is Test {
         assertLt(capacity, 10_000e18, "nor be inflated");
     }
 
-    /// @dev An unregistered reserve fails closed: the repayment still counts, but it contributes
-    /// no borrowing capacity, because crediting an unknown quantity is worse than crediting none.
-    function test_mainnet_unregisteredReserveGrantsNoCapacity() public {
+    /// @dev An unregistered reserve fails **loud**, not closed.
+    ///
+    /// This used to ingest the repayment for zero capacity, which sounded conservative and was in
+    /// fact destructive: returning success consumed the transaction's query id permanently, so once
+    /// the owner registered the asset the very same proof could never be resubmitted. The
+    /// borrower's largest repayment was not deferred, it was destroyed — and anyone could trigger
+    /// that deliberately by front-running a victim's own import. Reverting leaves the proof intact
+    /// and retryable, which is what {test_mainnet_unregisteredReserveWorksOnceRegistered} shows.
+    function test_mainnet_unregisteredReserveRevertsRatherThanBurningTheProof() public {
         CreditRegistry fresh = new CreditRegistry();
         fresh.registerSource(MAINNET, AAVE_V3_POOL, SourceKind.AaveV3);
         // Deliberately no registerReserve call.
 
+        vm.expectRevert(abi.encodeWithSelector(CreditRegistry.UnregisteredReserve.selector, USDT));
+        _submitTo(fresh, MAINNET, "mainnet-aave-repay.json", bytes32(uint256(11)));
+
+        assertEq(fresh.profileOf(AAVE_BORROWER).mainnetRepayments, 0, "nothing was recorded");
+    }
+
+    /// @dev The proof survived the rejection, so registering the reserve makes it importable.
+    function test_mainnet_unregisteredReserveWorksOnceRegistered() public {
+        CreditRegistry fresh = new CreditRegistry();
+        fresh.registerSource(MAINNET, AAVE_V3_POOL, SourceKind.AaveV3);
+
+        vm.expectRevert(abi.encodeWithSelector(CreditRegistry.UnregisteredReserve.selector, USDT));
+        _submitTo(fresh, MAINNET, "mainnet-aave-repay.json", bytes32(uint256(11)));
+
+        fresh.registerReserve(USDT, 6);
+        _submitTo(fresh, MAINNET, "mainnet-aave-repay.json", bytes32(uint256(11)));
+
+        assertEq(fresh.profileOf(AAVE_BORROWER).mainnetRepayments, 1, "the same proof now imports");
+        assertGt(fresh.demonstratedCapacityOf(AAVE_BORROWER), 0, "and grants its capacity");
+    }
+
+    /// @dev Submits a fixture to an arbitrary registry instance.
+    function _submitTo(CreditRegistry target, uint64 chainKey, string memory fixture, bytes32 salt) internal {
         INativeQueryVerifier.MerkleProofEntry[] memory siblings = new INativeQueryVerifier.MerkleProofEntry[](1);
-        siblings[0] = INativeQueryVerifier.MerkleProofEntry({hash: bytes32(uint256(11)), isLeft: true});
+        siblings[0] = INativeQueryVerifier.MerkleProofEntry({hash: salt, isLeft: true});
         bytes32[] memory roots = new bytes32[](1);
         roots[0] = bytes32(uint256(0xc0));
 
-        fresh.execute(
-            0,
-            MAINNET,
-            _height("mainnet-aave-repay.json"),
-            _txBytes("mainnet-aave-repay.json"),
-            bytes32(uint256(11)),
-            siblings,
-            bytes32(uint256(0xab)),
-            roots
+        target.execute(
+            0, chainKey, _height(fixture), _txBytes(fixture), salt, siblings, bytes32(uint256(0xab)), roots
         );
-
-        assertEq(fresh.profileOf(AAVE_BORROWER).mainnetRepayments, 1, "the repayment still counts");
-        assertEq(fresh.demonstratedCapacityOf(AAVE_BORROWER), 0, "but grants no borrowing capacity");
     }
 
     /// @dev Sepolia and mainnet histories accumulate into one profile, which is the whole point of

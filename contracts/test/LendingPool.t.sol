@@ -5,6 +5,8 @@ import {Test} from "forge-std/Test.sol";
 import {LendingPool, ITierSource} from "../src/creditcoin/LendingPool.sol";
 import {TUSD} from "../src/creditcoin/TUSD.sol";
 import {Tier} from "../src/creditcoin/ScoreLib.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 
 /// @dev Drives tiers directly; the registry's proof-to-tier path is covered elsewhere.
 contract StubTierSource is ITierSource {
@@ -140,7 +142,7 @@ contract LendingPoolTest is Test {
         assertEq(asset.balanceOf(platinum), amount);
         assertLt(collateral, amount, "borrowed more value than posted");
 
-        (uint256 principal, uint256 lockedCollateral,, Tier tierAtOrigination, bool active) = pool.loans(platinum);
+        (uint256 principal, uint256 lockedCollateral,, Tier tierAtOrigination,, bool active) = pool.loans(platinum);
         assertEq(principal, amount);
         assertEq(lockedCollateral, collateral);
         assertEq(uint8(tierAtOrigination), uint8(Tier.Platinum));
@@ -182,7 +184,7 @@ contract LendingPoolTest is Test {
     function test_borrow_rejectsWhenPaused() public {
         pool.pause();
         vm.prank(platinum);
-        vm.expectRevert();
+        vm.expectRevert(Pausable.EnforcedPause.selector);
         pool.borrow{value: 85e18}(100e18);
     }
 
@@ -250,7 +252,7 @@ contract LendingPoolTest is Test {
         vm.stopPrank();
 
         assertEq(platinum.balance - balanceBefore, collateral, "collateral returned in full");
-        (,,,, bool active) = pool.loans(platinum);
+        (,,,,, bool active) = pool.loans(platinum);
         assertFalse(active);
     }
 
@@ -278,7 +280,7 @@ contract LendingPoolTest is Test {
         pool.repay();
         vm.stopPrank();
 
-        (,,,, bool active) = pool.loans(platinum);
+        (,,,,, bool active) = pool.loans(platinum);
         assertFalse(active, "downgrade cannot trap an existing loan");
     }
 
@@ -312,7 +314,7 @@ contract LendingPoolTest is Test {
         attacker.settle(asset);
 
         // The re-entrant borrow must not have opened a second loan.
-        (,,,, bool active) = pool.loans(address(attacker));
+        (,,,,, bool active) = pool.loans(address(attacker));
         assertFalse(active, "no loan re-opened during the collateral refund");
     }
 
@@ -334,9 +336,109 @@ contract LendingPoolTest is Test {
         vm.prank(platinum);
         pool.borrow{value: 850e18}(1_000e18);
 
+        vm.warp(block.timestamp + 31 days);
+
         vm.prank(bronze);
-        vm.expectRevert();
+        vm.expectRevert(
+            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, bronze)
+        );
         pool.liquidate(platinum);
+    }
+
+    // ─── Liquidation ──────────────────────────────────────────────────────────────────────
+    //
+    // This path had no coverage at all, and it needed it most: `liquidate` used to check nothing
+    // but `active`, so the owner could seize a fully collateralized loan one second after it
+    // opened — and the collateral went to `owner()` personally rather than to the pool that
+    // funded it. That is a rug with a function name.
+
+    /// A loan inside its grace period is not in default, whatever the owner thinks.
+    function test_liquidate_revertsBeforeTheGracePeriodElapses() public {
+        vm.prank(platinum);
+        pool.borrow{value: 850e18}(1_000e18);
+
+        uint64 liquidatableAt = uint64(block.timestamp + pool.gracePeriod());
+
+        vm.expectRevert(
+            abi.encodeWithSelector(LendingPool.LoanNotInDefault.selector, platinum, liquidatableAt)
+        );
+        pool.liquidate(platinum);
+    }
+
+    /// Past the grace period, the debt is seized — into the pool, not the owner's pocket.
+    function test_liquidate_seizesToThePoolNotTheOwner() public {
+        vm.prank(platinum);
+        pool.borrow{value: 850e18}(1_000e18);
+
+        vm.warp(block.timestamp + 31 days);
+
+        uint256 ownerBefore = address(this).balance;
+        uint256 poolBefore = address(pool).balance;
+
+        pool.liquidate(platinum);
+
+        assertEq(address(this).balance, ownerBefore, "the owner receives nothing");
+        assertEq(address(pool).balance, poolBefore, "the collateral stays with the pool");
+
+        (,,,,, bool active) = pool.loans(platinum);
+        assertFalse(active, "and the loan is closed");
+    }
+
+    /// Seizing more than the debt is a penalty, not a recovery, so the excess goes back.
+    function test_liquidate_refundsCollateralAboveTheDebt() public {
+        registry.setCapacity(bronze, 0);
+        vm.prank(bronze);
+        pool.borrow{value: 150e18}(100e18); // 150% collateral on a 100 loan
+
+        vm.warp(block.timestamp + 31 days);
+
+        uint256 owed = pool.totalOwed(bronze);
+        uint256 before = bronze.balance;
+
+        pool.liquidate(bronze);
+
+        assertEq(bronze.balance - before, 150e18 - owed, "the surplus is returned to the borrower");
+    }
+
+    function test_liquidate_revertsWithoutAnActiveLoan() public {
+        vm.expectRevert(abi.encodeWithSelector(LendingPool.NoActiveLoan.selector, platinum));
+        pool.liquidate(platinum);
+    }
+
+    // ─── Terms are fixed at origination ───────────────────────────────────────────────────
+
+    /// `interestDue` read the tier's *current* APR, so the owner could reprice a loan that had
+    /// already been signed for. The rate the borrower agreed to is now frozen into the loan.
+    function test_setTerms_cannotRepriceAnOpenLoan() public {
+        vm.prank(platinum);
+        pool.borrow{value: 850e18}(1_000e18);
+
+        vm.warp(block.timestamp + 365 days);
+        uint256 owedAtAgreedRate = pool.totalOwed(platinum);
+
+        // Quadruple the Platinum rate.
+        pool.setTerms(Tier.Platinum, 8_500, 2_400, 10_000e18);
+
+        assertEq(pool.totalOwed(platinum), owedAtAgreedRate, "an open loan keeps the rate it was written at");
+    }
+
+    function test_setTerms_rejectsAConfiscatoryRate() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(LendingPool.AprTooHigh.selector, uint16(5_001), pool.MAX_APR_BPS())
+        );
+        pool.setTerms(Tier.Bronze, 15_000, 5_001, 100e18);
+    }
+
+    function test_setGracePeriod_isOwnerOnlyAndNonZero() public {
+        vm.expectRevert(LendingPool.ZeroAmount.selector);
+        pool.setGracePeriod(0);
+
+        vm.prank(bronze);
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, bronze));
+        pool.setGracePeriod(1 days);
+
+        pool.setGracePeriod(1 days);
+        assertEq(pool.gracePeriod(), 1 days);
     }
 
     function test_constructor_rejectsZeroAddresses() public {

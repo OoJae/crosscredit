@@ -51,13 +51,19 @@ contract LendingPool is Ownable, Pausable, ReentrancyGuard {
     /// @param principal tUSD borrowed.
     /// @param collateral tCTC locked, in wei.
     /// @param openedAt Timestamp interest accrues from.
-    /// @param tierAtOrigination Tier when the loan was taken, which fixes its terms for life.
+    /// @param tierAtOrigination Tier when the loan was taken.
+    /// @param aprBps The rate this loan actually pays, frozen at origination.
     /// @param active False once repaid or liquidated.
+    /// @dev `aprBps` is stored rather than looked up from {termsFor} because the tier alone did
+    /// not fix the terms: `setTerms` rewrites a tier's rate, and `interestDue` read it live, so an
+    /// owner could reprice a loan that had already been signed for. Freezing the number the
+    /// borrower agreed to is what makes "terms fixed at origination" true rather than aspirational.
     struct Loan {
         uint256 principal;
         uint256 collateral;
         uint64 openedAt;
         Tier tierAtOrigination;
+        uint16 aprBps;
         bool active;
     }
 
@@ -76,10 +82,19 @@ contract LendingPool is Ownable, Pausable, ReentrancyGuard {
     /// @notice One open loan per borrower, keeping the demo legible.
     mapping(address => Loan) public loans;
 
+    /// @notice How long after origination a loan may run before it can be liquidated.
+    /// @dev A loan has no maturity in this design, so without an explicit clock there is no
+    /// observable moment of default — which is how `liquidate` ended up gated on nothing at all.
+    uint64 public gracePeriod = 30 days;
+
+    /// @notice Ceiling on any tier's APR, so `setTerms` cannot express a confiscatory rate.
+    uint16 public constant MAX_APR_BPS = 5_000;
+
     event Borrowed(address indexed borrower, uint256 principal, uint256 collateral, Tier tier, uint16 collateralRatioBps);
     event Repaid(address indexed borrower, uint256 principal, uint256 interest, uint256 collateralReturned);
     event Liquidated(address indexed borrower, uint256 principal, uint256 collateralSeized);
     event TermsUpdated(Tier tier, uint16 collateralRatioBps, uint16 aprBps, uint256 maxBorrow);
+    event GracePeriodUpdated(uint64 gracePeriod);
 
     error ZeroAmount();
     error ZeroAddress();
@@ -89,6 +104,8 @@ contract LendingPool is Ownable, Pausable, ReentrancyGuard {
     error ExceedsTierLimit(uint256 requested, uint256 maximum);
     error InsufficientLiquidity(uint256 requested, uint256 available);
     error CollateralTransferFailed();
+    error LoanNotInDefault(address borrower, uint64 liquidatableAt);
+    error AprTooHigh(uint16 aprBps, uint16 maximum);
 
     constructor(address registry, address asset) Ownable(msg.sender) {
         if (registry == address(0) || asset == address(0)) revert ZeroAddress();
@@ -124,7 +141,10 @@ contract LendingPool is Ownable, Pausable, ReentrancyGuard {
     /// which makes it **invariant under identity multiplication**: splitting a history across a
     /// thousand fresh wallets divides the capacity rather than multiplying it, and a wallet with
     /// no real history gets no undercollateralized credit however high its score. Extra pseudonyms
-    /// cannot manufacture extra capacity — the formal statement is in arXiv:2605.03307.
+    /// cannot manufacture extra capacity. This follows directly from capacity being a **maximum**
+    /// rather than a sum, not from any external result — an earlier comment credited
+    /// arXiv:2605.03307, which formalises sponsor-delegated capacity with loss recourse, a
+    /// mechanism this contract does not have. See docs/THREAT_MODEL.md.
     ///
     /// It also closes the hole that motivated all of this: a borrower who farmed a spotless record
     /// on a contract with no lender can reach a good rate, but cannot borrow a penny more than
@@ -176,6 +196,7 @@ contract LendingPool is Ownable, Pausable, ReentrancyGuard {
             collateral: msg.value,
             openedAt: uint64(block.timestamp),
             tierAtOrigination: tier,
+            aprBps: terms.aprBps,
             active: true
         });
 
@@ -183,12 +204,12 @@ contract LendingPool is Ownable, Pausable, ReentrancyGuard {
         ASSET.safeTransfer(msg.sender, amount);
     }
 
-    /// @notice Interest owed so far — simple, not compounding, at the origination tier's APR.
+    /// @notice Interest owed so far — simple, not compounding, at the rate frozen at origination.
     function interestDue(address borrower) public view returns (uint256) {
         Loan memory loan = loans[borrower];
         if (!loan.active) return 0;
         uint256 elapsed = block.timestamp - loan.openedAt;
-        return (loan.principal * termsFor[loan.tierAtOrigination].aprBps * elapsed) / (BPS * YEAR);
+        return (loan.principal * loan.aprBps * elapsed) / (BPS * YEAR);
     }
 
     /// @notice Total owed to close the loan.
@@ -217,19 +238,40 @@ contract LendingPool is Ownable, Pausable, ReentrancyGuard {
         if (!sent) revert CollateralTransferFailed();
     }
 
-    /// @notice Seizes collateral on a defaulted loan.
-    /// @dev A stub. Real liquidation needs a price feed, a health-factor threshold and an
-    /// incentive for third-party liquidators; presenting owner-only seizure as more than a
-    /// placeholder would be dishonest. Roadmap item.
+    /// @notice Seizes collateral on a loan that has run past its grace period without repayment.
+    ///
+    /// @dev Still not a real liquidation engine — that needs a price feed, a health factor and an
+    /// incentive for third-party liquidators, and this has none of them. But it is no longer an
+    /// unconditional owner withdrawal, which is what it was: the only state it checked was
+    /// `active`, so the owner could seize a fully collateralized loan one second after it opened,
+    /// and the collateral went to `owner()` **personally** rather than to the pool that funded it.
+    /// A depositor reading that could reasonably have called it a rug.
+    ///
+    /// Two changes make it defensible: a loan must actually be overdue, and the proceeds go to the
+    /// pool, which is what bore the loss. Anything beyond the debt is returned to the borrower —
+    /// seizing collateral worth more than the debt is a penalty, not a recovery.
+    ///
+    /// @param borrower The defaulted borrower.
     function liquidate(address borrower) external onlyOwner nonReentrant {
         Loan memory loan = loans[borrower];
         if (!loan.active) revert NoActiveLoan(borrower);
 
-        delete loans[borrower];
-        emit Liquidated(borrower, loan.principal, loan.collateral);
+        uint256 deadline = loan.openedAt + gracePeriod;
+        if (block.timestamp <= deadline) revert LoanNotInDefault(borrower, uint64(deadline));
 
-        (bool sent,) = payable(owner()).call{value: loan.collateral}("");
-        if (!sent) revert CollateralTransferFailed();
+        uint256 owed = loan.principal + interestDue(borrower);
+        uint256 seized = loan.collateral > owed ? owed : loan.collateral;
+        uint256 refund = loan.collateral - seized;
+
+        delete loans[borrower];
+        emit Liquidated(borrower, loan.principal, seized);
+
+        // Seized collateral stays in this contract — `receive()` already accepts tCTC, so no
+        // transfer is needed. Only the excess moves, and it moves back to the borrower.
+        if (refund > 0) {
+            (bool sent,) = payable(borrower).call{value: refund}("");
+            if (!sent) revert CollateralTransferFailed();
+        }
     }
 
     // ─── Administration ───────────────────────────────────────────────────────────────────
@@ -239,10 +281,21 @@ contract LendingPool is Ownable, Pausable, ReentrancyGuard {
         ASSET.safeTransferFrom(msg.sender, address(this), amount);
     }
 
-    /// @notice Retunes a tier's terms.
+    /// @notice Retunes a tier's terms. Applies to loans opened afterwards, never to open ones.
+    /// @dev Open loans are insulated because {Loan-aprBps} is frozen at origination. Only the rate
+    /// is bounded here; a `collateralRatioBps` of zero is deliberately still expressible, since the
+    /// real ceiling on undercollateralized lending is demonstrated capacity, not this number.
     function setTerms(Tier tier, uint16 collateralRatioBps, uint16 aprBps, uint256 maxBorrow) external onlyOwner {
+        if (aprBps > MAX_APR_BPS) revert AprTooHigh(aprBps, MAX_APR_BPS);
         termsFor[tier] = Terms({collateralRatioBps: collateralRatioBps, aprBps: aprBps, maxBorrow: maxBorrow});
         emit TermsUpdated(tier, collateralRatioBps, aprBps, maxBorrow);
+    }
+
+    /// @notice Sets how long a loan may run before it becomes liquidatable.
+    function setGracePeriod(uint64 newGracePeriod) external onlyOwner {
+        if (newGracePeriod == 0) revert ZeroAmount();
+        gracePeriod = newGracePeriod;
+        emit GracePeriodUpdated(newGracePeriod);
     }
 
     function pause() external onlyOwner {

@@ -57,9 +57,16 @@ Live on the same registry, right now:
 | Borrower | History | Score | Tier | Capacity | Collateral for 1,000 tUSD |
 |---|---|---|---|---|---|
 | `0x76f30e…5b1A` | **5 real Aave V3 repayments** | 800 | **Platinum** | **$960,145** | **850** |
-| `0x8C04C2…22Cf` | 9 self-dealt, one batch | 390 | Silver | $0 | 1,300 |
-| `0x8ce707…89c6` | 11 self-dealt, proof by proof | 390 | Silver | $0 | 1,300 |
-| `0x04163f…A0B6` | 2 self-dealt, one **late** | 0 | Bronze | $0 | 1,500 |
+| `0xe57D6C…dd00` | **1 real repayment, from Oct 2024** | 423 | Silver | $2 | 1,300 |
+| `0xaA2871…55d5` | 9 self-dealt, one batch | 390 | Silver | $0 | 1,300 |
+| `0x8ce707…89c6` | 9 self-dealt, proof by proof | 390 | Silver | $0 | 1,300 |
+| `0xB82dC3…b52E` | 2 self-dealt, one **late** | 0 | Bronze | $0 | 1,500 |
+
+The second row is the time axis, and it is the one an attacker cannot script. That wallet reached
+423 from a **single** proof — 120 for the repayment, 183 for capacity, and **120 for age, maxed** —
+because the transaction it proved happened in October 2024. The Platinum wallet above it has five
+times the proofs and earns *nothing* from age, because everything it proved happened last week.
+Source-chain time is derived from the block height inside the Merkle proof, so it cannot be forged.
 
 The bottom three are the control group. Their proofs are just as valid; their evidence is not.
 Splitting a history across a thousand wallets divides capacity rather than multiplying it, so
@@ -104,10 +111,10 @@ nine.
 
 | Contract | Chain | Address |
 |---|---|---|
-| `LoanBook` | Ethereum Sepolia | [`0xE53a5448…5Cf9c`](https://sepolia.etherscan.io/address/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c#events) ✅ Etherscan |
-| `CreditRegistry` | Creditcoin CC3 | [`0x581A7413…6b3D2`](https://creditcoin-testnet.blockscout.com/address/0x581A7413e1fCcB767EC8BA9E837df43fbA06b3D2) ✅ Blockscout |
-| `CreditTierSBT` | Creditcoin CC3 | [`0xaaA368cc…3D2F3`](https://creditcoin-testnet.blockscout.com/address/0xaaA368ccD534a24e7A98C375789598835A83D2F3) ✅ |
-| `LendingPool` | Creditcoin CC3 | [`0x2FC0D783…0D90d`](https://creditcoin-testnet.blockscout.com/address/0x2FC0D783d7240B5814aBc7A6A464248B5b60D90d) ✅ |
+| `LoanBook` v2 | Ethereum Sepolia | [`0x07AdA5C6…6d41D`](https://sepolia.etherscan.io/address/0x07AdA5C60dFbe5C3A7dC48081B0fa70E14c6d41D#events) ✅ Etherscan |
+| `CreditRegistry` | Creditcoin CC3 | [`0x4C4381dB…Dddf81`](https://creditcoin-testnet.blockscout.com/address/0x4C4381dB68a1cAAE46a2E6CFc2f667ad22Dddf81) ✅ Blockscout |
+| `CreditTierSBT` | Creditcoin CC3 | [`0x326F8806…EddD18`](https://creditcoin-testnet.blockscout.com/address/0x326F8806cBd5ABF413889BfAc0A6622a0AEddD18) ✅ |
+| `LendingPool` | Creditcoin CC3 | [`0xf27877fa…9029C`](https://creditcoin-testnet.blockscout.com/address/0xf27877faC13244a4ad959E83cD9E5a15d919029C) ✅ |
 | `TUSD` | Creditcoin CC3 | [`0x26FEEdEC…3B051`](https://creditcoin-testnet.blockscout.com/address/0x26FEEdECb79A69EdC7d3Bdb8Cf4dD96E17a3B051) ✅ |
 | `EvmV1Decoder` (linked library) | Creditcoin CC3 | [`0x2b887101…2EDfa`](https://creditcoin-testnet.blockscout.com/address/0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa) |
 
@@ -151,7 +158,9 @@ are the registry's job, and each is exercised by a test that fails loudly if rem
 | `(chainKey, emitter)` is a registered source | A look-alike Aave on a chain we do not trust — routing is per-pair, so a Sepolia address cannot impersonate its mainnet namesake |
 | `receipt.receiptStatus == 1` | A **reverted** repayment counting as a successful one |
 | Dispatch on the log's own emitter and `topic0` | Anyone emitting identically-shaped events from their own contract. The caller's declared `action` is a hint and is never trusted for routing |
-| Reserve must be registered to count | An obscure 0-decimal token inflating capacity — unregistered reserves contribute **zero** |
+| Reserve must be registered to count | An obscure 0-decimal token inflating capacity. An unregistered reserve **reverts**, so the proof stays retryable rather than being silently consumed for nothing |
+| No `Borrow` of the same reserve/account in the same transaction | A **flash loan** minting arbitrary capacity with zero capital at risk. It still counts as a repayment; it just proves no capacity |
+| One repayment credit per proven transaction | Five `Repay` logs in one transaction scoring the entire 600-point mainnet term from a single proof |
 | Borrower read from the log topic | A relaying worker crediting reputation to itself |
 
 **Five attacks were rejected on the live chain** — forged merkle root, tampered payload, wrong
@@ -165,7 +174,7 @@ money or needs a wallet.
 ```bash
 git clone https://github.com/OoJae/crosscredit && cd crosscredit
 npm install
-forge build && forge test          # 164 tests, no network required
+forge build && forge test          # 214 tests, no network required
 ```
 
 To read live testnet state or run the frontend locally:
@@ -175,6 +184,7 @@ cp .env.example .env               # only SEPOLIA_RPC_URL is needed for read-onl
 npm run check:chains               # re-derives docs/evidence/supported-chains.json from live CC3
 npm run negative-paths             # five attacks, all rejected — free eth_calls
 npm run poh:negative               # the identity finding: 5/5 proved, 0/5 still valid
+npm run check:abi                  # the frontend ABI still matches the compiled contracts
 
 cd web && npm install && npm run dev
 ```
@@ -193,7 +203,7 @@ npm run prove:mainnet -- --find-aave        # find an attested one to try
 ## Layout
 
 ```
-contracts/       Foundry (solc 0.8.30) — 164 tests
+contracts/       Foundry (solc 0.8.30) — 214 tests
   src/sepolia/     LoanBook — the credit-history source
   src/creditcoin/  CreditRegistry (ASC), ScoreLib, SourceKinds, CreditTierSBT, LendingPool, TUSD
   src/vendored/    Attributed upstream base contracts (see below)

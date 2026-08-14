@@ -10,6 +10,8 @@ import {INativeQueryVerifier, NativeQueryVerifierLib} from "../src/vendored/Veri
 import {MockNativeQueryVerifier} from "./mocks/MockNativeQueryVerifier.sol";
 import {EncodedTxBuilder} from "./helpers/EncodedTxBuilder.sol";
 import {SourceKind, EventSigs} from "../src/creditcoin/SourceKinds.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 
 /// @notice Tests for the Attestcoin Smart Contract that turns verified Sepolia transactions into
 /// credit reputation.
@@ -263,13 +265,13 @@ contract CreditRegistryTest is Test {
         bytes memory payload = _repayment(1, borrower, PRINCIPAL, true);
         registry.pause();
 
-        vm.expectRevert();
+        vm.expectRevert(Pausable.EnforcedPause.selector);
         _submit(payload, bytes32(uint256(67)));
     }
 
     function test_pause_onlyOwner() public {
         vm.prank(relayer);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, relayer));
         registry.pause();
     }
 
@@ -287,7 +289,7 @@ contract CreditRegistryTest is Test {
 
     function test_registerSource_isOwnerOnly() public {
         vm.prank(relayer);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, relayer));
         registry.registerSource(SEPOLIA_KEY, IMPOSTOR, SourceKind.LoanBook);
     }
 

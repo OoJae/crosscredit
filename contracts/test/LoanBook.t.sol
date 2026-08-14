@@ -23,7 +23,12 @@ contract LoanBookTest is Test {
     // Redeclared so `vm.expectEmit` can match them.
     event LoanOpened(uint256 indexed loanId, address indexed borrower, uint256 principal, uint64 dueDate);
     event RepaymentMade(
-        uint256 indexed loanId, address indexed borrower, uint256 amount, bool onTime, uint64 timestamp
+        uint256 indexed loanId,
+        address indexed borrower,
+        address indexed payer,
+        uint256 amount,
+        bool onTime,
+        uint64 timestamp
     );
     event CollateralAdded(address indexed borrower, uint256 amount);
 
@@ -121,7 +126,7 @@ contract LoanBookTest is Test {
         uint64 dueDate = uint64(block.timestamp) + DURATION;
 
         vm.expectEmit(true, true, false, true, address(book));
-        emit RepaymentMade(loanId, borrower, 0.001 ether, true, uint64(block.timestamp));
+        emit RepaymentMade(loanId, borrower, borrower, 0.001 ether, true, uint64(block.timestamp));
 
         vm.prank(borrower);
         book.repay{value: 0.001 ether}(loanId);
@@ -137,7 +142,7 @@ contract LoanBookTest is Test {
         vm.warp(dueDate);
 
         vm.expectEmit(true, true, false, true, address(book));
-        emit RepaymentMade(loanId, borrower, 0.001 ether, true, uint64(dueDate));
+        emit RepaymentMade(loanId, borrower, borrower, 0.001 ether, true, uint64(dueDate));
 
         vm.prank(borrower);
         book.repay{value: 0.001 ether}(loanId);
@@ -149,7 +154,7 @@ contract LoanBookTest is Test {
         vm.warp(uint256(dueDate) + 1);
 
         vm.expectEmit(true, true, false, true, address(book));
-        emit RepaymentMade(loanId, borrower, 0.001 ether, false, uint64(dueDate) + 1);
+        emit RepaymentMade(loanId, borrower, borrower, 0.001 ether, false, uint64(dueDate) + 1);
 
         vm.prank(borrower);
         book.repay{value: 0.001 ether}(loanId);
@@ -161,7 +166,7 @@ contract LoanBookTest is Test {
         uint256 loanId = _open();
 
         vm.expectEmit(true, true, false, true, address(book));
-        emit RepaymentMade(loanId, borrower, 0.001 ether, true, uint64(block.timestamp));
+        emit RepaymentMade(loanId, borrower, other, 0.001 ether, true, uint64(block.timestamp));
 
         vm.prank(other);
         book.repay{value: 0.001 ether}(loanId);
@@ -260,10 +265,13 @@ contract LoanBookTest is Test {
         assertEq(logs.length, 1);
         Vm.Log memory log = logs[0];
 
-        assertEq(log.topics.length, 3);
-        assertEq(log.topics[0], keccak256("RepaymentMade(uint256,address,uint256,bool,uint64)"));
+        assertEq(log.topics.length, 4);
+        assertEq(log.topics[0], keccak256("RepaymentMade(uint256,address,address,uint256,bool,uint64)"));
         assertEq(uint256(log.topics[1]), loanId);
         assertEq(address(uint160(uint256(log.topics[2]))), borrower);
+        // The payer is indexed separately from the borrower, so the registry can credit the
+        // repayment to the borrower while refusing to penalise them for a stranger's lateness.
+        assertEq(address(uint160(uint256(log.topics[3]))), borrower);
 
         // Three non-indexed words. The registry relies on this exact width.
         assertEq(log.data.length, 96);
@@ -298,8 +306,8 @@ contract LoanBookTest is Test {
             0x0d7f8e19afd65be70c0b9ff46dab1702a44ca0e8fcd33448375d7c2690e5866b
         );
         assertEq(
-            keccak256("RepaymentMade(uint256,address,uint256,bool,uint64)"),
-            0x7d64aa0e099ec7ce5a5e95941014b245cf86dd8cd1115dd1ee421d8ec4d04206
+            keccak256("RepaymentMade(uint256,address,address,uint256,bool,uint64)"),
+            0x57f8fd60d10653687e2d0846de33d6d6099eb9eb0fb197aff44c9a9d5a6af0b5
         );
         assertEq(
             keccak256("CollateralAdded(address,uint256)"),
@@ -333,5 +341,59 @@ contract LoanBookTest is Test {
         (,, uint64 dueDate,,) = book.loans(loanId);
         assertEq(dueDate, uint64(block.timestamp) + duration);
         assertGt(dueDate, block.timestamp);
+    }
+
+    // ─── Collateral withdrawal ────────────────────────────────────────────────────────────
+
+    /// Collateral used to be a one-way door: `addCollateral` accepted ETH and nothing could ever
+    /// send it back, so every wei posted was permanently destroyed.
+    function test_withdrawCollateral_returnsFunds() public {
+        vm.prank(borrower);
+        book.addCollateral{value: 1 ether}();
+
+        uint256 before = borrower.balance;
+        vm.prank(borrower);
+        book.withdrawCollateral(0.4 ether);
+
+        assertEq(borrower.balance - before, 0.4 ether);
+        assertEq(book.collateralOf(borrower), 0.6 ether);
+    }
+
+    function test_withdrawCollateral_cannotExceedBalance() public {
+        vm.prank(borrower);
+        book.addCollateral{value: 1 ether}();
+
+        vm.expectRevert(abi.encodeWithSelector(LoanBook.InsufficientCollateral.selector, 2 ether, 1 ether));
+        vm.prank(borrower);
+        book.withdrawCollateral(2 ether);
+    }
+
+    /// One borrower cannot withdraw against another's balance.
+    function test_withdrawCollateral_isPerBorrower() public {
+        vm.prank(borrower);
+        book.addCollateral{value: 1 ether}();
+
+        vm.expectRevert(abi.encodeWithSelector(LoanBook.InsufficientCollateral.selector, 1, 0));
+        vm.prank(other);
+        book.withdrawCollateral(1);
+    }
+
+    function test_withdrawCollateral_rejectsZero() public {
+        vm.expectRevert(LoanBook.ZeroAmount.selector);
+        vm.prank(borrower);
+        book.withdrawCollateral(0);
+    }
+
+    /// The balance is decremented before the transfer, so a re-entrant caller sees the reduced
+    /// figure and cannot drain more than it posted.
+    function test_withdrawCollateral_decrementsBeforeTransferring() public {
+        vm.prank(borrower);
+        book.addCollateral{value: 1 ether}();
+
+        vm.prank(borrower);
+        book.withdrawCollateral(1 ether);
+
+        assertEq(book.collateralOf(borrower), 0);
+        assertEq(address(book).balance, 0);
     }
 }

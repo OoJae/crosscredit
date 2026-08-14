@@ -25,9 +25,9 @@ import {SourceKind, EventSigs} from "../src/creditcoin/SourceKinds.sol";
 /// but the **decoding and the entire validation chain are real**.
 contract RealProofTest is Test {
     /// @dev The live Sepolia LoanBook that emitted these logs.
-    address internal constant LOANBOOK = 0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c;
+    address internal constant LOANBOOK = 0x07AdA5C60dFbe5C3A7dC48081B0fa70E14c6d41D;
     address internal constant BORROWER_A = 0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6;
-    address internal constant BORROWER_B = 0x04163f60FA50519D86AeFB8e450312bAD76CA0B6;
+    address internal constant BORROWER_B = 0xB82dC3F27d4b72FaF7594C7724Cf43B47FF4b52e;
     uint64 internal constant SEPOLIA_KEY = 1;
 
     CreditRegistry internal registry;
@@ -98,9 +98,12 @@ contract RealProofTest is Test {
 
         EvmV1Decoder.LogEntry memory log = receipt.receiptLogs[0];
         assertEq(log.address_, LOANBOOK, "emitted by our LoanBook");
-        assertEq(log.topics.length, 3, "sig + loanId + borrower");
+        assertEq(log.topics.length, 4, "sig + loanId + borrower + payer");
         assertEq(log.topics[0], EventSigs.REPAYMENT_MADE);
         assertEq(address(uint160(uint256(log.topics[2]))), BORROWER_A);
+        // Borrower A settles their own debt, so payer == borrower and the lateness penalty would
+        // apply to them. A third-party payer here is what makes the penalty someone else's.
+        assertEq(address(uint160(uint256(log.topics[3]))), BORROWER_A, "payer");
         assertEq(log.data.length, 96, "amount + onTime + timestamp");
 
         (uint256 amount, bool onTime,) = abi.decode(log.data, (uint256, bool, uint64));

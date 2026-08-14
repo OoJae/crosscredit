@@ -8,6 +8,7 @@
 import {ethers} from 'ethers';
 import {proofProvider} from '@gluwa/usc-sdk';
 import {PROVER_TIMEOUT_MS, type WorkerConfig} from './config.js';
+import {describe} from './prove.js';
 
 /**
  * Confirmed by probing the live CC3 precompile rather than read from the SDK, which has no such
@@ -135,8 +136,7 @@ export async function dryRunBatch(config: WorkerConfig, args: BatchArgs): Promis
     return ok;
   } catch (error) {
     // Failure here is always a revert, never a `false` return.
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`  ✗ dry run failed  ${message}`);
+    console.error(`  ✗ dry run failed  ${describe(error)}`);
     return false;
   }
 }

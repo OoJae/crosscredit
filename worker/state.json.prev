@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "registry": "0x4C4381dB68a1cAAE46a2E6CFc2f667ad22Dddf81",
+  "cursorBlock": 11486250,
+  "submitted": {
+    "0x290f52826a71a27ee78f3653fb914952d4825295908438ce60fbbac8f6acc90e": {
+      "sourceTxHash": "0x290f52826a71a27ee78f3653fb914952d4825295908438ce60fbbac8f6acc90e",
+      "cc3TxHash": "0x659e4d5bc31c48b368959a43cd1d7e575544654e44957dc377bfc8b521ad2bb9",
+      "cc3Block": 5307631,
+      "gasUsed": "532140",
+      "at": "2026-08-14T09:54:49.151Z"
+    }
+  },
+  "failed": {
+    "0x97270301a204661136828100618b9ef2aa4ea3a9a5666d75d5b734f27dc7c379": "already processed on chain",
+    "0x0c76284eb8450f087443b993c94ed41f49ced4390247c4729db81efe3b119845": "already processed on chain",
+    "0xcd5cfae2a82738300259d8f959a79875b497ffb792bf468d466849cd8f637923": "already processed on chain",
+    "0x13e28358379e1a8bc7d99f3e374c5b931a27fb409516c794655700e6ee9d1343": "already processed on chain",
+    "0x70e8865270ba4bb654654b872964993b4a90fb623a191a4f4eca09e9e38f18e5": "already processed on chain",
+    "0x71b3c9539e47263d7918c8c2a5b983a2500cd48d2840571308fb820aab60254d": "already processed on chain",
+    "0x8a69619d03290a6ea005412ed871d958007285e829cab58fdb163ccad8001029": "already processed on chain",
+    "0xf6ee104dc1f3b797d7d2e110b6aa9f0c06171a3628bb1ee77b6d14a6213480d4": "already processed on chain",
+    "0x037a552c40dd14d6c93f8955adb5e5c9e3f5e9378bac697593f7a8d9e6b7ea06": "already processed on chain",
+    "0xe7f4fb7cae8b84bdca0a9e55815bc5731061cf3904ff0a0add32d3f3f1915cc7": "already processed on chain",
+    "0x0daef6de6b1ad560ef77cd6f5e31d49c6ba74780e7044b50dafaa4a0353fe186": "already processed on chain",
+    "0x07627ecd183137bdb24b8a1bf86fd4f58fe096ca80a309494675e09638c358da": "already processed on chain",
+    "0xbfb93cfa2dd60aeb7700a324f53f27664da329f3511fc7ddcf3e2eed76c075d1": "already processed on chain",
+    "0x2233f00a8316c6fc692c7e91423b0e960544cde1009b5dce744e7240fa6d187f": "already processed on chain",
+    "0xd67982a7d1c9b69ecd35c7fc37eede20ab2b467999c0694848b36f286a343c53": "already processed on chain",
+    "0x8899409a4e70766881a82efbeea92e6cd2e890850d0b49f1795f6ac2ed16aa55": "already processed on chain",
+    "0x8314a1ebdb058a1ef408aa8b8b388984d91272a53b1132a04f993f09e46c46ec": "already processed on chain",
+    "0xc12c70d12c0cf3dfcadf35cc039a149f5a6a2b1a63957100650026b8c9e5b21e": "already processed on chain",
+    "0x8ee3dd073803b08af4c512bca15fb9b8b059746e33422261fe37c05dcdf93f52": "already processed on chain"
+  }
+}

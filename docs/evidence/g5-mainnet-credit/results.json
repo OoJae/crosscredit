@@ -1,20 +1,20 @@
 {
-  "capturedAt": "2026-08-14T01:42:48.986Z",
+  "capturedAt": "2026-08-14T09:40:32.326Z",
   "claim": "A real Ethereum mainnet Aave V3 repayment, verified by Creditcoin and turned into credit history.",
-  "mainnetTx": "0xc23aadca8834c5319e383f77497f7607c6009dd5be629491e0806f2340505528",
-  "mainnetBlock": 25743186,
-  "borrower": "0x76f30e3f75437fB862B8D2C4D80a671bCeBA5b1A",
-  "logsInTransaction": 23,
-  "creditcoinTx": "0xe514f44aa8df32660e40051fd67f6f62e69820207eb8e3675f49ff4209dac485",
-  "creditcoinBlock": 5305665,
-  "gasUsed": "606578",
+  "mainnetTx": "0xba633e265f6b59a2f90495ad2447ccda3144a0d3f6506d543fd61807dd04bccf",
+  "mainnetBlock": 21000021,
+  "borrower": "0xe57D6C07d7DA0066AAC9BaF186CbC298fB57dd00",
+  "logsInTransaction": 6,
+  "creditcoinTx": "0x7447926e6f0bb5a5cf2f3c7265d1d77576f7d7a9c02caa5cedd1315b69b0795b",
+  "creditcoinBlock": 5307574,
+  "gasUsed": "991536",
   "proof": {
     "chainKey": 3,
-    "merkleSiblings": 10,
-    "continuityRoots": 15
+    "merkleSiblings": 8,
+    "continuityRoots": 980
   },
-  "scoreBefore": 680,
-  "scoreAfter": 800,
-  "tierAfter": "Platinum",
-  "demonstratedCapacityWei": "960145247856000000000000"
+  "scoreBefore": 0,
+  "scoreAfter": 423,
+  "tierAfter": "Silver",
+  "demonstratedCapacityWei": "1831124054821708757"
 }

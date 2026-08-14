@@ -65,6 +65,8 @@ contract CreditTierSBT is ERC721, IERC5192 {
     error Soulbound();
     error NoBadge(address borrower);
     error ZeroAddress();
+    error MintRequiresConsent(address borrower);
+    error NoVerifiedHistory(address borrower);
 
     constructor(address registry) ERC721("CrossCredit Credit Tier", "CCTIER") {
         if (registry == address(0)) revert ZeroAddress();
@@ -72,7 +74,17 @@ contract CreditTierSBT is ERC721, IERC5192 {
     }
 
     /// @notice Mints or refreshes `borrower`'s badge to match their verified credit tier.
-    /// @dev Permissionless and idempotent — calling it when nothing changed is a no-op beyond gas.
+    ///
+    /// @dev **Re-syncing** stays permissionless and idempotent — the caller cannot influence the
+    /// outcome, only pay gas to bring a badge in line with facts already on chain.
+    ///
+    /// **The first mint is not.** It creates a permanent, non-transferable, unburnable token in
+    /// someone's wallet, and the badge is a public statement about their creditworthiness. Letting
+    /// a stranger do that to an arbitrary address meant anyone could brand any wallet Bronze for
+    /// the price of gas, with no way to remove it — ERC-5192 has no burn by construction. So the
+    /// initial mint requires either the borrower themselves or a genuine verified history, which
+    /// is the only circumstance in which the badge says anything true.
+    ///
     /// @param borrower The address whose badge to bring up to date.
     /// @return tokenId The borrower's badge id.
     function sync(address borrower) external returns (uint256 tokenId) {
@@ -82,9 +94,16 @@ contract CreditTierSBT is ERC721, IERC5192 {
         tokenId = tokenOf[borrower];
 
         if (tokenId == 0) {
+            if (msg.sender != borrower && REGISTRY.profileOf(borrower).firstSeen == 0) {
+                revert NoVerifiedHistory(borrower);
+            }
             tokenId = _nextTokenId++;
             tokenOf[borrower] = tokenId;
-            _safeMint(borrower, tokenId);
+            // `_mint`, not `_safeMint`: the receiver hook exists to stop tokens stranding in
+            // contracts that cannot move them, and nothing can move this token anyway. Requiring
+            // the hook would instead lock out every smart-contract wallet — exactly the users a
+            // portable credit identity is for.
+            _mint(borrower, tokenId);
             // ERC-5192 requires this at mint time for tokens that are bound from birth.
             emit Locked(tokenId);
         }
@@ -98,6 +117,14 @@ contract CreditTierSBT is ERC721, IERC5192 {
     /// badge if it has not been synced since their last verified repayment.
     function tierOfBadge(address borrower) external view returns (Tier) {
         return REGISTRY.tierOf(borrower);
+    }
+
+    /// @inheritdoc ERC721
+    /// @dev Advertises ERC-5192 (`0xb45a3c0e`) alongside ERC-721. A soulbound token that does not
+    /// declare itself soulbound is one a marketplace will happily list and a wallet will happily
+    /// offer to send — the standard exists so tooling can know *before* trying and failing.
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+        return interfaceId == type(IERC5192).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /// @inheritdoc IERC5192

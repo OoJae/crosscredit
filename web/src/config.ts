@@ -49,13 +49,13 @@ declare module 'wagmi' {
 /** Deployed contracts. Mirrors `deployments.json` at the repo root. */
 export const ADDRESSES = {
   /** Sepolia — the credit-history source. */
-  loanBook: '0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c',
+  loanBook: '0x07AdA5C60dFbe5C3A7dC48081B0fa70E14c6d41D',
   /** CC3 — the Attestcoin Smart Contract. Reads Sepolia *and* Ethereum mainnet. */
-  registry: '0x581A7413e1fCcB767EC8BA9E837df43fbA06b3D2',
+  registry: '0x4C4381dB68a1cAAE46a2E6CFc2f667ad22Dddf81',
   /** CC3 — soulbound tier badge. */
-  sbt: '0xaaA368ccD534a24e7A98C375789598835A83D2F3',
+  sbt: '0x326F8806cBd5ABF413889BfAc0A6622a0AEddD18',
   /** CC3 — tier-priced lending, capped by demonstrated capacity. */
-  pool: '0x2FC0D783d7240B5814aBc7A6A464248B5b60D90d',
+  pool: '0xf27877faC13244a4ad959E83cD9E5a15d919029C',
   /** CC3 — the borrowable asset. */
   tusd: '0x26FEEdECb79A69EdC7d3Bdb8Cf4dD96E17a3B051',
   /** Creditcoin's native block-prover precompile. */
@@ -63,7 +63,7 @@ export const ADDRESSES = {
 } as const;
 
 /** Block LoanBook was deployed at — CC3's `eth_getLogs` times out over wide spans. */
-export const LOANBOOK_DEPLOY_BLOCK = 11_482_838n;
+export const LOANBOOK_DEPLOY_BLOCK = 11_486_250n;
 /**
  * Block the current `CreditRegistry` was deployed at, established by binary search on
  * `eth_getCode` rather than by hand.
@@ -74,7 +74,7 @@ export const LOANBOOK_DEPLOY_BLOCK = 11_482_838n;
  * no error — the reads succeed and return nothing. A hand-typed value of 5,305,700 did exactly
  * that, 22 blocks above the registry and 78 above its first ingest.
  */
-export const REGISTRY_DEPLOY_BLOCK = 5_305_625n;
+export const REGISTRY_DEPLOY_BLOCK = 5_307_511n;
 
 /** Creditcoin-internal id for Sepolia. Not the EVM chainId — see docs/evidence/supported-chains.json. */
 export const SOURCE_CHAIN_KEY = 1;
@@ -93,7 +93,7 @@ export const SOURCES = [
     chainKey: 1,
     chain: 'Sepolia',
     name: 'CrossCredit LoanBook',
-    address: '0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c',
+    address: '0x07AdA5C60dFbe5C3A7dC48081B0fa70E14c6d41D',
     raisesCapacity: false,
     note: 'Self-reported — no lender, so it is capped below Platinum',
   },
@@ -153,22 +153,26 @@ export const DEMO_BORROWERS = [
     real: true,
   },
   {
+    label: 'Silver — a 2024 repayment, aged on-chain',
+    address: '0xe57D6C07d7DA0066AAC9BaF186CbC298fB57dd00',
+    note: 'One proof from Oct 2024 — 22 months of history maxes the age term',
+    real: true,
+  },
+  {
     label: 'Silver — imported in one batch',
-    address: '0x8C04C28894BADcE63d1F00f356AbB126983522Cf',
+    address: '0xaA2871B057D80D92606f0a3eFa84f175F73b55d5',
     note: '9 events verified in a single transaction',
     real: false,
   },
   {
     label: 'Silver — imported proof by proof',
     address: '0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6',
-    // 9, verified against the live registry. The old copy said 11, counting proofs submitted
-    // rather than credit events ingested — two of them carried no scoreable log.
     note: '9 separate verifications, same result as one batch',
     real: false,
   },
   {
     label: 'Bronze — one late repayment',
-    address: '0x04163f60FA50519D86AeFB8e450312bAD76CA0B6',
+    address: '0xB82dC3F27d4b72FaF7594C7724Cf43B47FF4b52e',
     note: 'the penalty, on live testnet',
     real: false,
   },

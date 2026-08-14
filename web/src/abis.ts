@@ -39,7 +39,12 @@ export const registryAbi = parseAbi([
   'event LoanClosed(address indexed borrower, uint256 indexed loanId)',
 
   // Typed errors, so a failed simulation surfaces a real reason rather than a hex blob.
-  'error UnregisteredSource(uint64 chainKey, address emitter)',
+  // The contract's name is SourceNotRegistered. Declaring a different name here meant this revert
+  // could never decode into a readable reason — `scripts/check-abi-parity.ts` now catches exactly
+  // this class of typo, and caught this one.
+  'error SourceNotRegistered(uint64 chainKey, address emitter)',
+  'error UnregisteredReserve(address reserve)',
+  'error InvalidAnchor()',
   'error SourceTransactionFailed(uint8 receiptStatus)',
   'error UnsupportedTransactionType(uint8 txType)',
   'error NoRecognisedEvents()',
@@ -66,13 +71,15 @@ export const poolAbi = parseAbi([
   'function termsFor(uint8 tier) view returns (uint16 collateralRatioBps, uint16 aprBps, uint256 maxBorrow)',
   'function collateralRequired(address borrower, uint256 amount) view returns (uint256)',
   'function undercollateralizedPortion(address borrower, uint256 amount) view returns (uint256)',
-  'function loans(address borrower) view returns (uint256 principal, uint256 collateral, uint64 openedAt, uint8 tierAtOrigination, bool active)',
+  'function loans(address borrower) view returns (uint256 principal, uint256 collateral, uint64 openedAt, uint8 tierAtOrigination, uint16 aprBps, bool active)',
   'function totalOwed(address borrower) view returns (uint256)',
   'function interestDue(address borrower) view returns (uint256)',
   'function borrow(uint256 amount) payable',
   'function repay()',
   'function paused() view returns (bool)',
+  'function gracePeriod() view returns (uint64)',
   'error LoanAlreadyOpen(address borrower)',
+  'error LoanNotInDefault(address borrower, uint64 liquidatableAt)',
   'error NoActiveLoan(address borrower)',
   'error InsufficientCollateral(uint256 supplied, uint256 required)',
   'error ExceedsTierLimit(uint256 requested, uint256 maximum)',
@@ -81,7 +88,9 @@ export const poolAbi = parseAbi([
 
 export const loanBookAbi = parseAbi([
   'event LoanOpened(uint256 indexed loanId, address indexed borrower, uint256 principal, uint64 dueDate)',
-  'event RepaymentMade(uint256 indexed loanId, address indexed borrower, uint256 amount, bool onTime, uint64 timestamp)',
+  // `payer` is indexed separately from `borrower` so the registry can credit any repayment to the
+  // borrower while charging lateness only to the borrower's own conduct.
+  'event RepaymentMade(uint256 indexed loanId, address indexed borrower, address indexed payer, uint256 amount, bool onTime, uint64 timestamp)',
   'event CollateralAdded(address indexed borrower, uint256 amount)',
 ]);
 
@@ -107,7 +116,7 @@ export const blockProverAbi = parseAbi([
 export const EVENT_SIGS = {
   // Sepolia LoanBook — self-reported.
   '0x0d7f8e19afd65be70c0b9ff46dab1702a44ca0e8fcd33448375d7c2690e5866b': 'Loan opened',
-  '0x7d64aa0e099ec7ce5a5e95941014b245cf86dd8cd1115dd1ee421d8ec4d04206': 'Repayment',
+  '0x57f8fd60d10653687e2d0846de33d6d6099eb9eb0fb197aff44c9a9d5a6af0b5': 'Repayment',
   '0x7dba1be544024070cd5eebfa8bdd80a8b198cea8058c7d3cc1f8dd36e41ab2f7': 'Collateral added',
   // Ethereum mainnet — real third-party capital. Absent until an audit pointed out that the
   // flagship mainnet borrower's five Aave repayments all rendered as "Unknown", which undersold

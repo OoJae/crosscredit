@@ -94,7 +94,7 @@ async function main(): Promise<void> {
 
   const flagIndex = process.argv.indexOf('--from-block');
   const explicitFrom = flagIndex !== -1 ? Number.parseInt(process.argv[flagIndex + 1] ?? '', 10) : NaN;
-  const state = loadState(Number.isInteger(explicitFrom) ? explicitFrom : head);
+  const state = loadState(Number.isInteger(explicitFrom) ? explicitFrom : head, config.registryAddress);
   if (Number.isInteger(explicitFrom)) state.cursorBlock = explicitFrom;
 
   // Single-transaction mode: prove exactly one tx, which is what the demo drives.
@@ -150,6 +150,8 @@ async function main(): Promise<void> {
       const args = await fetchBatchProof(config, chunk.map((e) => e.txHash));
       if (!(await dryRunBatch(config, args))) {
         console.error('  ✗ aborting — the precompile rejected the batch, so submitting would only burn gas');
+        // A non-zero exit code, or CI and any wrapping script read this failure as success.
+        process.exitCode = 1;
         return;
       }
 
@@ -241,6 +243,7 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  console.error('✗ worker failed:', error);
+  // `describe`, never the raw error: ethers embeds the API-keyed RPC URL in it.
+  console.error(`✗ worker failed: ${describe(error)}`);
   process.exitCode = 1;
 });

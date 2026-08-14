@@ -18,6 +18,10 @@ contract StubRegistry is ICreditRegistry {
         storedProfiles[borrower].score = score;
         storedProfiles[borrower].onTime = 5;
         storedProfiles[borrower].loansClosed = 3;
+        // A non-zero `firstSeen` is what marks a profile as having verified history at all. The
+        // badge requires it before letting a third party mint on someone's behalf, so a stub that
+        // leaves it zero models an address the registry has never heard of.
+        storedProfiles[borrower].firstSeen = uint64(block.timestamp);
     }
 
     function tierOf(address borrower) external view returns (Tier) {
@@ -32,6 +36,9 @@ contract StubRegistry is ICreditRegistry {
         return storedProfiles[borrower];
     }
 }
+
+/// @dev A contract with no ERC-721 receiver hook — a plain smart-account wallet.
+contract NonReceiver {}
 
 /// @notice Tests for the soulbound credit tier badge.
 /// @dev The soulbinding tests carry the most weight. A transferable reputation token is not a
@@ -124,6 +131,61 @@ contract CreditTierSBTTest is Test {
     function test_locked_alwaysTrue() public {
         uint256 tokenId = sbt.sync(alice);
         assertTrue(sbt.locked(tokenId));
+    }
+
+    /// A soulbound token that does not declare itself soulbound is one a marketplace will list and
+    /// a wallet will offer to send. The interface id is the only way tooling can know in advance.
+    function test_supportsInterface_advertisesErc5192AndErc721() public view {
+        assertTrue(sbt.supportsInterface(0xb45a3c0e), "ERC-5192");
+        assertTrue(sbt.supportsInterface(type(IERC5192).interfaceId), "and it is the derived id");
+        assertTrue(sbt.supportsInterface(0x80ac58cd), "ERC-721");
+        assertTrue(sbt.supportsInterface(0x5b5e139f), "ERC-721 Metadata");
+        assertTrue(sbt.supportsInterface(0x01ffc9a7), "ERC-165");
+        assertFalse(sbt.supportsInterface(0xdeadbeef));
+    }
+
+    // ─── Minting on someone else's behalf ─────────────────────────────────────────────────
+
+    /// The badge is permanent, non-transferable and unburnable, and it is a public statement about
+    /// an address's creditworthiness. Letting a stranger create one for an address with no history
+    /// meant anyone could brand any wallet Bronze forever, for the price of gas.
+    function test_sync_strangerCannotMintForAnAddressWithNoHistory() public {
+        address untouched = makeAddr("untouched");
+
+        vm.prank(stranger);
+        vm.expectRevert(abi.encodeWithSelector(CreditTierSBT.NoVerifiedHistory.selector, untouched));
+        sbt.sync(untouched);
+    }
+
+    /// But an address may always mint its own badge, whatever the registry knows.
+    function test_sync_anyoneMayMintTheirOwnBadge() public {
+        address selfMinter = makeAddr("selfMinter");
+
+        vm.prank(selfMinter);
+        uint256 tokenId = sbt.sync(selfMinter);
+
+        assertEq(sbt.ownerOf(tokenId), selfMinter);
+    }
+
+    /// And once a borrower has verified history, refreshing their badge stays permissionless —
+    /// the caller cannot influence the outcome, only pay to bring it up to date.
+    function test_sync_strangerMayMintForAnAddressWithHistory() public {
+        vm.prank(stranger);
+        uint256 tokenId = sbt.sync(alice);
+
+        assertEq(sbt.ownerOf(tokenId), alice);
+    }
+
+    /// A contract wallet must be able to hold a badge. `_safeMint` would have required an ERC-721
+    /// receiver hook, locking out exactly the smart-account users a portable credit identity is
+    /// for — and the hook protects against a token stranding, which cannot happen to a token that
+    /// can never move.
+    function test_sync_mintsToAContractWalletThatCannotReceiveErc721() public {
+        NonReceiver wallet = new NonReceiver();
+        registry.set(address(wallet), Tier.Gold, 550);
+
+        uint256 tokenId = sbt.sync(address(wallet));
+        assertEq(sbt.ownerOf(tokenId), address(wallet));
     }
 
     function test_soulbound_transferFromReverts() public {

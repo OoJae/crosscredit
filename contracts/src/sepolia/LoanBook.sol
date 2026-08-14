@@ -43,12 +43,26 @@ contract LoanBook {
     event LoanOpened(uint256 indexed loanId, address indexed borrower, uint256 principal, uint64 dueDate);
 
     /// @notice Emitted on every repayment, whole or partial.
-    /// @dev topic0 `0x7d64aa0e099ec7ce5a5e95941014b245cf86dd8cd1115dd1ee421d8ec4d04206`.
+    /// @dev topic0 `0x57f8fd60d10653687e2d0846de33d6d6099eb9eb0fb197aff44c9a9d5a6af0b5`.
     /// `onTime` is computed here rather than left for the registry to infer, because the registry
     /// has no access to this chain's clock — only to what the proven receipt says.
+    ///
+    /// `payer` exists because repayment is permissionless and lateness is punitive. Credit accrues
+    /// to `borrower`, which is what makes a friend settling your debt useful — but it also meant a
+    /// stranger could settle 1 wei on your past-due loan and stamp an indelible `late` on your
+    /// profile, costing 150 points and barring Platinum forever. Recording who actually paid lets
+    /// the registry reward any repayment while penalising only the borrower's own lateness.
     event RepaymentMade(
-        uint256 indexed loanId, address indexed borrower, uint256 amount, bool onTime, uint64 timestamp
+        uint256 indexed loanId,
+        address indexed borrower,
+        address indexed payer,
+        uint256 amount,
+        bool onTime,
+        uint64 timestamp
     );
+
+    /// @notice Emitted when a borrower withdraws previously posted collateral.
+    event CollateralWithdrawn(address indexed borrower, uint256 amount);
 
     /// @notice Emitted when a borrower posts collateral.
     /// @dev topic0 `0x7dba1be544024070cd5eebfa8bdd80a8b198cea8058c7d3cc1f8dd36e41ab2f7`.
@@ -59,6 +73,8 @@ contract LoanBook {
     error ZeroAmount();
     error UnknownLoan(uint256 loanId);
     error LoanClosed(uint256 loanId);
+    error InsufficientCollateral(uint256 requested, uint256 available);
+    error CollateralTransferFailed();
 
     /// @notice Loans by id. Ids start at 1, so 0 reliably means "no loan".
     mapping(uint256 => Loan) public loans;
@@ -111,7 +127,7 @@ contract LoanBook {
             loan.closed = true;
         }
 
-        emit RepaymentMade(loanId, loan.borrower, msg.value, onTime, uint64(block.timestamp));
+        emit RepaymentMade(loanId, loan.borrower, msg.sender, msg.value, onTime, uint64(block.timestamp));
     }
 
     /// @notice Posts collateral, strengthening the sender's credit profile.
@@ -121,5 +137,25 @@ contract LoanBook {
         collateralOf[msg.sender] += msg.value;
 
         emit CollateralAdded(msg.sender, msg.value);
+    }
+
+    /// @notice Withdraws previously posted collateral.
+    /// @dev Exists because `addCollateral` accepted ETH with no way out, which made every wei ever
+    /// posted permanently unrecoverable — a nonsense position for a contract whose own NatSpec
+    /// calls collateral "skin in the game". Effects precede the interaction, so the re-entrant
+    /// call sees a balance already decremented.
+    /// @param amount Wei to withdraw.
+    function withdrawCollateral(uint256 amount) external {
+        if (amount == 0) revert ZeroAmount();
+
+        uint256 available = collateralOf[msg.sender];
+        if (amount > available) revert InsufficientCollateral(amount, available);
+
+        collateralOf[msg.sender] = available - amount;
+
+        emit CollateralWithdrawn(msg.sender, amount);
+
+        (bool ok,) = msg.sender.call{value: amount}('');
+        if (!ok) revert CollateralTransferFailed();
     }
 }

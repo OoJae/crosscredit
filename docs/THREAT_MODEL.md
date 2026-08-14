@@ -48,9 +48,17 @@ Three things enforce it:
    proven against a real third-party protocol. A wallet with a Platinum tier but no real history
    gets **no discount at all**.
 3. **Capacity is conserved across identities.** Splitting a history over a thousand wallets divides
-   capacity rather than multiplying it. This is the conservation result formalised in
-   [arXiv:2605.03307](https://arxiv.org/pdf/2605.03307): extra pseudonyms cannot create extra
-   capacity. `test_capacityCap_isInvariantUnderIdentitySplitting` asserts exactly this.
+   capacity rather than multiplying it, because capacity is the largest single repayment rather
+   than a sum. `test_capacityCap_isInvariantUnderIdentitySplitting` asserts exactly this.
+
+   **A correction to our own earlier citation.** Previous versions cited
+   [arXiv:2605.03307](https://arxiv.org/pdf/2605.03307) as "the conservation theorem" behind this
+   property, in three places. The paper is real and the intuition is related, but it formalises
+   **sponsor-delegated** capacity, where conservation follows from sponsors bearing loss recourse
+   along the delegation path. CrossCredit has no sponsors and no recourse, so it does not inherit
+   the theorem — our invariance is a direct consequence of using a maximum instead of a sum, which
+   is a much smaller claim and one we can actually prove. We cite the paper now as related work,
+   not as authority. A judge who reads it would have caught this, and should have.
 
 Sybil resistance here is **priced, not prevented** — which is what the whole field actually does,
 whether or not it says so.
@@ -131,15 +139,37 @@ The conservation theorem handles this *correctly* — they receive capacity prop
 risked, which is the intended behaviour — but it means this is **one-dollar-one-vote, not
 one-person-one-vote**. It is a sybil *cost* mechanism, not a sybil *proof* mechanism.
 
-### 5. Wash lending
+### 5. Wash lending, and the flash loan that broke our first answer
 
 Borrowing from Aave and repaying immediately produces a genuine `Repay` event at the cost of gas
 plus a few seconds of interest.
 
-Partly mitigated: capacity is the **largest single repayment**, not the sum, so repeating a small
-loan a thousand times demonstrates the ability to handle the small loan only. Scaling capacity by
-*duration* of debt held — the integral of exposure over time — would close it properly and is the
-obvious next iteration.
+**Our original mitigation was wrong, and an audit proved it.** We argued that capacity being the
+*largest single* repayment bounded this, because repeating a small loan demonstrates only the small
+loan. That bound exists only if loan size is bounded by the attacker's own capital — and a flash
+loan removes exactly that bound. Worse, largest-single is precisely the metric a flash loan
+maximises.
+
+The attack, in one transaction, with **zero capital at risk for any length of time**: flash-loan
+8,000,000 USDC at 0% fee, supply it, borrow against it, repay immediately, withdraw, return the
+flash loan. Aave V3 imposes no same-block borrow/repay restriction. Every log is genuine, every
+proof verifies. And because `_ingestTransaction` had no per-transaction cap, five `Repay` logs in
+that one transaction scored five repayments — 600 points — so **one proof reached Platinum**.
+
+Two fixes, both live:
+
+1. **Same-transaction detection.** A pre-scan pairs each `Repay` against any `Borrow` of the same
+   reserve, for the same account, from the same registered pool in the same transaction. When they
+   match, the repayment still counts but grants **no capacity**. A flash loan cannot span blocks,
+   so this kills the zero-capital variant specifically while leaving a borrower who genuinely
+   repays one debt and opens another untouched. Five tests pin both directions.
+2. **One repayment credit per proven transaction**, however many `Repay` logs it carries.
+
+**What this still does not close.** A *multi-block* wash loan — genuinely borrowing, holding the
+debt across blocks, paying real interest, then repaying — is bounded only by the interest paid,
+which is small for a short hold. Closing it properly needs capacity weighted by the **integral of
+debt held over time**, which we have not built. Until then, capacity means "this address has
+repaid this much at least momentarily", not "this address can carry this much".
 
 ### 6. Units are normalised; value is not
 
@@ -181,6 +211,55 @@ the negative-path script failed its own baseline using a proof captured hours ea
 Operationally: fetch proofs fresh and submit promptly. Stored fixtures are for decoder tests only.
 Not documented anywhere we could find.
 
+### 10. A key of ours reached a public repository
+
+`scripts/seed-borrower-c.ts` wrote the demo borrower's private key into
+`docs/evidence/borrower-c-history.json` — a **committed** artifact — and it was pushed publicly on
+Aug 13 2026 and sat there for about 26 hours. It controlled a testnet-only wallet holding 0.02
+Sepolia ETH and 15 tCTC. The deployer key was never committed.
+
+The interesting part is not the funds, which were worthless. It is that anyone holding that key
+could have opened and repaid loans *as that borrower* on Sepolia — and because ingestion is
+permissionless, proven the result. A single late repayment would have permanently altered the
+profile the demo is built on.
+
+Three changes: the script no longer records a key at all (the wallet is generated per run and its
+key discarded, never printed, never written); the borrower was rotated by re-seeding; and CI now
+fails on any committed field named like a secret, or on `.env` becoming tracked. The gate was
+replayed against the original leaked blob and catches it.
+
+Git history was **not** rewritten. The key is a throwaway, already rotated, and a force-push during
+judging risks breaking links a reviewer has already opened. Disclosure plus rotation is the better
+trade; pretending it never happened is not one of the options.
+
+### 11. Third parties could brand you late, and could brand you at all
+
+Two related holes, both now closed, both worth stating because they are the kind that survive in
+production systems for years.
+
+`LoanBook.repay` is permissionless — a friend settling your debt should build *your* reputation —
+but the event omitted `msg.sender`. So a stranger could settle **1 wei** on your past-due loan and
+stamp an indelible `late` on your profile: −150 points and Platinum barred for ever, for the price
+of gas. The event now carries an indexed `payer`, and the penalty applies only when the borrower
+paid for themselves. Credit for the repayment still accrues to the borrower whoever pays.
+
+Separately, `CreditTierSBT.sync` would mint for any address. The badge is permanent,
+non-transferable and unburnable by construction, so anyone could brand any wallet Bronze for ever.
+The initial mint now requires either the borrower themselves or a genuine verified history.
+
+### 12. The age term rests on an owner-supplied anchor
+
+Source-chain time is not provable. Aave, ENS and Proof of Humanity emit no timestamp, and the
+precompile proves transactions rather than block headers, so the only temporal fact covered by a
+proof is the **block height**. `registerChainAnchor` converts height to time against an
+owner-registered `(height, timestamp, secondsPerBlock)` reference.
+
+That is a trusted input and an approximation. Measured against our own headline transaction it
+drifts 3.8 days over 1.8 years (0.55%), well inside the 30-day granularity the term scores in — but
+a dishonest anchor could inflate everyone's age term, and a chain that changed its block time would
+skew it. It is bounded (120 points) and it replaced something strictly worse: before it, the term
+measured time since *import*, which rewarded importing early and idling.
+
 ---
 
 ## What we would build next, in order
@@ -202,5 +281,7 @@ Not documented anywhere we could find.
 ```bash
 npm run poh:negative      # 5/5 identities proved, 0/5 still valid
 npm run negative-paths    # 5 attacks rejected by the live precompile
-forge test                # 163 tests, including the self-dealt and capacity-invariance properties
+npm run check:abi         # the frontend ABI matches the compiled contracts
+forge test                # 214 tests, including the flash-loan guard, the capacity high-water
+                          # rule, the age axis, and the self-dealt ceiling
 ```

@@ -150,10 +150,14 @@ library ScoreLib {
         uint256 penalty = uint256(profile.late) * PENALTY_PER_LATE
             + uint256(profile.liquidations) * PENALTY_PER_LIQUIDATION;
 
-        // Saturating: more penalties than points floors at zero rather than wrapping.
-        uint256 net = positive > penalty ? positive - penalty : 0;
+        // Clamp the positive side BEFORE subtracting. Clamping the net afterwards let penalties be
+        // absorbed by points that could never have been scored anyway: with every cap maxed, the
+        // positive terms sum to 1,430 against a 1,000 ceiling, so the first 430 points of default
+        // were invisible — two liquidations and a late payment could leave the score untouched.
+        uint256 capped = _min(positive, MAX_SCORE);
 
-        return uint16(_min(net, MAX_SCORE));
+        // Saturating: more penalties than points floors at zero rather than wrapping.
+        return uint16(capped > penalty ? capped - penalty : 0);
     }
 
     /// @notice Points earned purely by how long this borrower's proven history spans.

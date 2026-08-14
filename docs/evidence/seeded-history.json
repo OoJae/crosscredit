@@ -1,15 +1,15 @@
 {
-  "capturedAt": "2026-08-13T21:39:15.261Z",
+  "capturedAt": "2026-08-14T09:20:39.907Z",
   "network": "ethereum-sepolia",
   "chainId": 11155111,
-  "loanBook": "0xe53a54489aec265337f6f8fa3ee6e08ecba5cf9c",
+  "loanBook": "0x07AdA5C60dFbe5C3A7dC48081B0fa70E14c6d41D",
   "borrowers": {
     "A": {
       "address": "0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6",
       "role": "clean history — all on time, targets Platinum"
     },
     "B": {
-      "address": "0x04163f60FA50519D86AeFB8e450312bAD76CA0B6",
+      "address": "0xB82dC3F27d4b72FaF7594C7724Cf43B47FF4b52e",
       "role": "one late repayment — tier contrast"
     }
   },
@@ -17,7 +17,7 @@
     "maxBatchSize": 10,
     "maxBatchRange": 1000,
     "borrowerAEventCount": 9,
-    "borrowerABlockSpan": 10,
+    "borrowerABlockSpan": 11,
     "borrowerAFitsSingleBatch": true
   },
   "events": [
@@ -27,8 +27,8 @@
       "loanId": 1,
       "amountWei": "2000000000000000",
       "onTime": null,
-      "txHash": "0xa16b46aad0fc17d8801ac528d3ceccd498d1c71591cd377d3e54f533c013ed2c",
-      "blockNumber": 11482842
+      "txHash": "0x290f52826a71a27ee78f3653fb914952d4825295908438ce60fbbac8f6acc90e",
+      "blockNumber": 11486254
     },
     {
       "borrower": "0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6",
@@ -36,8 +36,8 @@
       "loanId": 1,
       "amountWei": "1000000000000000",
       "onTime": true,
-      "txHash": "0xeeaa5b3f44a0727b175dab9a97838b6e50e0c476668fc18649d77b7b81e9e8ea",
-      "blockNumber": 11482844
+      "txHash": "0x97270301a204661136828100618b9ef2aa4ea3a9a5666d75d5b734f27dc7c379",
+      "blockNumber": 11486255
     },
     {
       "borrower": "0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6",
@@ -45,8 +45,8 @@
       "loanId": 1,
       "amountWei": "1000000000000000",
       "onTime": true,
-      "txHash": "0x00c6b475d0005690ca745aa759694658b32a5a90d7f868f546372d060badfc2c",
-      "blockNumber": 11482845
+      "txHash": "0x0c76284eb8450f087443b993c94ed41f49ced4390247c4729db81efe3b119845",
+      "blockNumber": 11486256
     },
     {
       "borrower": "0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6",
@@ -54,8 +54,8 @@
       "loanId": 2,
       "amountWei": "2000000000000000",
       "onTime": null,
-      "txHash": "0x5b33e027786f70857b0cb5ee4b9305dc1ad1306c2e58e49047c6fe4a0f7df4b7",
-      "blockNumber": 11482847
+      "txHash": "0xcd5cfae2a82738300259d8f959a79875b497ffb792bf468d466849cd8f637923",
+      "blockNumber": 11486257
     },
     {
       "borrower": "0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6",
@@ -63,8 +63,8 @@
       "loanId": null,
       "amountWei": "3000000000000000",
       "onTime": null,
-      "txHash": "0x30ec4420dd44cdb75ac30940bb122204286b13ef46c929132c2f8034833466f5",
-      "blockNumber": 11482848
+      "txHash": "0x13e28358379e1a8bc7d99f3e374c5b931a27fb409516c794655700e6ee9d1343",
+      "blockNumber": 11486258
     },
     {
       "borrower": "0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6",
@@ -72,8 +72,8 @@
       "loanId": 2,
       "amountWei": "2000000000000000",
       "onTime": true,
-      "txHash": "0xe9c9315b1c2a4797bbf0891d40640c9b90ce04f32b4c84449e5fd72c6455cb71",
-      "blockNumber": 11482849
+      "txHash": "0x70e8865270ba4bb654654b872964993b4a90fb623a191a4f4eca09e9e38f18e5",
+      "blockNumber": 11486259
     },
     {
       "borrower": "0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6",
@@ -81,8 +81,8 @@
       "loanId": 3,
       "amountWei": "2000000000000000",
       "onTime": null,
-      "txHash": "0xcaa90278485f8ef318a52d430416ce324d7a761ed71181c2e8dd62f47026521d",
-      "blockNumber": 11482850
+      "txHash": "0x71b3c9539e47263d7918c8c2a5b983a2500cd48d2840571308fb820aab60254d",
+      "blockNumber": 11486262
     },
     {
       "borrower": "0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6",
@@ -90,8 +90,8 @@
       "loanId": 3,
       "amountWei": "1000000000000000",
       "onTime": true,
-      "txHash": "0xd78ac33e03b158546dc11173aca6ea651b9d3cc88634e31b3b572479593f3ee9",
-      "blockNumber": 11482851
+      "txHash": "0x8a69619d03290a6ea005412ed871d958007285e829cab58fdb163ccad8001029",
+      "blockNumber": 11486263
     },
     {
       "borrower": "0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6",
@@ -99,26 +99,26 @@
       "loanId": 3,
       "amountWei": "1000000000000000",
       "onTime": true,
-      "txHash": "0xeb835a0852340dae65f23c386f276cbe2cf688ec8f6097fd7abb70074cdcc093",
-      "blockNumber": 11482852
+      "txHash": "0xf6ee104dc1f3b797d7d2e110b6aa9f0c06171a3628bb1ee77b6d14a6213480d4",
+      "blockNumber": 11486265
     },
     {
-      "borrower": "0x04163f60FA50519D86AeFB8e450312bAD76CA0B6",
+      "borrower": "0xB82dC3F27d4b72FaF7594C7724Cf43B47FF4b52e",
       "event": "LoanOpened",
       "loanId": 4,
       "amountWei": "2000000000000000",
       "onTime": null,
-      "txHash": "0x210c2ae46968d39aa1f512b03527d27831c7a4ef6698f415f5890a511d067407",
-      "blockNumber": 11482855
+      "txHash": "0x037a552c40dd14d6c93f8955adb5e5c9e3f5e9378bac697593f7a8d9e6b7ea06",
+      "blockNumber": 11486267
     },
     {
-      "borrower": "0x04163f60FA50519D86AeFB8e450312bAD76CA0B6",
+      "borrower": "0xB82dC3F27d4b72FaF7594C7724Cf43B47FF4b52e",
       "event": "RepaymentMade",
       "loanId": 4,
       "amountWei": "2000000000000000",
       "onTime": false,
-      "txHash": "0x7534ba930a0014e250d0886cf6910037e1403d21c1eb4bf11adbb93e4b5c225e",
-      "blockNumber": 11482861
+      "txHash": "0xe7f4fb7cae8b84bdca0a9e55815bc5731061cf3904ff0a0add32d3f3f1915cc7",
+      "blockNumber": 11486274
     }
   ]
 }

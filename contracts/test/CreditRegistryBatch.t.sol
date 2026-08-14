@@ -10,6 +10,7 @@ import {INativeQueryVerifier, NativeQueryVerifierLib} from "../src/vendored/Veri
 import {MockNativeQueryVerifier} from "./mocks/MockNativeQueryVerifier.sol";
 import {EncodedTxBuilder} from "./helpers/EncodedTxBuilder.sol";
 import {SourceKind, EventSigs} from "../src/creditcoin/SourceKinds.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 
 /// @notice Tests for batch verification — importing a whole credit history in one transaction.
 ///
@@ -266,7 +267,14 @@ contract CreditRegistryBatchTest is Test {
         b.heights[1] = b.heights[0];
         b.proofs[1] = b.proofs[0];
 
-        vm.expectRevert();
+        // The specific selector matters: a bare expectRevert here would also pass if the batch
+        // failed for an unrelated reason, which is exactly what this test exists to rule out.
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CreditRegistry.QueryAlreadyProcessed.selector,
+                registry.queryIdFor(SEPOLIA_KEY, b.heights[0], b.proofs[0].root, b.proofs[0].siblings)
+            )
+        );
         _submit(b);
 
         assertEq(registry.profileOf(borrower).onTime, 0, "nothing applied");
@@ -279,7 +287,12 @@ contract CreditRegistryBatchTest is Test {
 
         // A larger batch that re-includes the already-verified transaction.
         Batch memory second = _repaymentBatch(3);
-        vm.expectRevert();
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CreditRegistry.QueryAlreadyProcessed.selector,
+                registry.queryIdFor(SEPOLIA_KEY, second.heights[0], second.proofs[0].root, second.proofs[0].siblings)
+            )
+        );
         _submit(second);
 
         assertEq(registry.profileOf(borrower).onTime, 1, "batch reverted whole; no partial apply");
@@ -333,7 +346,7 @@ contract CreditRegistryBatchTest is Test {
         Batch memory b = _repaymentBatch(2);
         registry.pause();
 
-        vm.expectRevert();
+        vm.expectRevert(Pausable.EnforcedPause.selector);
         _submit(b);
     }
 }

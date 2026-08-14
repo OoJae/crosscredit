@@ -30,7 +30,10 @@ export default function Borrow({address, canWrite}: {address: Address; canWrite:
 
   const tierIndex = Number(tier ?? 0);
   const myTerms = terms?.find((t) => t.tier === tierIndex);
-  const hasLoan = loan !== undefined && loan[4];
+  // Index 5, not 4: `aprBps` was inserted before `active` when the loan started carrying the rate
+  // it was written at. Positional tuple reads like this are exactly why the ABI-parity check
+  // cannot save us here — `loans(address)` has the same selector whatever it returns.
+  const hasLoan = loan !== undefined && loan[5];
 
   const parsedAmount = (() => {
     try {

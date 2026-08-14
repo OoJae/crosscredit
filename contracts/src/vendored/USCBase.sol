@@ -18,7 +18,14 @@
 //      could emit look-alike events and have them accepted as Sepolia history. Source-chain
 //      authentication is impossible without this value, and `execute` is `external` and
 //      non-virtual, so it cannot be wrapped by a subclass instead.
-//   2. Added NatSpec. No other logic, storage layout, or control flow is changed — the
+//   2. `_processAndEmitEvent` gains a `uint64 blockHeight` parameter (and both `execute` and the
+//      batch path forward it). Upstream discards the height once the proof verifies. We need it
+//      because it is the ONLY proof-covered source of foreign-chain time: Aave, ENS and PoH events
+//      carry no timestamp, so without it a decade-old mainnet history and one imported this
+//      morning are indistinguishable, and the score's age term silently measures time since import
+//      rather than span of history. The height is covered by the Merkle proof, so it cannot be
+//      forged by the caller — which a caller-supplied timestamp could be.
+//   3. Added NatSpec. No other logic, storage layout, or control flow is changed — the
 //      verification path and the `_computeQueryId` assembly are byte-for-byte upstream so the
 //      security-critical core stays diffable against the original.
 // ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -54,11 +61,14 @@ abstract contract USCBase {
     /// @param queryId The replay-protection id, already marked consumed.
     /// @param chainKey Source chain the proof was verified against. MUST be checked by the
     /// implementation (see modification note 1 above).
+    /// @param blockHeight Source-chain height the proof was verified at. Proof-covered, so it is
+    /// trustworthy in a way `action` is not (see modification note 2 above).
     /// @param encodedTransaction The verified, Attestcoin-encoded transaction + receipt.
     function _processAndEmitEvent(
         uint8 action,
         bytes32 queryId,
         uint64 chainKey,
+        uint64 blockHeight,
         bytes memory encodedTransaction
     ) internal virtual;
 
@@ -93,7 +103,7 @@ abstract contract USCBase {
         // Mark the query as processed
         processedQueries[queryId] = true;
 
-        _processAndEmitEvent(action, queryId, chainKey, encodedTransaction);
+        _processAndEmitEvent(action, queryId, chainKey, blockHeight, encodedTransaction);
 
         return true;
     }

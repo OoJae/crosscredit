@@ -76,7 +76,8 @@ library EncodedTxBuilder {
         });
     }
 
-    /// @notice `RepaymentMade(uint256 indexed loanId, address indexed borrower, uint256 amount, bool onTime, uint64 timestamp)`.
+    /// @notice `RepaymentMade(uint256 indexed loanId, address indexed borrower, address indexed
+    /// payer, uint256 amount, bool onTime, uint64 timestamp)`, paid by the borrower themselves.
     function repaymentMade(
         address emitter,
         bytes32 sig,
@@ -85,14 +86,31 @@ library EncodedTxBuilder {
         uint256 amount,
         bool onTime
     ) internal pure returns (EvmV1Decoder.LogEntryTuple memory log) {
-        bytes32[] memory topics = new bytes32[](3);
+        return repaymentMadeBy(emitter, sig, loanId, borrower, borrower, amount, onTime, 1_786_000_000);
+    }
+
+    /// @notice The full form: an explicit `payer` and an explicit source timestamp.
+    /// @dev `payer` distinguishes a borrower's own lateness from a third party settling their debt;
+    /// `timestamp` is what the age term reads, so tests can build history that is genuinely old.
+    function repaymentMadeBy(
+        address emitter,
+        bytes32 sig,
+        uint256 loanId,
+        address borrower,
+        address payer,
+        uint256 amount,
+        bool onTime,
+        uint64 timestamp
+    ) internal pure returns (EvmV1Decoder.LogEntryTuple memory log) {
+        bytes32[] memory topics = new bytes32[](4);
         topics[0] = sig;
         topics[1] = bytes32(loanId);
         topics[2] = bytes32(uint256(uint160(borrower)));
+        topics[3] = bytes32(uint256(uint160(payer)));
         log = EvmV1Decoder.LogEntryTuple({
             address_: emitter,
             topics: topics,
-            data: abi.encode(amount, onTime, uint64(1_786_000_000))
+            data: abi.encode(amount, onTime, timestamp)
         });
     }
 
@@ -106,5 +124,107 @@ library EncodedTxBuilder {
         topics[0] = sig;
         topics[1] = bytes32(uint256(uint160(borrower)));
         log = EvmV1Decoder.LogEntryTuple({address_: emitter, topics: topics, data: abi.encode(amount)});
+    }
+
+    // ─── Ethereum mainnet shapes ──────────────────────────────────────────────────────────
+    //
+    // Until these existed the mainnet decoders could only be tested against captured fixtures,
+    // which meant anything a real transaction did not happen to contain — a same-transaction
+    // borrow, an ENS v3 layout, a Proof of Humanity update — was untestable and therefore untested.
+
+    /// @notice Aave V3 `Repay(address indexed reserve, address indexed user, address indexed
+    /// repayer, uint256 amount, bool useATokens)`.
+    function aaveRepay(
+        address emitter,
+        bytes32 sig,
+        address reserve,
+        address user,
+        address repayer,
+        uint256 amount
+    ) internal pure returns (EvmV1Decoder.LogEntryTuple memory log) {
+        bytes32[] memory topics = new bytes32[](4);
+        topics[0] = sig;
+        topics[1] = bytes32(uint256(uint160(reserve)));
+        topics[2] = bytes32(uint256(uint160(user)));
+        topics[3] = bytes32(uint256(uint160(repayer)));
+        log = EvmV1Decoder.LogEntryTuple({
+            address_: emitter,
+            topics: topics,
+            data: abi.encode(amount, false)
+        });
+    }
+
+    /// @notice Aave V3 `Borrow(address indexed reserve, address user, address indexed onBehalfOf,
+    /// uint256 amount, uint8 interestRateMode, uint256 borrowRate, uint16 indexed referralCode)`.
+    function aaveBorrow(address emitter, bytes32 sig, address reserve, address onBehalfOf, uint256 amount)
+        internal
+        pure
+        returns (EvmV1Decoder.LogEntryTuple memory log)
+    {
+        bytes32[] memory topics = new bytes32[](4);
+        topics[0] = sig;
+        topics[1] = bytes32(uint256(uint160(reserve)));
+        topics[2] = bytes32(uint256(uint160(onBehalfOf)));
+        topics[3] = bytes32(0); // referralCode
+        log = EvmV1Decoder.LogEntryTuple({
+            address_: emitter,
+            topics: topics,
+            data: abi.encode(onBehalfOf, amount, uint8(2), uint256(0))
+        });
+    }
+
+    /// @notice Aave V3 `LiquidationCall(address indexed collateralAsset, address indexed debtAsset,
+    /// address indexed user, ...)`.
+    function aaveLiquidation(address emitter, bytes32 sig, address collateralAsset, address debtAsset, address user)
+        internal
+        pure
+        returns (EvmV1Decoder.LogEntryTuple memory log)
+    {
+        bytes32[] memory topics = new bytes32[](4);
+        topics[0] = sig;
+        topics[1] = bytes32(uint256(uint160(collateralAsset)));
+        topics[2] = bytes32(uint256(uint160(debtAsset)));
+        topics[3] = bytes32(uint256(uint160(user)));
+        log = EvmV1Decoder.LogEntryTuple({
+            address_: emitter,
+            topics: topics,
+            data: abi.encode(uint256(0), uint256(0), address(0), false)
+        });
+    }
+
+    /// @notice ENS `NameRegistered`. Both accepted controller versions carry four non-indexed
+    /// words; only the tail differs, and `expires` sits at index 3 in each.
+    /// @param v4 True for the v4 layout (trailing `bytes32 referrer`), false for v3.
+    function ensRegistered(address emitter, bytes32 sig, address owner, uint256 expires, uint256 premium, bool v4)
+        internal
+        pure
+        returns (EvmV1Decoder.LogEntryTuple memory log)
+    {
+        bytes32[] memory topics = new bytes32[](3);
+        topics[0] = sig;
+        topics[1] = keccak256("crosscredit");
+        topics[2] = bytes32(uint256(uint160(owner)));
+        bytes memory data = v4
+            ? abi.encode("crosscredit", uint256(1 ether), premium, expires, bytes32(0))
+            : abi.encode("crosscredit", uint256(1 ether), premium, expires);
+        log = EvmV1Decoder.LogEntryTuple({address_: emitter, topics: topics, data: data});
+    }
+
+    /// @notice Proof of Humanity v2 `UpdateInitiated(bytes20 indexed humanityId, address indexed
+    /// owner, uint40 expirationTime, bool claimed, address gateway)`.
+    function pohUpdateInitiated(address emitter, bytes32 sig, address owner, uint256 expirationTime, bool claimed)
+        internal
+        pure
+        returns (EvmV1Decoder.LogEntryTuple memory log)
+    {
+        bytes32[] memory topics = new bytes32[](3);
+        topics[0] = sig;
+        topics[1] = bytes32(uint256(uint160(owner)));
+        topics[2] = bytes32(uint256(uint160(owner)));
+        log = EvmV1Decoder.LogEntryTuple({
+            address_: emitter,
+            topics: topics,
+            data: abi.encode(expirationTime, claimed, address(0))
+        });
     }
 }

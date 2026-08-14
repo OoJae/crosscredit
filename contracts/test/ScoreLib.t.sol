@@ -274,12 +274,18 @@ contract ScoreLibTest is Test {
         assertEq(ScoreLib.compute(_empty(), NOW), 0);
     }
 
-    function testFuzz_scoreNeverExceedsMax(
+    /// @dev Asserts against the **sum of the individual caps**, not against `MAX_SCORE`.
+    ///
+    /// `assertLe(score, MAX_SCORE)` cannot fail: `compute` clamps to `MAX_SCORE` on its last line,
+    /// so the assertion restates the clamp rather than testing anything. Bounding by the caps
+    /// instead makes the property bite — if any single cap stopped being applied, this fails.
+    function testFuzz_scoreRespectsEveryIndividualCap(
         uint32 onTime,
         uint32 mainnet,
         uint256 capacity,
         uint32 closed,
-        uint64 age
+        uint64 age,
+        bool identity
     ) public pure {
         CreditProfile memory p = _empty();
         p.onTime = onTime;
@@ -287,19 +293,76 @@ contract ScoreLibTest is Test {
         p.demonstratedCapacityWei = capacity;
         p.loansClosed = closed;
         p.oldestActivity = uint64(bound(age, 0, NOW));
+        p.identityExpiry = identity ? NOW + 1 : 0;
 
+        uint256 ceiling = ScoreLib.CAP_ON_TIME + ScoreLib.CAP_CLOSED_LOANS + ScoreLib.CAP_MAINNET_REPAYMENTS
+            + ScoreLib.CAP_CAPACITY + ScoreLib.CAP_AGE + ScoreLib.POINTS_IDENTITY;
+
+        assertLe(ScoreLib.compute(p, NOW), ceiling);
         assertLe(ScoreLib.compute(p, NOW), ScoreLib.MAX_SCORE);
     }
 
-    /// @dev Saturating subtraction: no underflow, no wrap, however many defaults accumulate.
-    function testFuzz_penaltiesNeverUnderflow(uint32 late, uint32 liquidations) public pure {
+    /// @dev Saturating subtraction that actually asserts the floor.
+    ///
+    /// The old version asserted `<= MAX_SCORE`, which would have passed just as happily if the
+    /// function returned garbage below 1000 rather than flooring at zero. This asserts the real
+    /// property: once penalties exceed the capped positive score, the result is exactly 0.
+    function testFuzz_penaltiesFloorAtZeroAndNeverWrap(uint32 late, uint32 liquidations) public pure {
         CreditProfile memory p = _empty();
         p.onTime = 6;
         p.mainnetRepayments = 4;
         p.late = late;
         p.liquidations = liquidations;
 
-        assertLe(ScoreLib.compute(p, NOW), ScoreLib.MAX_SCORE);
+        uint256 positive = ScoreLib.CAP_ON_TIME + _min(4 * ScoreLib.POINTS_PER_MAINNET_REPAYMENT, ScoreLib.CAP_MAINNET_REPAYMENTS);
+        uint256 penalty = uint256(late) * ScoreLib.PENALTY_PER_LATE
+            + uint256(liquidations) * ScoreLib.PENALTY_PER_LIQUIDATION;
+
+        uint16 score = ScoreLib.compute(p, NOW);
+        if (penalty >= positive) {
+            assertEq(score, 0, "penalties exceeding the score floor it at zero, never wrap");
+        } else {
+            assertEq(score, uint16(positive - penalty), "and otherwise subtract exactly");
+        }
+    }
+
+    function _min(uint256 a, uint256 b) private pure returns (uint256) {
+        return a < b ? a : b;
+    }
+
+    /// @dev The clamp is applied to the positive terms **before** penalties are subtracted.
+    ///
+    /// With every cap maxed the positive terms sum to 1,430 against a 1,000 ceiling, so clamping
+    /// afterwards let the first 430 points of default vanish — a borrower could take two
+    /// liquidations and a late payment and score exactly the same as a spotless one.
+    function test_clamp_penaltiesAreNotAbsorbedByUnscorableHeadroom() public pure {
+        CreditProfile memory perfect = _empty();
+        perfect.onTime = 100;
+        perfect.loansClosed = 100;
+        perfect.mainnetRepayments = 100;
+        perfect.demonstratedCapacityWei = 1_000_000 ether;
+        perfect.oldestActivity = NOW - 3650 days;
+        perfect.identityExpiry = NOW + 365 days;
+
+        assertEq(ScoreLib.compute(perfect, NOW), ScoreLib.MAX_SCORE, "everything maxed hits the ceiling");
+
+        // Built field by field, not `= perfect`. Assigning one memory struct to another copies the
+        // *reference*, so mutating the copy would silently mutate the original and this test would
+        // be comparing a value against itself.
+        CreditProfile memory defaulted = _empty();
+        defaulted.onTime = 100;
+        defaulted.loansClosed = 100;
+        defaulted.mainnetRepayments = 100;
+        defaulted.demonstratedCapacityWei = 1_000_000 ether;
+        defaulted.oldestActivity = NOW - 3650 days;
+        defaulted.identityExpiry = NOW + 365 days;
+        defaulted.liquidations = 1;
+
+        assertEq(
+            ScoreLib.compute(defaulted, NOW),
+            ScoreLib.MAX_SCORE - ScoreLib.PENALTY_PER_LIQUIDATION,
+            "a liquidation must cost its full penalty even at the ceiling"
+        );
     }
 
     function testFuzz_moreRealRepaymentsIsNeverWorse(uint16 n) public pure {

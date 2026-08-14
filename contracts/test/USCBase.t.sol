@@ -12,16 +12,21 @@ contract HookSpy is USCBase {
     uint8 public lastAction;
     bytes32 public lastQueryId;
     uint64 public lastChainKey;
+    uint64 public lastBlockHeight;
     bytes public lastPayload;
     uint256 public hookCalls;
 
-    function _processAndEmitEvent(uint8 action, bytes32 queryId, uint64 chainKey, bytes memory encodedTransaction)
-        internal
-        override
-    {
+    function _processAndEmitEvent(
+        uint8 action,
+        bytes32 queryId,
+        uint64 chainKey,
+        uint64 blockHeight,
+        bytes memory encodedTransaction
+    ) internal override {
         lastAction = action;
         lastQueryId = queryId;
         lastChainKey = chainKey;
+        lastBlockHeight = blockHeight;
         lastPayload = encodedTransaction;
         ++hookCalls;
     }

@@ -62,8 +62,13 @@ Range **0–1000**.
 | Age of proven history | **+10** per 30 days | 120 |
 | Live ENS name or PoH humanity | **+60** | 60 |
 
-Positive components are capped individually, summed, then penalties are subtracted with a
-**saturating floor at zero** (never underflows, never wraps).
+Positive components are capped individually, summed, **clamped to 1,000**, and only then are
+penalties subtracted, with a saturating floor at zero.
+
+The clamp order matters and used to be wrong. With every cap maxed the positive terms sum to
+**1,430** against a 1,000 ceiling, so clamping the *net* let the first 430 points of default vanish
+— two liquidations and a late payment could leave a score untouched.
+`test_clamp_penaltiesAreNotAbsorbedByUnscorableHeadroom` pins it.
 
 ## Three load-bearing properties
 
@@ -73,9 +78,19 @@ own seeded Borrower A dropped from 710/Platinum to **390/Silver** when this land
 is the fix, not a regression. `test_selfDealtHistoryCannotReachPlatinum` fails if any cap is
 loosened enough to undo it.
 
-**2. Time cannot be compressed.** Six repayments in six blocks and six over six months scored
-identically before the age term existed. Wall-clock age is the single input a scripted attacker
-cannot fabricate.
+**2. Time cannot be compressed — and it is now measured from the right clock.** Wall-clock age is
+the one input a scripted attacker cannot fabricate. But Aave, ENS and Proof of Humanity emit no
+timestamp, and the precompile proves transactions rather than block headers, so for a long time six
+of the seven ingest paths stamped Creditcoin's own `block.timestamp` — making the term measure
+*time since import*. That rewarded importing early and idling, and gave a decade of genuine Aave
+history exactly zero age points.
+
+The fix uses the one temporal fact that **is** covered by the Merkle proof: the source block
+height. `registerChainAnchor` records a `(height, timestamp, secondsPerBlock)` reference per chain
+and heights are converted against it. Measured against our own marquee transaction, the estimate
+drifts **3.8 days over a 1.8-year span — 0.55%**, far inside the 30-day granularity the term scores
+in. It is an approximation, and an owner-supplied one; both facts are stated in
+[`THREAT_MODEL.md`](THREAT_MODEL.md).
 
 **3. A liquidation costs more than a late payment.** −250 against −150: being liquidated means a
 third party lost patience and seized collateral, which is materially worse than paying our toy
@@ -103,14 +118,21 @@ This is the part that matters most, and it lives in
 > above what you post**. Everything beyond it is fully collateralized.
 
 A wallet holding Platinum with zero demonstrated capacity gets the Platinum *rate* on a fully
-collateralized loan and **no discount at all**. Live, right now, that is exactly what the three
-Sepolia demo borrowers show: Silver tiers, zero capacity, zero undercollateralized portion.
+collateralized loan and **no discount at all**. Live, right now, that is exactly what the Sepolia
+demo borrowers show: Silver tiers, zero capacity, zero undercollateralized portion.
+
+And capacity is only granted for capital that was genuinely at risk. A repayment funded by a borrow
+in the **same transaction** is a flash loan wearing a repayment's clothes — real event, valid proof,
+zero exposure — so it counts as a repayment and grants no capacity at all. That hole let one
+transaction reach Platinum before it was closed; see [`THREAT_MODEL.md`](THREAT_MODEL.md#5-wash-lending-and-the-flash-loan-that-broke-our-first-answer).
 
 It also gives sybil resistance an arithmetic rather than an identity answer. Capacity is the
 *largest single* repayment, not the sum, so splitting a history across a thousand wallets divides
-capacity instead of multiplying it — the conservation result formalised in
-[arXiv:2605.03307](https://arxiv.org/pdf/2605.03307), asserted by
-`test_capacityCap_isInvariantUnderIdentitySplitting`. We tried the identity route first and
+capacity instead of multiplying it. That invariance is a direct consequence of using a maximum
+rather than a sum, and is asserted by `test_capacityCap_isInvariantUnderIdentitySplitting`.
+(Earlier drafts credited [arXiv:2605.03307](https://arxiv.org/pdf/2605.03307) as the formal
+result; that paper is about *sponsor-delegated* capacity with loss recourse, which we do not have.
+Corrected in [`THREAT_MODEL.md`](THREAT_MODEL.md).) We tried the identity route first and
 measured it failing; see [`THREAT_MODEL.md`](THREAT_MODEL.md#why-not-proof-of-personhood).
 
 ## Calibration against real history
@@ -134,9 +156,24 @@ capacity            min(960145e18 / 1e16, 200) = 200
 Its quote from the live pool: **850 collateral to borrow 1000**, with the full 1000 counted as
 undercollateralized because capacity (~$960k) far exceeds it.
 
+### The age axis, demonstrated on two real wallets
+
+The clearest evidence the time term works is a pair of live mainnet borrowers scored by the same
+contract on the same day:
+
+| Borrower | Proofs | Oldest proven activity | Age points | Score |
+|---|---|---|---|---|
+| `0x76f30e…5b1A` | 5 repayments | 2026-08-09 (~0 months) | **0** | 800 |
+| `0xe57D6C…dd00` | **1** repayment | **2024-10-19 (~22 months)** | **120 (maxed)** | 423 |
+
+The second wallet reached 423 from a *single* proof — 120 (repayment) + 183 (capacity) + 120 (age)
+— because its history is genuinely old. The first has five times the proofs and earns nothing from
+age, because everything it proved happened last week. No amount of scripting converts one into the
+other.
+
 ### Borrower A — `0x8ce707…89c6`, self-dealt but spotless
 
-3 loans closed · 5 on-time · 0 late · imported by 11 separate proofs
+3 loans closed · 5 on-time · 0 late · imported by 9 separate proofs
 
 ```
 on-time     min(5 × 60, 360) = 300
@@ -146,7 +183,7 @@ capacity                        0     ← no third party was ever involved
                                 390   →  Silver, and zero undercollateralized credit
 ```
 
-### Borrower B — `0x04163f…A0B6`, one default
+### Borrower B — `0xB82dC3…b52E`, one default
 
 ```
 closed 30 − penalty 150 = −120 → floors at 0   →  Bronze

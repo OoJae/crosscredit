@@ -8,20 +8,19 @@
       "role": "Source chain — where borrowers build the credit history that gets proven to Creditcoin",
       "contracts": {
         "LoanBook": {
-          "address": "0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c",
-          "deployedAt": "2026-08-13",
-          "explorerUrl": "https://sepolia.etherscan.io/address/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c",
-          "eventsUrl": "https://sepolia.etherscan.io/address/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c#events",
+          "address": "0x07AdA5C60dFbe5C3A7dC48081B0fa70E14c6d41D",
+          "deployedAt": "2026-08-14",
+          "explorerUrl": "https://sepolia.etherscan.io/address/0x07AdA5C60dFbe5C3A7dC48081B0fa70E14c6d41D",
+          "eventsUrl": "https://sepolia.etherscan.io/address/0x07AdA5C60dFbe5C3A7dC48081B0fa70E14c6d41D#events",
           "eventTopics": {
             "LoanOpened(uint256,address,uint256,uint64)": "0x0d7f8e19afd65be70c0b9ff46dab1702a44ca0e8fcd33448375d7c2690e5866b",
             "RepaymentMade(uint256,address,uint256,bool,uint64)": "0x7d64aa0e099ec7ce5a5e95941014b245cf86dd8cd1115dd1ee421d8ec4d04206",
             "CollateralAdded(address,uint256)": "0x7dba1be544024070cd5eebfa8bdd80a8b198cea8058c7d3cc1f8dd36e41ab2f7"
           },
-          "deployBlock": 11482838,
+          "deployBlock": 11486250,
           "verification": {
-            "sourcify": "exact_match",
-            "sourcifyUrl": "https://repo.sourcify.dev/contracts/full_match/11155111/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c/",
-            "etherscan": "verified"
+            "etherscan": "verified",
+            "verifiedAt": "2026-08-14"
           },
           "seededHistory": {
             "evidence": "docs/evidence/seeded-history.json",
@@ -29,16 +28,26 @@
             "borrowerA": {
               "address": "0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6",
               "events": 9,
-              "blockSpan": 10,
               "allOnTime": true,
               "fitsSingleBatch": true
             },
             "borrowerB": {
-              "address": "0x04163f60FA50519D86AeFB8e450312bAD76CA0B6",
+              "address": "0xB82dC3F27d4b72FaF7594C7724Cf43B47FF4b52e",
               "events": 2,
               "lateRepayments": 1
+            },
+            "borrowerC": {
+              "address": "0xaA2871B057D80D92606f0a3eFa84f175F73b55d5",
+              "events": 9,
+              "note": "ephemeral wallet, key generated per run and discarded"
             }
-          }
+          },
+          "version": "v2",
+          "changesFromV1": [
+            "RepaymentMade gained an indexed 'payer' (topic0 0x57f8fd60...). Without it a third party could settle 1 wei on a past-due loan and stamp an indelible 'late' on the borrower.",
+            "Added withdrawCollateral: addCollateral previously accepted ETH with no path out, so all collateral was permanently unrecoverable."
+          ],
+          "supersedes": "0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c (v1)"
         }
       }
     },
@@ -54,24 +63,28 @@
       },
       "contracts": {
         "CreditRegistry": {
-          "address": "0x581A7413e1fCcB767EC8BA9E837df43fbA06b3D2",
+          "address": "0x4C4381dB68a1cAAE46a2E6CFc2f667ad22Dddf81",
           "deployedAt": "2026-08-14",
-          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0x581A7413e1fCcB767EC8BA9E837df43fbA06b3D2",
+          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0x4C4381dB68a1cAAE46a2E6CFc2f667ad22Dddf81",
           "linkedLibraries": {
             "EvmV1Decoder": "0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa"
           },
           "features": [
             "multi-source: owner-registered (chainKey, emitter) -> SourceKind allowlist",
-            "reads Ethereum mainnet (chainKey 3) and Sepolia (chainKey 1)",
-            "decoders for LoanBook, Aave V3 / Sparklend, ENS, Proof of Humanity",
-            "demonstratedCapacityOf(address) — caps undercollateralized borrowing",
-            "reserve decimal normalisation via registerReserve",
+            "flash-loan guard: a Repay funded by a Borrow of the same reserve/account in the SAME transaction grants no capacity",
+            "one mainnetRepayments credit per proven transaction, however many Repay logs it carries",
+            "registerChainAnchor: derives source-chain time from the proof-covered block height (0.55% drift measured)",
+            "unregistered reserve REVERTS rather than consuming the queryId, so the proof stays retryable",
+            "scoreOf/tierOf recompute live, so a lapsed identity stops paying without a new proof",
+            "loans keyed by keccak(chainKey, emitter, loanId)",
+            "previewIngest: a free view using the precompile verify() overload",
+            "queryIdFor: exposes the replay id off-chain",
             "single-proof execute + batch executeBatch (<=10, one shared continuity proof)"
           ],
           "registeredSources": [
             {
               "chainKey": 1,
-              "emitter": "0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c",
+              "emitter": "0x07AdA5C60dFbe5C3A7dC48081B0fa70E14c6d41D",
               "kind": "LoanBook"
             },
             {
@@ -109,11 +122,27 @@
             "DAI": 18,
             "WETH": 18
           },
-          "supersedes": "0xB5F3B44113A31B07508464de39d7ddd939184B2c (single-source, LoanBook only)",
+          "supersedes": "0x581A7413e1fCcB767EC8BA9E837df43fbA06b3D2 (no flash-loan guard, cached scores, wrong ENS v3 decode)",
           "verification": {
             "blockscout": "verified",
             "verifiedAt": "2026-08-14",
-            "note": "Verified explicitly after an audit found this field had been copy-forwarded onto new addresses on redeploy, asserting a verification that had never been performed for them."
+            "confirmedVia": "api/v2/smart-contracts is_verified"
+          },
+          "deployBlock": 5307511,
+          "chainAnchors": {
+            "note": "Measured against real blocks, not assumed. An earlier hand-picked pair was 106 days out on Sepolia and 73 on mainnet.",
+            "3": {
+              "height": 21000000,
+              "timestamp": 1729345547,
+              "secondsPerBlock": 12,
+              "utc": "2024-10-19T13:45:47Z"
+            },
+            "1": {
+              "height": 11486289,
+              "timestamp": 1786699416,
+              "secondsPerBlock": 12,
+              "utc": "2026-08-14T09:23:36Z"
+            }
           }
         },
         "EvmV1Decoder": {
@@ -123,22 +152,26 @@
           "note": "Our own build of @gluwa/usc-contracts@0.1.2 (solc 0.8.30). External library — its public functions force delegatecall linking. Deliberately NOT the pre-existing 0x731c345d... instance, which is a different build (9,598 B, solc 0.8.23) of unverified provenance."
         },
         "CreditTierSBT": {
-          "address": "0xaaA368ccD534a24e7A98C375789598835A83D2F3",
+          "address": "0x326F8806cBd5ABF413889BfAc0A6622a0AEddD18",
           "deployedAt": "2026-08-14",
-          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0xaaA368ccD534a24e7A98C375789598835A83D2F3",
+          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0x326F8806cBd5ABF413889BfAc0A6622a0AEddD18",
           "standard": "ERC-721 + ERC-5192 (soulbound)",
           "note": "On-chain SVG + metadata. sync(borrower) is permissionless: it derives from the registry, which derives from proofs.",
           "verification": {
             "blockscout": "verified",
-            "verifiedAt": "2026-08-14",
-            "note": "Verified explicitly after an audit found this field had been copy-forwarded onto new addresses on redeploy, asserting a verification that had never been performed for them."
+            "verifiedAt": "2026-08-14"
           },
-          "supersedes": "0x96a68DBe0cC9BD13E92B4730eFfE531F63f4B2F6 (bound to the single-source registry)"
+          "supersedes": "0xaaA368ccD534a24e7A98C375789598835A83D2F3",
+          "changes": [
+            "advertises ERC-5192 (0xb45a3c0e) via supportsInterface",
+            "initial mint requires the borrower or a verified profile",
+            "_mint not _safeMint, so contract wallets can hold a badge"
+          ]
         },
         "LendingPool": {
-          "address": "0x2FC0D783d7240B5814aBc7A6A464248B5b60D90d",
+          "address": "0xf27877faC13244a4ad959E83cD9E5a15d919029C",
           "deployedAt": "2026-08-14",
-          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0x2FC0D783d7240B5814aBc7A6A464248B5b60D90d",
+          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0xf27877faC13244a4ad959E83cD9E5a15d919029C",
           "liquidity": "100000 tUSD",
           "terms": {
             "Bronze": "150% / 14%",
@@ -148,11 +181,16 @@
           },
           "verification": {
             "blockscout": "verified",
-            "verifiedAt": "2026-08-14",
-            "note": "Verified explicitly after an audit found this field had been copy-forwarded onto new addresses on redeploy, asserting a verification that had never been performed for them."
+            "verifiedAt": "2026-08-14"
           },
-          "supersedes": "0xA37a9338b17c20917046E29F23D9d8F796a5FDAb (no capacity cap)",
-          "capacityCap": "collateralRequired() applies the tier discount only up to CreditRegistry.demonstratedCapacityOf(borrower). Beyond it, borrowing is fully collateralized regardless of tier."
+          "supersedes": "0x2FC0D783d7240B5814aBc7A6A464248B5b60D90d",
+          "capacityCap": "collateralRequired() applies the tier discount only up to CreditRegistry.demonstratedCapacityOf(borrower). Beyond it, borrowing is fully collateralized regardless of tier.",
+          "changes": [
+            "liquidate() requires an elapsed grace period and pays the POOL, not owner() personally; excess above the debt is refunded",
+            "aprBps frozen at origination so setTerms cannot reprice an open loan",
+            "setTerms bounded by MAX_APR_BPS = 5000"
+          ],
+          "gracePeriodDays": 30
         },
         "TUSD": {
           "address": "0x26FEEdECb79A69EdC7d3Bdb8Cf4dD96E17a3B051",
@@ -374,6 +412,16 @@
         "name": "CreditRegistry (Phase 3)",
         "address": "0xB5F3B44113A31B07508464de39d7ddd939184B2c",
         "pausedAt": "2026-08-14"
+      },
+      {
+        "name": "CreditRegistry (Phase 4.5)",
+        "address": "0x581A7413e1fCcB767EC8BA9E837df43fbA06b3D2",
+        "pausedAt": "2026-08-14"
+      },
+      {
+        "name": "LendingPool (Phase 4.5)",
+        "address": "0x2FC0D783d7240B5814aBc7A6A464248B5b60D90d",
+        "pausedAt": "2026-08-14"
       }
     ],
     "notPausable": [
@@ -383,5 +431,56 @@
         "issue": "No pause(). Its badges are soulbound and unburnable, and their tokenURI reads the superseded registry, so it still renders Platinum/710 for borrowers the current system rates Silver/390. Two contradictory permanent badges now exist per borrower. Disclosed rather than fixable without a burn path."
       }
     ]
+  },
+  "deploymentLineage": {
+    "note": "Superseded addresses are history, not alternatives. Every retired CC3 contract is paused.",
+    "CreditRegistry": [
+      "0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c (P2, no batch)",
+      "0xB5F3B44113A31B07508464de39d7ddd939184B2c (P3, single-source) [paused]",
+      "0x581A7413e1fCcB767EC8BA9E837df43fbA06b3D2 (P4.5, multi-source) [paused]",
+      "0x4C4381dB68a1cAAE46a2E6CFc2f667ad22Dddf81 (P4.6, current)"
+    ],
+    "LoanBook": [
+      "0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c (v1)",
+      "0x07AdA5C60dFbe5C3A7dC48081B0fa70E14c6d41D (v2, current)"
+    ],
+    "LendingPool": [
+      "0xA37a9338b17c20917046E29F23D9d8F796a5FDAb (P3) [paused]",
+      "0x2FC0D783d7240B5814aBc7A6A464248B5b60D90d (P4.5) [paused]",
+      "0xf27877faC13244a4ad959E83cD9E5a15d919029C (P4.6, current)"
+    ],
+    "CreditTierSBT": [
+      "0x96a68DBe0cC9BD13E92B4730eFfE531F63f4B2F6 (P3)",
+      "0xaaA368ccD534a24e7A98C375789598835A83D2F3 (P4.5)",
+      "0x326F8806cBd5ABF413889BfAc0A6622a0AEddD18 (P4.6, current)"
+    ]
+  },
+  "gateG6": {
+    "status": "PASSED",
+    "date": "2026-08-14",
+    "description": "Post-audit remediation. Flash-loaned capacity closed, age term anchored to proof-covered block height, all four contracts verified.",
+    "testCount": 214,
+    "ageAxisEvidence": {
+      "claim": "Time cannot be compressed, and is now measured from the source chain rather than the ingest clock.",
+      "0xe57D6C07d7DA0066AAC9BaF186CbC298fB57dd00": {
+        "proofs": 1,
+        "oldestActivity": "2024-10-19",
+        "ageMonths": 22,
+        "agePoints": 120,
+        "score": 423
+      },
+      "0x76f30e3f75437fB862B8D2C4D80a671bCeBA5b1A": {
+        "proofs": 5,
+        "oldestActivity": "2026-08-09",
+        "ageMonths": 0,
+        "agePoints": 0,
+        "score": 800
+      },
+      "anchorDrift": "3.8 days over a 1.8-year span (0.55%)"
+    },
+    "negativePaths": {
+      "attacksRejected": "5/5",
+      "evidence": "docs/evidence/g3-negative-paths/results.json"
+    }
   }
 }

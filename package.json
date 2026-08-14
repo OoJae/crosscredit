@@ -25,7 +25,8 @@
     "worker:batch": "tsx worker/index.ts batch",
     "negative-paths": "tsx scripts/negative-paths.ts",
     "prove:mainnet": "tsx scripts/prove-mainnet.ts",
-    "poh:negative": "tsx scripts/poh-negative.ts"
+    "poh:negative": "tsx scripts/poh-negative.ts",
+    "check:abi": "tsx scripts/check-abi-parity.ts"
   },
   "dependencies": {
     "@gluwa/usc-contracts": "0.1.2",

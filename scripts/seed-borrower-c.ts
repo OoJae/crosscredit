@@ -125,9 +125,15 @@ async function main(): Promise<void> {
       // it into this payload, and this payload is a committed evidence artifact — so a throwaway
       // demo key was published to a public repository. Evidence files are for things we want the
       // world to read; a key belongs in `.env` and nowhere else.
-      keyLocation: 'BORROWER_C_PRIVATE_KEY in .env (gitignored, test-only)',
+      keyLocation:
+        'None. The wallet is generated per run, used, and its key discarded — never printed, ' +
+        'never written to disk. Re-seeding creates a new one.',
     },
-    expected: {score: 710, tier: 'Platinum', onTime: 5, late: 0, loansClosed: 3},
+    // Silver, not Platinum. This history is self-dealt — `LoanBook` has no lender and takes a
+    // self-declared principal — so it is capped below the top tier by design and earns **zero**
+    // demonstrated capacity, hence no undercollateralized credit at all. Only real third-party
+    // mainnet repayments move that. See docs/SCORING.md.
+    expected: {score: 390, tier: 'Silver', onTime: 5, late: 0, loansClosed: 3, demonstratedCapacityWei: '0'},
     batchConstraints: {
       maxBatchSize: 10,
       maxBatchRange: 1000,
