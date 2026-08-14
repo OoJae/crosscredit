@@ -3,13 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CrossCredit — portable credit, verified cross-chain</title>
+    <title>CrossCredit — the assay office for on-chain credit</title>
     <meta
       name="description"
-      content="Prove your Ethereum repayment history to Creditcoin and borrow undercollateralized. No oracle, no bridge."
+      content="Your real Ethereum repayment history, proven to Creditcoin and priced as a loan. Nothing self-reported, no oracle delivering a number."
     />
-    <!-- The tier badge is an on-chain SVG served as a data: URI, so images must allow data:. -->
+    <meta name="theme-color" content="#0A0B0D" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <!--
+      The tier badge is an on-chain SVG served as a data: URI, so images must allow data:.
+      Fonts and brand marks are same-origin, so this stays as tight as it was.
+    -->
     <meta http-equiv="Content-Security-Policy" content="img-src 'self' data:;" />
+
+    <!--
+      Only the two faces the hero paints with. Preloading the mono and the italic too would
+      compete for bandwidth with the type that is actually above the fold.
+    -->
+    <link rel="preload" href="/fonts/inter-tight-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/instrument-serif-400.woff2" as="font" type="font/woff2" crossorigin />
+
+    <meta property="og:title" content="CrossCredit — the assay office for on-chain credit" />
+    <meta
+      property="og:description"
+      content="Prove your Ethereum repayment history to Creditcoin and borrow undercollateralized."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
     <div id="root"></div>

@@ -1,0 +1,22 @@
+<!--
+  Fineness mark — Bronze.
+
+  In UK hallmarking the shape of the surround denotes the metal and the number inside is the
+  fineness. The same convention here: the cartouche identifies the tier without relying on colour
+  (so it survives greyscale, a 16px favicon, and colour-blindness), and the number is the score
+  floor the tier begins at.
+
+  Bronze is the base metal, so it gets the plainest cut: a rectangle with clipped corners.
+  Colour #cd7f32 is locked to `_tierColour` in CreditTierSBT.sol — the badge is deployed and
+  immutable, so the brand yields to the contract rather than the other way round.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 56" fill="none" role="img" aria-label="Bronze tier, from 0 points">
+  <title>Bronze — from 0</title>
+  <path d="M4 4h40v40l-6 8H10l-6-8Z" stroke="#cd7f32" stroke-width="2.5" stroke-linejoin="round" />
+  <text
+    x="24" y="32"
+    font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
+    font-size="15" font-weight="700" letter-spacing="0.5"
+    fill="#cd7f32" text-anchor="middle"
+  >000</text>
+</svg>

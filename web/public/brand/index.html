@@ -1,0 +1,67 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>CrossCredit — marks</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  body { background:#0A0B0D; color:#EDE7DD; font:14px ui-monospace,monospace; margin:0; padding:40px; }
+  h2 { font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#8A8F97; font-weight:500; margin:36px 0 14px; }
+  .row { display:flex; align-items:flex-end; gap:28px; flex-wrap:wrap; }
+  .sizes { display:flex; align-items:flex-end; gap:20px; }
+  img { display:block; }
+  .cap { font-size:10px; color:#8A8F97; text-align:center; margin-top:8px; letter-spacing:.08em; }
+  .cell { text-align:center; }
+  .vellum { background:#EDE7DD; color:#0A0B0D; padding:24px; display:inline-block; }
+  .grey { filter: grayscale(1); }
+</style>
+
+<h1 style="font-size:13px;letter-spacing:.18em;text-transform:uppercase;font-weight:600;margin:0 0 4px">CrossCredit &mdash; hallmark system</h1>
+<p style="color:#8A8F97;font-size:12px;line-height:1.6;max-width:56ch;margin:0 0 8px">The cartouche shape denotes the tier and the number is its score floor, so the marks survive greyscale, a 16px favicon and colour-blindness without leaning on colour. Metal hex values are locked to <code>_tierColour</code> in CreditTierSBT.sol, which is deployed and immutable.</p>
+<h2>Maker's mark — 16 / 24 / 48 / 128</h2>
+<div class="sizes">
+  <div class="cell"><img src="mark.svg" width="16" /><div class="cap">16</div></div>
+  <div class="cell"><img src="mark.svg" width="24" /><div class="cap">24</div></div>
+  <div class="cell"><img src="mark.svg" width="48" /><div class="cap">48</div></div>
+  <div class="cell"><img src="mark.svg" width="128" /><div class="cap">128</div></div>
+</div>
+
+<h2>Favicon at true size</h2>
+<div class="sizes">
+  <div class="cell"><img src="../favicon.svg" width="16" /><div class="cap">16</div></div>
+  <div class="cell"><img src="../favicon.svg" width="32" /><div class="cap">32</div></div>
+  <div class="cell"><img src="../favicon.svg" width="64" /><div class="cap">64</div></div>
+</div>
+
+<h2>Fineness marks — the hallmark row</h2>
+<div class="row">
+  <div class="cell"><img src="hallmark-bronze.svg" width="56" /><div class="cap">bronze</div></div>
+  <div class="cell"><img src="hallmark-silver.svg" width="56" /><div class="cap">silver</div></div>
+  <div class="cell"><img src="hallmark-gold.svg" width="56" /><div class="cap">gold</div></div>
+  <div class="cell"><img src="hallmark-platinum.svg" width="56" /><div class="cap">platinum</div></div>
+  <div class="cell"><img src="hallmark-assay.svg" width="56" /><div class="cap">assay</div></div>
+</div>
+
+<h2>Same row at 20px — does shape still separate them?</h2>
+<div class="row">
+  <img src="hallmark-bronze.svg" width="20" />
+  <img src="hallmark-silver.svg" width="20" />
+  <img src="hallmark-gold.svg" width="20" />
+  <img src="hallmark-platinum.svg" width="20" />
+  <img src="hallmark-assay.svg" width="20" />
+</div>
+
+<h2>Greyscale — colour must not be doing the work</h2>
+<div class="row grey">
+  <img src="hallmark-bronze.svg" width="48" />
+  <img src="hallmark-silver.svg" width="48" />
+  <img src="hallmark-gold.svg" width="48" />
+  <img src="hallmark-platinum.svg" width="48" />
+</div>
+
+<h2>Wordmark</h2>
+<div class="row"><img src="wordmark.svg" width="320" /></div>
+<div class="row"><img src="wordmark.svg" width="180" /></div>
+
+<h2>Inverted — mark on vellum</h2>
+<div class="vellum">
+  <img src="mark-dark.svg" width="64" /> <img src="wordmark-dark.svg" width="220" />
+</div>

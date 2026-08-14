@@ -1,0 +1,14 @@
+<!--
+  Fineness mark — Gold. Shield surround, the traditional cut for gold.
+  500 is the score floor. Colour locked to CreditTierSBT.sol `_tierColour`.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 56" fill="none" role="img" aria-label="Gold tier, from 500 points">
+  <title>Gold — from 500</title>
+  <path d="M24 3 44 9v22c0 11-9 18-20 22C13 49 4 42 4 31V9Z" stroke="#d4af37" stroke-width="2.5" stroke-linejoin="round" />
+  <text
+    x="24" y="31"
+    font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
+    font-size="15" font-weight="700" letter-spacing="0.5"
+    fill="#d4af37" text-anchor="middle"
+  >500</text>
+</svg>
