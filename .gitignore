@@ -30,3 +30,8 @@ web/dist/
 # Scratch output from browser automation and one-off state backups — never artifacts.
 .playwright-mcp/
 *.bak
+
+# Rendered video output and snapshot scratch — large binaries, regenerable from the composition.
+videos/*/renders/
+videos/*/snaps/
+videos/*/capture/

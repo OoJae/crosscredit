@@ -1,0 +1,38 @@
+
+> crosscredit@0.1.0 negative-paths
+> tsx scripts/negative-paths.ts
+
+CrossCredit — adversarial repro against live CC3
+  registry   0x4C4381dB68a1cAAE46a2E6CFc2f667ad22Dddf81
+  precompile 0x0000000000000000000000000000000000000FD2
+  real proof 0xeeaa5b3f44a0727b175dab9a97838b6e50e0c476668fc18649d77b7b81e9e8ea (block 11482844, fetched fresh)
+
+✓ baseline: the untampered proof verifies against the live precompile
+
+✓ REJECTED  Forged merkle proof
+  attack   merkle root replaced with 0xdede…
+  rejected by block-prover precompile
+  reason   Merkle proof validation failed
+
+✓ REJECTED  Tampered transaction payload
+  attack   last 4 bytes of txBytes altered
+  rejected by block-prover precompile
+  reason   Merkle proof validation failed
+
+✓ REJECTED  Wrong source chain
+  attack   real Sepolia proof submitted as chainKey 3 (Ethereum Mainnet)
+  rejected by block-prover precompile (registry WrongSourceChain is the second line, unit-tested)
+  reason   Continuity proof does not match attestation or checkpoint
+
+✓ REJECTED  Replayed query
+  attack   resubmitting an already-ingested transaction
+  rejected by USCBase replay guard
+  reason   UnknownAction(uint8)
+
+✓ REJECTED  Oversized batch
+  attack   11 proofs, one over MAX_BATCH_SIZE (10)
+  rejected by CreditRegistry.BatchTooLarge
+  reason   BatchTooLarge(uint256,uint256)
+
+✓ 5/5 attacks rejected
+✓ wrote docs/evidence/g3-negative-paths/results.json

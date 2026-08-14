@@ -1,0 +1,14 @@
+# A real loan on the deployed pool, start to finish. Silver tier, 130% collateral.
+
+collateralRequired(borrower, 100 tUSD) = 130 tCTC
+
+borrow    0xa416364d82a4ad75bd6fc2bd5856ef9bcdbb932a1e792405ba46515bbae2fd1f
+  100 tUSD received, 130 tCTC locked
+
+totalOwed after one block = 100.000020928462709284 tUSD
+  The pool lends exactly the principal, so interest has to come from
+  somewhere else. The first repay attempt reverted, correctly:
+  ERC20InsufficientBalance(borrower, 100.000000, 100.000021)
+
+repay     0xfcdf732e3e05dab6e10d4d0f3f49542c2107a9f65c6c080f2005f886519a88fb
+  collateral returned, loan closed

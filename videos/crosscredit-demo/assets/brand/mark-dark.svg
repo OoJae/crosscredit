@@ -1,0 +1,27 @@
+<!--
+  CrossCredit maker's mark — dark-on-light variant, for vellum and print grounds.
+
+  A hallmark is struck, not drawn, so the mark is built as a punch face: a lozenge cartouche
+  holding two counter-facing arcs. The arcs are the two C's of CrossCredit and read as two chains,
+  one opening right and one opening left, overlapping where a proof crosses between them.
+
+  The right arc is a mirror of the left via `translate(64,0) scale(-1,1)` rather than a second
+  hand-written path — the symmetry has to be exact, and a first attempt with two independent arcs
+  closed into a plain ring and lost the whole idea.
+
+  Explicit `#0A0B0D`, not `currentColor`: an SVG loaded through an `<img>` tag has no parent to
+  inherit from, so `currentColor` resolves to black and the mark disappears. The themeable version
+  is the inline React component in `web/src/site/Mark.tsx`.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="CrossCredit">
+  <title>CrossCredit</title>
+
+  <!-- Cut-corner cartouche. A punch is struck square, never rolled round. -->
+  <path d="M32 3 61 32 32 61 3 32Z" stroke="#0A0B0D" stroke-width="2.4" stroke-linejoin="round" opacity="0.4" />
+
+  <!-- Left C: opens right, bulging left of centre. -->
+  <path id="c" d="M29.1 20.4A12 12 0 1 0 29.1 43.6" stroke="#0A0B0D" stroke-width="4.4" stroke-linecap="round" />
+
+  <!-- Right C: the exact mirror. The gap between the two terminal pairs is the thing being proven. -->
+  <use href="#c" transform="translate(64 0) scale(-1 1)" />
+</svg>

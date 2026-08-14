@@ -1,0 +1,17 @@
+# The undercollateralized quote, read live from the deployed pool.
+# Same call, same amount, two borrowers. Only the evidence differs.
+
+0x76f30e3f75437fB862B8D2C4D80a671bCeBA5b1A
+  5 real Aave repayments
+  tier                        Platinum
+  demonstrated capacity       $960,145
+  collateral to borrow 1,000  850 tCTC
+  of which undercollateralized 1,000 tUSD
+
+0x8ce707293F8BDE083A09B86CbB70d6a20F0F89c6
+  9 self-dealt LoanBook events
+  tier                        Silver
+  demonstrated capacity       $0
+  collateral to borrow 1,000  1,300 tCTC
+  of which undercollateralized 0 tUSD
+

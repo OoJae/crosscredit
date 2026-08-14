@@ -1,0 +1,18 @@
+<!--
+  Fineness mark — Platinum. Hexagonal surround — the most-faceted cut in the set, for the only
+  tier that borrows more than it posts.
+
+  700 is the score floor. Platinum additionally requires late == 0 and liquidations == 0, which is
+  why the surround is drawn unbroken: a single default anywhere in the proven history bars it.
+  Colour locked to CreditTierSBT.sol `_tierColour`.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 56" fill="none" role="img" aria-label="Platinum tier, from 700 points">
+  <title>Platinum — from 700</title>
+  <path d="M24 3 44 17v22L24 53 4 39V17Z" stroke="#e5e4e2" stroke-width="2.5" stroke-linejoin="round" />
+  <text
+    x="24" y="33"
+    font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
+    font-size="15" font-weight="700" letter-spacing="0.5"
+    fill="#e5e4e2" text-anchor="middle"
+  >700</text>
+</svg>
