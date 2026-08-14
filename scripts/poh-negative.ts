@@ -75,7 +75,19 @@ async function withMainnet<T>(attempt: (provider: ethers.JsonRpcProvider) => Pro
       lastError = error;
     }
   }
-  throw lastError;
+
+  // This script reads 2021 state, so it needs an archive node. The free public endpoints it
+  // rotates through have since started gating archive requests behind an account, which used to
+  // surface as an ethers stack trace three screens long — unhelpful to anyone running this from a
+  // clean clone to check our claim. Say what is wrong and what to do instead.
+  const detail = lastError instanceof Error ? lastError.message.split('\n')[0] : String(lastError);
+  throw new Error(
+    'No archive RPC available. This script queries Ethereum state from 2021, and every public ' +
+      'endpoint it tried refused the archive request.\n' +
+      '  Set MAINNET_RPC_URL to an archive provider (Alchemy\'s free tier is enough) and re-run.\n' +
+      '  Or read the captured result: docs/evidence/g5-identity-negative/results.json\n' +
+      `  Last endpoint said: ${detail}`,
+  );
 }
 
 async function main(): Promise<void> {
@@ -199,6 +211,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  console.error('✗ poh-negative failed:', error);
+  console.error(`✗ poh-negative failed: ${error instanceof Error ? error.message : String(error)}`);
   process.exitCode = 1;
 });

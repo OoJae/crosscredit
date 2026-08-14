@@ -87,14 +87,19 @@ with the fact that there is no enforcement layer.
 | | |
 |---|---|
 | **Real mainnet credit** | [`docs/evidence/g5-mainnet-credit/`](docs/evidence/g5-mainnet-credit/results.json) — an Ethereum wallet's Aave history becomes a Creditcoin credit line |
-| **Whole history in one transaction** | [`0xc8ca57e3…`](https://creditcoin-testnet.blockscout.com/tx/0xc8ca57e39f8fb840ff4e9de837f1f826b0ff41f30039cb311f6a1fbce325437b) — 9 Sepolia transactions verified together for **126,146 gas per event** |
-| **Undercollateralized borrow** | [`0xb6da8c06…`](https://creditcoin-testnet.blockscout.com/tx/0xb6da8c060e8e9c3ff84e17e0399bcc3c844c58507fcb11655de540d82270d833) — 100 tUSD borrowed against 85 tCTC |
-| **Replay rejected** | [`0x7c4737ca…`](https://creditcoin-testnet.blockscout.com/tx/0x7c4737cab8f77b699c28906cde9c8b4758a215a850847115702e9a35a0e2a0a5) — status 0, `Query already processed` |
+| **Whole history in one transaction** | [`0xffad0a92…`](https://creditcoin-testnet.blockscout.com/tx/0xffad0a92eb99ca20d2d58043c92b9d82fc7cd025f789e51a3ed347859312b69b) — 9 Sepolia transactions verified together, 1,207,503 gas, **134,167 per event** |
+| **A real loan, opened and closed** | [`0xa416364d…`](https://creditcoin-testnet.blockscout.com/tx/0xa416364d82a4ad75bd6fc2bd5856ef9bcdbb932a1e792405ba46515bbae2fd1f) borrow · [`0xfcdf732e…`](https://creditcoin-testnet.blockscout.com/tx/0xfcdf732e3e05dab6e10d4d0f3f49542c2107a9f65c6c080f2005f886519a88fb) repay — 100 tUSD against 130 tCTC at Silver |
+| **The undercollateralized quote** | Read it yourself: `collateralRequired(0x76f30e…, 1000e18)` returns **850e18**, and **1300e18** for the self-dealt wallet. Same call, same pool, different evidence |
+| **Five attacks rejected** | `npm run negative-paths` — free, no wallet, against the live precompile. [`results.json`](docs/evidence/g3-negative-paths/results.json) |
 
-**Batching is 3.4× cheaper**, measured like-for-like on the same registry: **126,146 gas per event**
-batched versus ~433,000 proving them one at a time. The saving is structural — verifying a foreign
-block means walking a continuity chain back to an attested one, and a batch walks it once for all
-nine.
+**Batching is 4× cheaper**, measured like-for-like on the current registry: **134,167 gas per event**
+batched versus **532,140** proving the same kind of Sepolia event one at a time. The saving is
+structural — verifying a foreign block means walking a continuity chain back to an attested one, and
+a batch walks it once for all nine.
+
+A single mainnet proof costs more again (991,536 gas for the 2024 repayment) because its continuity
+proof carries 980 roots rather than 14. Mainnet history cannot be batched at all: real history spans
+years, and the prover rejects a batch wider than 1,000 blocks.
 
 ## Deployed contracts
 
@@ -166,39 +171,67 @@ are the registry's job, and each is exercised by a test that fails loudly if rem
 **Five attacks were rejected on the live chain** — forged merkle root, tampered payload, wrong
 source chain, replayed query, oversized batch. Reproduce them for free: `npm run negative-paths`.
 
-## Run it yourself
+## Verify it yourself
 
-Needs [Node 20+](https://nodejs.org) and [Foundry](https://getfoundry.sh). Nothing below spends
-money or needs a wallet.
+Three tiers of effort. Everything in the first two was re-run from a clean clone on 2026-08-14.
+
+### Nothing at all — just a browser
+
+[crosscredit.vercel.app](https://crosscredit.vercel.app) is read-only by default. No wallet, no
+funds, no sign-up. Look up any address in the [explorer](https://crosscredit.vercel.app/explorer),
+including the five below, and every number you see is read live from the deployed registry.
+
+### A clone and two minutes — no wallet, no funds
 
 ```bash
 git clone https://github.com/OoJae/crosscredit && cd crosscredit
 npm install
 forge build && forge test          # 214 tests, no network required
-```
 
-To read live testnet state or run the frontend locally:
-
-```bash
-cp .env.example .env               # only SEPOLIA_RPC_URL is needed for read-only use
-npm run check:chains               # re-derives docs/evidence/supported-chains.json from live CC3
-npm run negative-paths             # five attacks, all rejected — free eth_calls
-npm run poh:negative               # the identity finding: 5/5 proved, 0/5 still valid
+cp .env.example .env               # public RPC endpoints are already filled in
+npm run negative-paths             # 5 attacks rejected by the LIVE precompile — free eth_calls
+npm run check:chains               # re-derives the supported-chain list from live CC3
 npm run check:abi                  # the frontend ABI still matches the compiled contracts
+npm run prove:mainnet -- --find-aave   # list Aave repayments Creditcoin has attested right now
 
 cd web && npm install && npm run dev
 ```
 
-To prove new history you need a funded test wallet ([`docs/HUMAN_ACTIONS.md`](docs/HUMAN_ACTIONS.md)
-has the faucets):
+`negative-paths` is the one worth your time: it submits a forged Merkle root, a tampered payload, a
+wrong-chain proof, a replayed query and an oversized batch to the real precompile on CC3, and shows
+you all five being refused. It costs nothing and needs no key.
+
+### A funded test wallet — to write
+
+You need tCTC from the Creditcoin Discord `token-faucet` (`/faucet address:0x…`); a real ingest costs
+about 0.0002 CTC. [`docs/HUMAN_ACTIONS.md`](docs/HUMAN_ACTIONS.md) has the links.
 
 ```bash
-npm run seed:borrower-c                    # fresh history on Sepolia (~10 min to attest)
-npm run worker:batch -- --borrower 0x…     # import it all in ONE transaction
-npm run worker:watch                       # or follow the chain head continuously
-npm run prove:mainnet -- 0x<mainnetTxHash>  # import a REAL Aave repayment from Ethereum mainnet
-npm run prove:mainnet -- --find-aave        # find an attested one to try
+npm run prove:mainnet -- --find-aave        # pick any attested Aave repayment
+npm run prove:mainnet -- 0x<mainnetTxHash>  # prove it — credit lands on whoever the log names
+npm run seed:borrower-c                     # or make fresh Sepolia history (~10 min to attest)
+npm run worker:batch -- --borrower 0x…      # and import it all in ONE transaction
 ```
+
+**This is the honest self-serve demo.** Take *any* real Aave repayment from the list, prove it, and
+watch a wallet that has never touched Creditcoin acquire a credit profile. Ingestion is
+permissionless and the borrower is read from the proven log, so you can import anyone's history —
+and nobody can import it *as* themselves.
+
+### Two limits worth knowing before you try
+
+- **Importing mainnet history is CLI-only.** The app's Import tab reads Sepolia `LoanBook` history
+  for the address being viewed; the mainnet path lives in `npm run prove:mainnet`. A judge wanting
+  to exercise the headline capability should use the CLI above. Putting it in the UI is the first
+  thing on the list after submission.
+- **`npm run poh:negative` needs an archive RPC and is therefore flaky.** It reads Ethereum state
+  from 2021 and rotates through four public endpoints; some of them now gate archive requests
+  (`403 Archive requests require a personal token`), so whether it works depends on which one
+  answers. Two clean-clone runs on the same afternoon gave one failure and one success. Set
+  `MAINNET_RPC_URL` to an archive provider (Alchemy's free tier is enough) to make it reliable, or
+  read the captured result in
+  [`docs/evidence/g5-identity-negative/`](docs/evidence/g5-identity-negative/results.json). It now
+  fails with that instruction rather than a stack trace.
 
 ## Layout
 
