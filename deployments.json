@@ -68,7 +68,10 @@
             "single-proof execute",
             "batch executeBatch (<=10, one shared continuity proof)"
           ],
-          "supersedes": "0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c (Phase 2, no batch support)"
+          "supersedes": "0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c (Phase 2, no batch support)",
+          "verification": {
+            "blockscout": "verified"
+          }
         },
         "EvmV1Decoder": {
           "address": "0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa",
@@ -81,7 +84,10 @@
           "deployedAt": "2026-08-14",
           "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0x96a68DBe0cC9BD13E92B4730eFfE531F63f4B2F6",
           "standard": "ERC-721 + ERC-5192 (soulbound)",
-          "note": "On-chain SVG + metadata. sync(borrower) is permissionless: it derives from the registry, which derives from proofs."
+          "note": "On-chain SVG + metadata. sync(borrower) is permissionless: it derives from the registry, which derives from proofs.",
+          "verification": {
+            "blockscout": "verified"
+          }
         },
         "LendingPool": {
           "address": "0xA37a9338b17c20917046E29F23D9d8F796a5FDAb",
@@ -93,12 +99,18 @@
             "Silver": "130% / 11%",
             "Gold": "110% / 8%",
             "Platinum": "85% / 6% (undercollateralized)"
+          },
+          "verification": {
+            "blockscout": "verified"
           }
         },
         "TUSD": {
           "address": "0x26FEEdECb79A69EdC7d3Bdb8Cf4dD96E17a3B051",
           "deployedAt": "2026-08-14",
-          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0x26FEEdECb79A69EdC7d3Bdb8Cf4dD96E17a3B051"
+          "explorerUrl": "https://creditcoin-testnet.blockscout.com/address/0x26FEEdECb79A69EdC7d3Bdb8Cf4dD96E17a3B051",
+          "verification": {
+            "blockscout": "verified"
+          }
         }
       }
     }
@@ -208,5 +220,10 @@
       }
     },
     "evidence": "docs/evidence/g3-batch-import/README.md"
+  },
+  "liveApp": {
+    "url": "https://crosscredit.vercel.app",
+    "hosting": "Vercel",
+    "note": "Read-only by default \u2014 no wallet or testnet funds needed to view any borrower."
   }
 }

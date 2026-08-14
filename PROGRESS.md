@@ -8,13 +8,14 @@ Session log. Updated at the end of every session: done / next / blockers / addre
 
 | | |
 |---|---|
-| **Phase** | 3 complete → next is **Phase 4 (frontend)** |
+| **Phase** | 4 complete → next is **Phase 5 (video, deck, submission)** |
 | **Day** | 1 of 23 (Aug 13, 2026) |
 | **G0** — real proof round-trip | ✅ **PASSED** — [evidence](docs/evidence/g0-hello-bridge/README.md) |
 | **G1** — seeded history on a public explorer | ✅ **PASSED** — 11 events, verified source |
 | **G2** — make-or-break credit loop | ✅ **PASSED** — score 0 → 710, Bronze → Platinum, live |
 | **G3** — batch · SBT · pool · negative paths | ✅ **PASSED** — 9 proofs in ONE tx, 3.4× cheaper |
-| **Next gate** | **G4** — 3 UI screens vs live testnet; stranger runs demo from README |
+| **G4** — live app, README runnable by a stranger | ✅ **PASSED** — <https://crosscredit.vercel.app> |
+| **Next gate** | **G5** — demo video · deck PDF · every submission field has a URL |
 | **Repo** | <https://github.com/OoJae/crosscredit> (public, CI green) |
 | **Internal submit target** | **Sep 4, 2026** (deadline disputed — see Open questions) |
 
@@ -256,3 +257,45 @@ Phase 2 registry's G2 transactions remain valid historical evidence.
 
 **Blockers**
 - None.
+
+
+### Session 5 — Aug 14, 2026 (Phase 4, Gate G4)
+
+**G4 PASSED — the product is clickable.** <https://crosscredit.vercel.app>
+
+- Three tabs (Dashboard / Import history / Borrow) against live testnet, **read-only by default**
+  so a judge needs no wallet and no tCTC to see the whole story. Three seeded borrowers are
+  one-click examples.
+- **Pure static, no backend** — possible because CORS is open on the prover API, CC3 RPC and
+  Blockscout. 164 KB gzipped; the unused wallet-connector SDKs tree-shake out.
+- **All four CC3 contracts verified on Blockscout.** They were unverified, so Blockscout's 4-byte
+  database was mis-decoding our `LoanClosed` as an unrelated NFT protocol's event.
+- README rewritten around the live link; `.env.example` now ships the deployed addresses.
+
+**Findings**
+1. **viem is fine on CC3 despite blocks missing `mixHash`.** That field breaks strict
+   deserializers — it is why `forge script` cannot deploy here — but viem does no runtime block
+   validation and never reads it. Verified against the live chain before committing to wagmi.
+2. **wagmi v3 renamed `useAccount` → `useConnection`**; pinned v2.19.5, which every connector
+   library still targets.
+3. **No Multicall3 on CC3.** The chain definition omits it deliberately — a declared-but-absent
+   multicall hard-fails, whereas omitting it lets wagmi fall back to parallel reads.
+4. **The SDK is skipped in the browser.** Its single-proof call returns the API response
+   untransformed, so plain fetch is equivalent, and importing it would drag ethers v6 in beside
+   viem plus reach for `process.env`.
+
+**G4 rehearsal, measured**: clean clone → `npm install` → `forge build && forge test` → 130 green
+in **10 seconds**; then `cp .env.example .env` → `npm run negative-paths` → 5/5 attacks rejected
+against the live chain with **zero manual configuration**. The rehearsal is what caught the blank
+addresses in `.env.example` — a stranger would have hit that immediately.
+
+**Next — Phase 5 (G5)**
+- Demo video per BUILD_GUIDE §9. The honest cut: pre-attested history, so the batch import and the
+  score jump happen live on camera without a 9-minute wait.
+- Deck PDF per §10; the Attestcoin Integration Summary field is scored hardest, so it is written
+  last and from `docs/ATTESTCOIN_INTEGRATION.md`.
+- Every DoraHacks field needs a working URL.
+
+**Blockers**
+- None technical. Operator items are now time-sensitive: DoraHacks registration, the deadline
+  question, and the Aug 18 AMA (host approval needed).

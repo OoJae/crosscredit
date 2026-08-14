@@ -2,109 +2,152 @@
 
 **Trustless cross-chain credit reputation and lending on Creditcoin.**
 
-Borrowers build a repayment history on Ethereum Sepolia. CrossCredit proves those transactions
-to Creditcoin using the **Attestcoin Protocol's** native block-prover precompile — a Merkle
-inclusion proof plus a chain-continuity proof, verified synchronously inside a Creditcoin block.
-No oracle operator. No bridge multisig. Verified history becomes an on-chain credit score and a
-soulbound Credit Tier NFT, which prices loans in a lending pool — Platinum borrows
-undercollateralized.
+### → **[crosscredit.vercel.app](https://crosscredit.vercel.app)** — live on testnet, no wallet needed to look around
 
-> 🚧 **Under active construction** for [BUIDL CTC 2026 Fall][hackathon]. The Creditcoin-side
-> contracts, worker and UI land over the coming phases; what is listed below is live now.
+Borrowers build a repayment history on Ethereum Sepolia. CrossCredit proves those transactions to
+Creditcoin using the **Attestcoin Protocol's** native block-prover precompile — a Merkle inclusion
+proof plus a chain-continuity proof, verified synchronously inside a Creditcoin block. No oracle
+operator. No bridge multisig. Verified history becomes an on-chain credit score and a soulbound
+Credit Tier NFT, which prices real loans: **Platinum borrows undercollateralized at 85%.**
 
-## Live on testnet
+---
 
-**The core premise is proven.** On Aug 13, 2026 a transaction on Ethereum Sepolia was verified by
-Creditcoin's block-prover precompile and acted upon inside a Creditcoin block — no oracle
-operator, no bridge multisig:
+## See it working in 60 seconds
 
-| | |
-|---|---|
-| Sepolia burn | [`0xad717c5c…`](https://sepolia.etherscan.io/tx/0xad717c5c85279de036a321b63ccdb109a6c447e79f47261e52f969bdd20ca28d) (block 11482813) |
-| Verified + acted on, Creditcoin | [`0x7ae82162…`](https://creditcoin-testnet.blockscout.com/tx/0x7ae82162d5f8ec24471637d1e545452d24adf3aa0066b42b874890fbf550f872) (block 5304687) |
-| End-to-end | **9 min 39 s** · 393,638 gas ≈ 0.000197 CTC |
-
-Full measurements and the two SDK failure modes we hit:
-[`docs/evidence/g0-hello-bridge/`](docs/evidence/g0-hello-bridge/README.md).
-
-### Deployed contracts
-
-| Contract | Chain | Address |
-|---|---|---|
-| `LoanBook` | Ethereum Sepolia | [`0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c`](https://sepolia.etherscan.io/address/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c#events) — verified on Etherscan |
-| `CreditRegistry` | Creditcoin CC3 | [`0xB5F3B44113A31B07508464de39d7ddd939184B2c`](https://creditcoin-testnet.blockscout.com/address/0xB5F3B44113A31B07508464de39d7ddd939184B2c) |
-| `CreditTierSBT` | Creditcoin CC3 | [`0x96a68DBe0cC9BD13E92B4730eFfE531F63f4B2F6`](https://creditcoin-testnet.blockscout.com/address/0x96a68DBe0cC9BD13E92B4730eFfE531F63f4B2F6) |
-| `LendingPool` | Creditcoin CC3 | [`0xA37a9338b17c20917046E29F23D9d8F796a5FDAb`](https://creditcoin-testnet.blockscout.com/address/0xA37a9338b17c20917046E29F23D9d8F796a5FDAb) |
-| `TUSD` | Creditcoin CC3 | [`0x26FEEdECb79A69EdC7d3Bdb8Cf4dD96E17a3B051`](https://creditcoin-testnet.blockscout.com/address/0x26FEEdECb79A69EdC7d3Bdb8Cf4dD96E17a3B051) |
-| `EvmV1Decoder` (linked) | Creditcoin CC3 | [`0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa`](https://creditcoin-testnet.blockscout.com/address/0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa) |
-
-Seeded with [11 real events](docs/evidence/seeded-history.json) across two borrowers: a clean
-9-event record (all on time, spanning 10 blocks — so it fits a **single** batch proof) and a
-second borrower with a late repayment, for tier contrast.
-
-**A whole credit history, imported in ONE transaction.** A fresh wallet's 9 Sepolia events were
-verified in a single Creditcoin transaction
-([`0xc8ca57e3…`](https://creditcoin-testnet.blockscout.com/tx/0xc8ca57e39f8fb840ff4e9de837f1f826b0ff41f30039cb311f6a1fbce325437b)),
-taking it from Bronze to **Platinum**, minting a soulbound badge, and then
-[borrowing 100 tUSD against just 85 tCTC](https://creditcoin-testnet.blockscout.com/tx/0xb6da8c060e8e9c3ff84e17e0399bcc3c844c58507fcb11655de540d82270d833)
-— **more value than it posted**, which no anonymous address can do.
-
-| | Gas per event |
-|---|---|
-| Single proof | ~433,000 |
-| **Batch of 9 (one shared continuity proof)** | **126,146 — 3.4× cheaper** |
-
-**Five attacks rejected on the live chain** — forged merkle root, tampered payload, wrong source
-chain, replayed query, oversized batch. Reproduce for free: `npm run negative-paths`.
+Open [crosscredit.vercel.app](https://crosscredit.vercel.app) and click through the three seeded
+borrowers. No wallet, no testnet funds, no setup:
 
 | Borrower | Imported via | Score | Tier | Collateral for 1,000 tUSD |
 |---|---|---|---|---|
-| A | 11 single proofs | 710 | Platinum | **850 tCTC** |
-| B (one late repayment) | 2 single proofs | 0 | Bronze | 1,500 tCTC |
-| C | **1 batch of 9** | 710 | Platinum | **850 tCTC** |
+| `0x8C04C2…22Cf` | **one batch of 9 proofs** | 710 | **Platinum** | **850 tCTC** |
+| `0x8ce707…89c6` | 11 separate proofs | 710 | **Platinum** | **850 tCTC** |
+| `0x04163f…A0B6` | 2 proofs, one **late** | 0 | Bronze | 1,500 tCTC |
 
-One late repayment is the entire difference between 850 and 1,500 tCTC of collateral.
+A single late repayment is the whole difference between 850 and 1,500 tCTC of collateral on an
+identical loan. The first two borrowers reached the same place by different routes — batch and
+proof-by-proof converge on identical state.
 
-Evidence: [G3 batch import](docs/evidence/g3-batch-import/README.md) ·
-[G2 credit loop](docs/evidence/g2-verified-credit-loop/README.md) ·
-[scoring model](docs/SCORING.md) ·
-[Attestcoin integration](docs/ATTESTCOIN_INTEGRATION.md)
+## What actually happened on-chain
 
-```bash
-npm run worker:batch -- --borrower 0x…   # import a whole history in one transaction
-npm run worker:backfill -- --from-block N   # or one proof at a time
-npm run negative-paths                      # five attacks, all rejected, costs nothing
+| | |
+|---|---|
+| **Whole history in one transaction** | [`0xc8ca57e3…`](https://creditcoin-testnet.blockscout.com/tx/0xc8ca57e39f8fb840ff4e9de837f1f826b0ff41f30039cb311f6a1fbce325437b) — 9 Sepolia transactions verified together, Bronze → Platinum |
+| **Undercollateralized borrow** | [`0xb6da8c06…`](https://creditcoin-testnet.blockscout.com/tx/0xb6da8c060e8e9c3ff84e17e0399bcc3c844c58507fcb11655de540d82270d833) — 100 tUSD borrowed against 85 tCTC |
+| **Replay rejected** | [`0x7c4737ca…`](https://creditcoin-testnet.blockscout.com/tx/0x7c4737cab8f77b699c28906cde9c8b4758a215a850847115702e9a35a0e2a0a5) — status 0, `Query already processed` |
+
+**Batching is 3.4× cheaper**, measured like-for-like on the same registry: **126,146 gas per event**
+batched versus ~433,000 proving them one at a time. The saving is structural — verifying a foreign
+block means walking a continuity chain back to an attested one, and a batch walks it once for all
+nine.
+
+## Deployed contracts
+
+| Contract | Chain | Address |
+|---|---|---|
+| `LoanBook` | Ethereum Sepolia | [`0xE53a5448…5Cf9c`](https://sepolia.etherscan.io/address/0xE53a54489AEC265337F6f8Fa3EE6e08EcbA5Cf9c#events) ✅ Etherscan |
+| `CreditRegistry` | Creditcoin CC3 | [`0xB5F3B441…84B2c`](https://creditcoin-testnet.blockscout.com/address/0xB5F3B44113A31B07508464de39d7ddd939184B2c) ✅ Blockscout |
+| `CreditTierSBT` | Creditcoin CC3 | [`0x96a68DBe…4B2F6`](https://creditcoin-testnet.blockscout.com/address/0x96a68DBe0cC9BD13E92B4730eFfE531F63f4B2F6) ✅ |
+| `LendingPool` | Creditcoin CC3 | [`0xA37a9338…5FDAb`](https://creditcoin-testnet.blockscout.com/address/0xA37a9338b17c20917046E29F23D9d8F796a5FDAb) ✅ |
+| `TUSD` | Creditcoin CC3 | [`0x26FEEdEC…3B051`](https://creditcoin-testnet.blockscout.com/address/0x26FEEdECb79A69EdC7d3Bdb8Cf4dD96E17a3B051) ✅ |
+| `EvmV1Decoder` (linked library) | Creditcoin CC3 | [`0x2b887101…2EDfa`](https://creditcoin-testnet.blockscout.com/address/0x2b887101B0E7710BDBC252c4c4a6aEb45052EDfa) |
+
+## How it works
+
+```
+   ETHEREUM SEPOLIA (chainKey 1)                CREDITCOIN CC3 TESTNET (chainId 102031)
+┌──────────────────────────────┐        ┌────────────────────────────────────────────────┐
+│ LoanBook.sol                 │        │ BlockProver precompile @ 0x…0FD2               │
+│  openLoan / repay /          │        │   ▲ verifyAndEmit (Merkle + continuity)        │
+│  addCollateral               │        │   │  ≤10 proofs share one continuity proof     │
+│  → emits attestable events   │        │ CreditRegistry.sol  (Attestcoin Smart Contract) │
+└───────────┬──────────────────┘        │   replay guard → verify → decode → validate     │
+            │ events                    │   → CreditProfile → ScoreLib → tier             │
+            ▼                           │        │                    │                   │
+┌──────────────────────────────┐        │        ▼                    ▼                   │
+│ Oracle Worker  /  the web UI │ proofs │  CreditTierSBT         LendingPool               │
+│  wait for attestation →      │───────▶│  (ERC-721 + 5192,      (tier → collateral %,     │
+│  fetch proof → dry run →     │        │   on-chain SVG)         Platinum = 85%)          │
+│  execute / executeBatch      │        └────────────────────────────────────────────────┘
+└──────────────────────────────┘
 ```
 
-## Quickstart
+**The precompile proves inclusion and continuity — nothing else.** It explicitly does *not* check
+that a transaction succeeded, which chain it came from, or which contract emitted the log. Those
+are the registry's job, and each is exercised by a test that fails loudly if removed:
+
+| Check | Attack it stops |
+|---|---|
+| Replay guard on the derived query id | Resubmitting one genuine repayment to farm score |
+| `chainKey == 1` | A look-alike LoanBook on Ethereum Mainnet — CC3 attests that chain too |
+| `receipt.receiptStatus == 1` | A **reverted** repayment counting as a successful one |
+| Emitter `== LOANBOOK` | Anyone emitting identically-shaped events from their own contract |
+| Known `topic0` | Unrelated logs being read as credit events |
+| Borrower read from the log topic | A relaying worker crediting reputation to itself |
+
+**Five attacks were rejected on the live chain** — forged merkle root, tampered payload, wrong
+source chain, replayed query, oversized batch. Reproduce them for free: `npm run negative-paths`.
+
+## Run it yourself
+
+Needs [Node 20+](https://nodejs.org) and [Foundry](https://getfoundry.sh). Nothing below spends
+money or needs a wallet.
 
 ```bash
+git clone https://github.com/OoJae/crosscredit && cd crosscredit
 npm install
-cp .env.example .env      # fill in SEPOLIA_RPC_URL and a test-only DEPLOYER_PRIVATE_KEY
-forge test                # 130 tests
-npm run check:chains      # re-derives docs/evidence/supported-chains.json from live CC3
+forge build && forge test          # 130 tests, no network required
+```
+
+To read live testnet state or run the frontend locally:
+
+```bash
+cp .env.example .env               # only SEPOLIA_RPC_URL is needed for read-only use
+npm run check:chains               # re-derives docs/evidence/supported-chains.json from live CC3
+npm run negative-paths             # five attacks, all rejected — free eth_calls
+
+cd web && npm install && npm run dev
+```
+
+To prove new history you need a funded test wallet ([`docs/HUMAN_ACTIONS.md`](docs/HUMAN_ACTIONS.md)
+has the faucets):
+
+```bash
+npm run seed:borrower-c                    # fresh history on Sepolia (~10 min to attest)
+npm run worker:batch -- --borrower 0x…     # import it all in ONE transaction
+npm run worker:watch                       # or follow the chain head continuously
 ```
 
 ## Layout
 
 ```
-contracts/       Foundry project (solc 0.8.30)
+contracts/       Foundry (solc 0.8.30) — 130 tests
   src/sepolia/     LoanBook — the credit-history source
   src/creditcoin/  CreditRegistry (ASC), ScoreLib, CreditTierSBT, LendingPool, TUSD
   src/vendored/    Attributed upstream base contracts (see below)
-  test/            Unit tests, mocks, captured proof fixtures, fork tests
-worker/          Oracle worker — watch & backfill(batch) modes (TS, ethers v6, @gluwa/usc-sdk)
-web/             Frontend — Dashboard / Import History / Borrow
-scripts/         check-chains, seed-history, deploy, e2e-smoke
-docs/            BUILD_GUIDE (spec) · ATTESTCOIN_INTEGRATION · evidence/
+  test/            Unit tests, mocks, real captured proof fixtures
+worker/          Oracle worker — watch, backfill and batch modes
+web/             The frontend deployed at crosscredit.vercel.app
+scripts/         check-chains, seed-history, capture-proof, negative-paths, deploy
+docs/            BUILD_GUIDE · ATTESTCOIN_INTEGRATION · SCORING · evidence/
 ```
+
+## Documentation
+
+- **[docs/ATTESTCOIN_INTEGRATION.md](docs/ATTESTCOIN_INTEGRATION.md)** — how the protocol is used,
+  what we had to establish ourselves, and where the depth is
+- **[docs/SCORING.md](docs/SCORING.md)** — the model, and why every constant is what it is
+- **[docs/evidence/](docs/evidence/)** — gate-by-gate proof: G0 round-trip, G2 credit loop,
+  G3 batch import, negative paths
+- **[PROGRESS.md](PROGRESS.md)** — build log, including the things that went wrong
 
 ## Attribution
 
 `contracts/src/vendored/` contains base contracts adapted from Gluwa's official examples,
-[`gluwa/usc-testnet-bridge-examples`][examples] pinned at commit `4ff9a3bf`. Each file carries a
-header naming its upstream source and listing every modification we made. All other code in this
-repository is original work written from Aug 13, 2026 onward.
+[`gluwa/usc-testnet-bridge-examples`][examples] pinned at commit `4ff9a3bf`. Each file names its
+upstream source and lists every modification. All other code here is original work written from
+Aug 13, 2026 onward.
+
+Built for [BUIDL CTC 2026 Fall][hackathon].
 
 ## License
 
