@@ -3,7 +3,10 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['node_modules/**', 'vendor/**', 'contracts/out/**', 'contracts/cache/**', 'web/dist/**'],
+    // `web/` is a separate package with its own tsconfig, and is typechecked and built by its own
+    // CI job. Linting it from here would run type-aware rules without type information, since the
+    // root tsconfig deliberately excludes it.
+    ignores: ['node_modules/**', 'vendor/**', 'contracts/out/**', 'contracts/cache/**', 'web/**'],
   },
   eslint.configs.recommended,
   {
