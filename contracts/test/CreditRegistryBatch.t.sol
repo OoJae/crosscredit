@@ -9,6 +9,7 @@ import {CreditProfile, ScoreLib, Tier} from "../src/creditcoin/ScoreLib.sol";
 import {INativeQueryVerifier, NativeQueryVerifierLib} from "../src/vendored/VerifierInterface.sol";
 import {MockNativeQueryVerifier} from "./mocks/MockNativeQueryVerifier.sol";
 import {EncodedTxBuilder} from "./helpers/EncodedTxBuilder.sol";
+import {SourceKind, EventSigs} from "../src/creditcoin/SourceKinds.sol";
 
 /// @notice Tests for batch verification — importing a whole credit history in one transaction.
 ///
@@ -39,7 +40,8 @@ contract CreditRegistryBatchTest is Test {
         verifier = MockNativeQueryVerifier(NativeQueryVerifierLib.PRECOMPILE_ADDRESS);
         verifier.setShouldVerify(true);
 
-        registry = new CreditRegistry(SEPOLIA_KEY, LOANBOOK);
+        registry = new CreditRegistry();
+        registry.registerSource(SEPOLIA_KEY, LOANBOOK, SourceKind.LoanBook);
         vm.warp(1_786_000_000);
     }
 
@@ -72,11 +74,11 @@ contract CreditRegistryBatchTest is Test {
     function _repaymentBatch(uint256 n) internal view returns (Batch memory b) {
         b = _alloc(n);
         for (uint256 i = 0; i < n; ++i) {
-            b.actions[i] = uint8(CreditRegistry.Action.RepaymentMade);
+            b.actions[i] = uint8(CreditRegistry.Action.Generic);
             b.heights[i] = BASE_HEIGHT + uint64(i);
             b.payloads[i] = EncodedTxBuilder.single(
                 EncodedTxBuilder.repaymentMade(
-                    LOANBOOK, registry.REPAYMENT_MADE_SIG(), i + 1, borrower, PRINCIPAL, true
+                    LOANBOOK, EventSigs.REPAYMENT_MADE, i + 1, borrower, PRINCIPAL, true
                 )
             );
             b.proofs[i] = _proofFor(i + 1);
@@ -134,26 +136,26 @@ contract CreditRegistryBatchTest is Test {
     function test_batch_mixedEventTypesAllApplied() public {
         Batch memory b = _alloc(3);
 
-        b.actions[0] = uint8(CreditRegistry.Action.LoanOpened);
+        b.actions[0] = uint8(CreditRegistry.Action.Generic);
         b.heights[0] = BASE_HEIGHT;
         b.payloads[0] = EncodedTxBuilder.single(
             EncodedTxBuilder.loanOpened(
-                LOANBOOK, registry.LOAN_OPENED_SIG(), 1, borrower, PRINCIPAL, uint64(block.timestamp + 1 days)
+                LOANBOOK, EventSigs.LOAN_OPENED, 1, borrower, PRINCIPAL, uint64(block.timestamp + 1 days)
             )
         );
         b.proofs[0] = _proofFor(1);
 
-        b.actions[1] = uint8(CreditRegistry.Action.CollateralAdded);
+        b.actions[1] = uint8(CreditRegistry.Action.Generic);
         b.heights[1] = BASE_HEIGHT + 1;
         b.payloads[1] = EncodedTxBuilder.single(
-            EncodedTxBuilder.collateralAdded(LOANBOOK, registry.COLLATERAL_ADDED_SIG(), borrower, 0.003 ether)
+            EncodedTxBuilder.collateralAdded(LOANBOOK, EventSigs.COLLATERAL_ADDED, borrower, 0.003 ether)
         );
         b.proofs[1] = _proofFor(2);
 
-        b.actions[2] = uint8(CreditRegistry.Action.RepaymentMade);
+        b.actions[2] = uint8(CreditRegistry.Action.Generic);
         b.heights[2] = BASE_HEIGHT + 2;
         b.payloads[2] = EncodedTxBuilder.single(
-            EncodedTxBuilder.repaymentMade(LOANBOOK, registry.REPAYMENT_MADE_SIG(), 1, borrower, PRINCIPAL, true)
+            EncodedTxBuilder.repaymentMade(LOANBOOK, EventSigs.REPAYMENT_MADE, 1, borrower, PRINCIPAL, true)
         );
         b.proofs[2] = _proofFor(3);
 
@@ -166,18 +168,23 @@ contract CreditRegistryBatchTest is Test {
         assertEq(p.loansClosed, 1, "loan closed within the same batch");
     }
 
-    /// @dev Borrower C's real seeded shape: 3 loans, 5 on-time repayments, 1 collateral deposit.
-    /// Nine proofs, one transaction, Bronze to Platinum.
-    function test_batch_wholeHistoryReachesPlatinumInOneTransaction() public {
+    /// @dev Borrower C's real seeded shape: 3 loans, 5 on-time repayments, 1 collateral deposit —
+    /// nine proofs verified in a single transaction.
+    ///
+    /// It lands at **Silver, not Platinum**, and that is the point. This history came from our own
+    /// `LoanBook`, which has no lender, so it is cheap to manufacture; `ScoreLib` caps such signals
+    /// below the tier that lends more than the borrower posts. An earlier version of this test
+    /// asserted Platinum, which is precisely the hole that reading real mainnet history closed.
+    function test_batch_wholeHistoryImportsInOneTransaction() public {
         Batch memory b = _alloc(9);
         uint256 slot;
 
         for (uint256 loan = 1; loan <= 3; ++loan) {
-            b.actions[slot] = uint8(CreditRegistry.Action.LoanOpened);
+            b.actions[slot] = uint8(CreditRegistry.Action.Generic);
             b.heights[slot] = BASE_HEIGHT + uint64(slot);
             b.payloads[slot] = EncodedTxBuilder.single(
                 EncodedTxBuilder.loanOpened(
-                    LOANBOOK, registry.LOAN_OPENED_SIG(), loan, borrower, PRINCIPAL, uint64(block.timestamp + 30 days)
+                    LOANBOOK, EventSigs.LOAN_OPENED, loan, borrower, PRINCIPAL, uint64(block.timestamp + 30 days)
                 )
             );
             b.proofs[slot] = _proofFor(slot + 1);
@@ -186,11 +193,11 @@ contract CreditRegistryBatchTest is Test {
             uint256 repayments = loan == 2 ? 1 : 2;
             for (uint256 r = 0; r < repayments; ++r) {
                 uint256 amount = repayments == 1 ? PRINCIPAL : PRINCIPAL / 2;
-                b.actions[slot] = uint8(CreditRegistry.Action.RepaymentMade);
+                b.actions[slot] = uint8(CreditRegistry.Action.Generic);
                 b.heights[slot] = BASE_HEIGHT + uint64(slot);
                 b.payloads[slot] = EncodedTxBuilder.single(
                     EncodedTxBuilder.repaymentMade(
-                        LOANBOOK, registry.REPAYMENT_MADE_SIG(), loan, borrower, amount, true
+                        LOANBOOK, EventSigs.REPAYMENT_MADE, loan, borrower, amount, true
                     )
                 );
                 b.proofs[slot] = _proofFor(slot + 1);
@@ -198,11 +205,11 @@ contract CreditRegistryBatchTest is Test {
             }
 
             if (loan == 2) {
-                b.actions[slot] = uint8(CreditRegistry.Action.CollateralAdded);
+                b.actions[slot] = uint8(CreditRegistry.Action.Generic);
                 b.heights[slot] = BASE_HEIGHT + uint64(slot);
                 b.payloads[slot] = EncodedTxBuilder.single(
                     EncodedTxBuilder.collateralAdded(
-                        LOANBOOK, registry.COLLATERAL_ADDED_SIG(), borrower, 0.003 ether
+                        LOANBOOK, EventSigs.COLLATERAL_ADDED, borrower, 0.003 ether
                     )
                 );
                 b.proofs[slot] = _proofFor(slot + 1);
@@ -215,8 +222,15 @@ contract CreditRegistryBatchTest is Test {
 
         _submit(b);
 
-        assertEq(registry.scoreOf(borrower), 710, "matches ScoreLib's documented arithmetic");
-        assertEq(uint8(registry.tierOf(borrower)), uint8(Tier.Platinum), "Platinum in one transaction");
+        CreditProfile memory p = registry.profileOf(borrower);
+        assertEq(p.onTime, 5, "all five repayments applied");
+        assertEq(p.loansClosed, 3, "closure derived from proven repayments");
+        assertEq(registry.scoreOf(borrower), 390, "matches ScoreLib's documented arithmetic");
+        assertEq(
+            uint8(registry.tierOf(borrower)),
+            uint8(Tier.Silver),
+            "self-dealt history reaches Silver, never Platinum"
+        );
     }
 
     // ─── Size and shape ───────────────────────────────────────────────────────────────────
@@ -276,7 +290,7 @@ contract CreditRegistryBatchTest is Test {
     function test_batch_oneBadItemRevertsEntireBatch() public {
         Batch memory b = _repaymentBatch(3);
         b.payloads[2] = EncodedTxBuilder.single(
-            EncodedTxBuilder.repaymentMade(IMPOSTOR, registry.REPAYMENT_MADE_SIG(), 3, borrower, PRINCIPAL, true)
+            EncodedTxBuilder.repaymentMade(IMPOSTOR, EventSigs.REPAYMENT_MADE, 3, borrower, PRINCIPAL, true)
         );
 
         vm.expectRevert(CreditRegistry.NoRecognisedEvents.selector);
@@ -287,7 +301,7 @@ contract CreditRegistryBatchTest is Test {
 
     function test_batch_rejectsWrongSourceChain() public {
         Batch memory b = _repaymentBatch(2);
-        vm.expectRevert(abi.encodeWithSelector(CreditRegistry.WrongSourceChain.selector, SEPOLIA_KEY, uint64(3)));
+        vm.expectRevert(CreditRegistry.NoRecognisedEvents.selector);
         registry.executeBatch(b.actions, 3, b.heights, b.payloads, b.proofs, _shared());
     }
 

@@ -11,6 +11,10 @@ import {Tier} from "./ScoreLib.sol";
 /// @notice The subset of `CreditRegistry` the pool reads.
 interface ITierSource {
     function tierOf(address borrower) external view returns (Tier);
+
+    /// @notice Largest single repayment this address has proven against a real third-party
+    /// protocol on Ethereum mainnet. Zero for an address with no such history.
+    function demonstratedCapacityOf(address borrower) external view returns (uint256);
 }
 
 /// @title LendingPool
@@ -106,10 +110,46 @@ contract LendingPool is Ownable, Pausable, ReentrancyGuard {
         terms = termsFor[tier];
     }
 
-    /// @notice Collateral required to borrow `amount` at a borrower's current tier.
+    /// @notice Collateral required to borrow `amount`, given the borrower's tier **and** the
+    /// capital real third parties have demonstrably risked on them.
+    ///
+    /// @dev **This is the sybil defence, and it is arithmetic rather than an identity check.**
+    ///
+    /// A tier alone decides the *rate* at which credit is extended. It does not decide *how much*
+    /// undercollateralized credit is available — that is capped by `demonstratedCapacityOf`, the
+    /// largest single repayment the borrower has proven against a real mainnet protocol. Borrowing
+    /// beyond that cap is collateralized at 100%.
+    ///
+    /// The consequence is that credit capacity is anchored to capital that genuinely was at risk,
+    /// which makes it **invariant under identity multiplication**: splitting a history across a
+    /// thousand fresh wallets divides the capacity rather than multiplying it, and a wallet with
+    /// no real history gets no undercollateralized credit however high its score. Extra pseudonyms
+    /// cannot manufacture extra capacity — the formal statement is in arXiv:2605.03307.
+    ///
+    /// It also closes the hole that motivated all of this: a borrower who farmed a spotless record
+    /// on a contract with no lender can reach a good rate, but cannot borrow a penny more than
+    /// they post.
     function collateralRequired(address borrower, uint256 amount) public view returns (uint256) {
         (, Terms memory terms) = quote(borrower);
-        return (amount * terms.collateralRatioBps) / BPS;
+        if (terms.collateralRatioBps >= BPS) {
+            return (amount * terms.collateralRatioBps) / BPS;
+        }
+
+        // Undercollateralized terms apply only up to demonstrated capacity.
+        uint256 capacity = REGISTRY.demonstratedCapacityOf(borrower);
+        uint256 discounted = amount > capacity ? capacity : amount;
+        uint256 remainder = amount - discounted;
+
+        return (discounted * terms.collateralRatioBps) / BPS + remainder;
+    }
+
+    /// @notice How much of `amount` would be covered by the borrower's undercollateralized
+    /// allowance, so a UI can show why a quote is what it is.
+    function undercollateralizedPortion(address borrower, uint256 amount) external view returns (uint256) {
+        (, Terms memory terms) = quote(borrower);
+        if (terms.collateralRatioBps >= BPS) return 0;
+        uint256 capacity = REGISTRY.demonstratedCapacityOf(borrower);
+        return amount > capacity ? capacity : amount;
     }
 
     /// @notice Borrows `amount` tUSD, locking the tCTC sent as collateral.
@@ -124,7 +164,7 @@ contract LendingPool is Ownable, Pausable, ReentrancyGuard {
         (Tier tier, Terms memory terms) = quote(msg.sender);
         if (amount > terms.maxBorrow) revert ExceedsTierLimit(amount, terms.maxBorrow);
 
-        uint256 required = (amount * terms.collateralRatioBps) / BPS;
+        uint256 required = collateralRequired(msg.sender, amount);
         if (msg.value < required) revert InsufficientCollateral(msg.value, required);
 
         uint256 available = ASSET.balanceOf(address(this));

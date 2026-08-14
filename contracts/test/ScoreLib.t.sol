@@ -5,72 +5,237 @@ import {Test} from "forge-std/Test.sol";
 import {CreditProfile, ScoreLib, Tier} from "../src/creditcoin/ScoreLib.sol";
 
 /// @notice Tests for the credit scoring model.
-/// @dev Two things are being protected here. First, the arithmetic: caps, the late penalty, and
-/// the floor at zero. Second — and more importantly for the demo — the **calibration against the
-/// real seeded history on Sepolia**. The constants were chosen so that Borrower A's genuine
-/// 9-event record reaches Platinum and Borrower B's single late repayment does not. If someone
-/// retunes a constant, `test_calibration_*` fails and the demo narrative is caught before it is
-/// recorded rather than after.
+///
+/// @dev The most important tests here are not the arithmetic ones — they are the
+/// `test_selfDealt_*` cases, which pin the property the whole model exists to enforce:
+///
+/// **History we cannot verify a lender for must never reach the tier that lends more than the
+/// borrower posts.** Our own `LoanBook` on Sepolia has no lender; anyone can open a loan with a
+/// self-declared principal and repay it to nobody for the price of gas. So its signals are capped
+/// such that a *perfect, infinitely long* self-dealt record tops out at Gold. Reaching Platinum
+/// requires repayments to a real third-party protocol on Ethereum mainnet, which cost real money
+/// to produce.
+///
+/// If someone loosens a cap and self-dealt history can reach Platinum again, these tests fail.
 contract ScoreLibTest is Test {
+    /// @dev A fixed "now" so age arithmetic is deterministic. Roughly Aug 2026.
+    uint64 internal constant NOW = 1_786_000_000;
+    uint64 internal constant MONTH = 30 days;
+
     function _empty() internal pure returns (CreditProfile memory p) {
         return p;
     }
 
-    // ─── Calibration against real seeded profiles ─────────────────────────────────────────
-    // Source of truth: docs/evidence/seeded-history.json, captured from live Sepolia.
+    // ─── The property that matters: self-dealt history cannot buy undercollateralized credit ──
 
-    /// @dev Borrower A `0x8ce707…`: 3 loans opened and closed, 5 on-time repayments, 0 late,
-    /// 0.006 ETH repaid, 0.003 ETH collateral.
-    ///   on-time   min(5 x 100, 600) = 500
-    ///   closed    min(3 x  40, 120) = 120
-    ///   volume    min(0.006e18 / 1e14, 200) =  60
-    ///   collateral min(0.003e18 / 1e14, 80) =  30
-    ///   penalty   0 x 150             =   0
-    ///   total                         = 710  -> Platinum (>= 700 and late == 0)
-    function test_calibration_borrowerAReachesPlatinum() public pure {
-        CreditProfile memory p = CreditProfile({
-            totalRepaidWei: 0.006 ether,
-            totalCollateralWei: 0.003 ether,
-            onTime: 5,
-            late: 0,
-            loansOpened: 3,
-            loansClosed: 3,
-            firstSeen: 1_786_656_000,
-            score: 0
-        });
+    /// @dev The exact attack that motivated this model. `openLoan(1 wei) → repay(1 wei)`, repeated
+    /// forever, with every proof cryptographically valid. It must not reach Platinum.
+    function test_selfDealt_perfectTestnetHistoryCannotReachPlatinum() public pure {
+        CreditProfile memory p = _empty();
+        p.onTime = type(uint32).max;
+        p.loansClosed = type(uint32).max;
+        p.loansOpened = type(uint32).max;
+        p.totalRepaidWei = 1_000_000 ether;
+        p.oldestActivity = NOW - 3650 days; // a decade of it, so the age term is also maxed
+        p.identityExpiry = NOW + 3650 days; // and an ENS name on top
 
-        uint16 score = ScoreLib.compute(p);
-        assertEq(score, 710, "calibration drift: Borrower A must score exactly 710");
+        uint16 score = ScoreLib.compute(p, NOW);
+
+        assertLt(score, ScoreLib.THRESHOLD_PLATINUM, "self-dealt history must not clear Platinum");
+        assertEq(uint8(ScoreLib.tierFor(p, score)), uint8(Tier.Gold), "Gold is the ceiling without a real lender");
+    }
+
+    /// @dev The cap is structural: on-time + closed + age cannot sum past the Platinum threshold.
+    function test_selfDealt_capsSumBelowPlatinum() public pure {
+        uint256 ceiling = ScoreLib.CAP_ON_TIME + ScoreLib.CAP_CLOSED_LOANS + ScoreLib.CAP_AGE
+            + ScoreLib.POINTS_IDENTITY;
+        assertLt(ceiling, ScoreLib.THRESHOLD_PLATINUM, "testnet-only signals must not reach Platinum");
+    }
+
+    /// @dev And real third-party history does clear it — otherwise the model would be unusable.
+    function test_mainnet_realHistoryReachesPlatinum() public pure {
+        CreditProfile memory p = _empty();
+        p.mainnetRepayments = 4;
+        p.demonstratedCapacityWei = 5 ether;
+        p.oldestActivity = NOW - 12 * MONTH;
+
+        // 480 repayments + 200 capacity (capped) + 120 age (capped) = 800
+        uint16 score = ScoreLib.compute(p, NOW);
+        assertEq(score, 800);
         assertEq(uint8(ScoreLib.tierFor(p, score)), uint8(Tier.Platinum));
     }
 
-    /// @dev Borrower B `0x04163f…`: 1 loan opened and closed, 0 on-time, 1 late, 0.002 ETH
-    /// repaid, no collateral.
-    ///   closed 40 + volume 20 = 60, penalty 150 -> floors at 0 -> Bronze.
-    /// One default wipes out the credit earned by the repayment that caused it. That is the
-    /// intended shape: late payment should hurt more than the payment helps.
-    function test_calibration_borrowerBStaysBronze() public pure {
-        CreditProfile memory p = CreditProfile({
-            totalRepaidWei: 0.002 ether,
-            totalCollateralWei: 0,
-            onTime: 0,
-            late: 1,
-            loansOpened: 1,
-            loansClosed: 1,
-            firstSeen: 1_786_656_000,
-            score: 0
-        });
+    // ─── Calibration against the real seeded profiles ─────────────────────────────────────
+    // Source of truth: docs/evidence/seeded-history.json.
 
-        uint16 score = ScoreLib.compute(p);
-        assertEq(score, 0, "penalty must dominate a single late repayment");
+    /// @dev Borrower A: 5 on-time, 3 closed, no mainnet history, seeded the same day.
+    ///   on-time  min(5 × 60, 360) = 300
+    ///   closed   min(3 × 30,  90) =  90
+    ///   age      0 (hours old)
+    ///                             = 390 → Silver
+    /// Under the previous model this profile scored 710 and reached Platinum on six wei of
+    /// self-dealt history. The drop is the fix, not a regression.
+    function test_calibration_borrowerASettlesAtSilver() public pure {
+        CreditProfile memory p = _empty();
+        p.onTime = 5;
+        p.loansOpened = 3;
+        p.loansClosed = 3;
+        p.totalRepaidWei = 0.006 ether;
+        p.totalCollateralWei = 0.003 ether;
+        p.oldestActivity = NOW;
+
+        uint16 score = ScoreLib.compute(p, NOW);
+        assertEq(score, 390, "calibration drift");
+        assertEq(uint8(ScoreLib.tierFor(p, score)), uint8(Tier.Silver));
+    }
+
+    /// @dev The same record, a year later, earns Gold purely from elapsed time.
+    function test_calibration_ageAloneLiftsBorrowerAToGold() public pure {
+        CreditProfile memory p = _empty();
+        p.onTime = 5;
+        p.loansClosed = 3;
+        p.oldestActivity = NOW - 12 * MONTH;
+
+        uint16 score = ScoreLib.compute(p, NOW);
+        assertEq(score, 510);
+        assertEq(uint8(ScoreLib.tierFor(p, score)), uint8(Tier.Gold));
+    }
+
+    /// @dev Borrower B: one late repayment wipes out everything it earned.
+    function test_calibration_borrowerBStaysBronze() public pure {
+        CreditProfile memory p = _empty();
+        p.late = 1;
+        p.loansOpened = 1;
+        p.loansClosed = 1;
+        p.totalRepaidWei = 0.002 ether;
+        p.oldestActivity = NOW;
+
+        uint16 score = ScoreLib.compute(p, NOW);
+        assertEq(score, 0);
         assertEq(uint8(ScoreLib.tierFor(p, score)), uint8(Tier.Bronze));
     }
 
-    // ─── Tier boundaries ──────────────────────────────────────────────────────────────────
+    // ─── Time ─────────────────────────────────────────────────────────────────────────────
+
+    /// @dev Wall-clock is the one input a scripted attacker cannot compress, so it must actually
+    /// move the score. Without this term, six repayments in six blocks scores like six over six
+    /// months.
+    function test_age_historyLengthIsScored() public pure {
+        CreditProfile memory fresh = _empty();
+        fresh.onTime = 3;
+        fresh.oldestActivity = NOW;
+
+        CreditProfile memory aged = _empty();
+        aged.onTime = 3;
+        aged.oldestActivity = NOW - 6 * MONTH;
+
+        assertGt(ScoreLib.compute(aged, NOW), ScoreLib.compute(fresh, NOW), "age must count");
+    }
+
+    function test_age_isCapped() public pure {
+        CreditProfile memory p = _empty();
+        p.oldestActivity = NOW - 12 * MONTH;
+        uint16 atCap = ScoreLib.compute(p, NOW);
+
+        p.oldestActivity = NOW - 200 * MONTH;
+        assertEq(ScoreLib.compute(p, NOW), atCap, "age contribution caps");
+    }
+
+    function test_age_zeroWhenNoActivityRecorded() public pure {
+        CreditProfile memory p = _empty();
+        p.onTime = 1;
+        assertEq(ScoreLib.compute(p, NOW), 60, "no oldestActivity means no age points");
+    }
+
+    /// @dev A clock skew that puts activity in the future must not underflow or award points.
+    function test_age_futureActivityScoresZero() public pure {
+        CreditProfile memory p = _empty();
+        p.oldestActivity = NOW + 10 * MONTH;
+        assertEq(ScoreLib.compute(p, NOW), 0);
+    }
+
+    // ─── Mainnet signals ──────────────────────────────────────────────────────────────────
+
+    /// @dev A real repayment is worth twice a self-reported one, because a third party's capital
+    /// was actually at risk.
+    function test_mainnet_repaymentOutweighsSelfReported() public pure {
+        CreditProfile memory selfReported = _empty();
+        selfReported.onTime = 1;
+
+        CreditProfile memory real = _empty();
+        real.mainnetRepayments = 1;
+
+        assertGt(ScoreLib.compute(real, NOW), ScoreLib.compute(selfReported, NOW));
+    }
+
+    /// @dev Capacity is the largest single repayment, so repeated small repayments cannot
+    /// impersonate the ability to handle a large one.
+    function test_mainnet_capacityIsCapped() public pure {
+        CreditProfile memory p = _empty();
+        p.demonstratedCapacityWei = 2 ether;
+        uint16 atCap = ScoreLib.compute(p, NOW);
+
+        p.demonstratedCapacityWei = 10_000 ether;
+        assertEq(ScoreLib.compute(p, NOW), atCap, "a whale cannot buy a tier");
+    }
+
+    /// @dev Being liquidated is a worse signal than paying our toy contract late, and is
+    /// penalised accordingly.
+    function test_mainnet_liquidationHurtsMoreThanLateness() public pure {
+        assertGt(ScoreLib.PENALTY_PER_LIQUIDATION, ScoreLib.PENALTY_PER_LATE);
+    }
+
+    /// @dev One liquidation bars Platinum outright, however strong the rest of the record.
+    function test_mainnet_oneLiquidationBarsPlatinum() public pure {
+        CreditProfile memory p = _empty();
+        p.mainnetRepayments = 20;
+        p.demonstratedCapacityWei = 100 ether;
+        p.oldestActivity = NOW - 48 * MONTH;
+        p.liquidations = 1;
+
+        uint16 score = ScoreLib.compute(p, NOW);
+        assertLt(uint8(ScoreLib.tierFor(p, score)), uint8(Tier.Platinum));
+    }
+
+    // ─── Identity ─────────────────────────────────────────────────────────────────────────
+
+    /// @dev An unexpired ENS name or humanity claim helps a little. It is a rate limiter on cheap
+    /// identity creation — about $25 for five years — not a licence to borrow.
+    function test_identity_unexpiredClaimAddsPoints() public pure {
+        CreditProfile memory without = _empty();
+        without.onTime = 2;
+
+        CreditProfile memory with_ = _empty();
+        with_.onTime = 2;
+        with_.identityExpiry = NOW + 365 days;
+
+        assertEq(
+            ScoreLib.compute(with_, NOW) - ScoreLib.compute(without, NOW),
+            ScoreLib.POINTS_IDENTITY
+        );
+    }
+
+    /// @dev The precompile proves past events, never current state — so a claim that has since
+    /// lapsed must stop counting the moment it expires.
+    function test_identity_expiredClaimIsWorthless() public pure {
+        CreditProfile memory p = _empty();
+        p.onTime = 2;
+        p.identityExpiry = NOW - 1;
+
+        assertEq(ScoreLib.compute(p, NOW), 120, "an expired claim contributes nothing");
+    }
+
+    /// @dev Identity alone cannot buy a tier, however many credentials are proven.
+    function test_identity_aloneCannotReachSilver() public pure {
+        CreditProfile memory p = _empty();
+        p.identityExpiry = NOW + 3650 days;
+        assertLt(ScoreLib.compute(p, NOW), ScoreLib.THRESHOLD_SILVER);
+    }
+
+    // ─── Tiers, floors, invariants ────────────────────────────────────────────────────────
 
     function test_tier_boundaries() public pure {
         CreditProfile memory p = _empty();
-        assertEq(uint8(ScoreLib.tierFor(p, 0)), uint8(Tier.Bronze));
         assertEq(uint8(ScoreLib.tierFor(p, 249)), uint8(Tier.Bronze));
         assertEq(uint8(ScoreLib.tierFor(p, 250)), uint8(Tier.Silver));
         assertEq(uint8(ScoreLib.tierFor(p, 499)), uint8(Tier.Silver));
@@ -79,105 +244,69 @@ contract ScoreLibTest is Test {
         assertEq(uint8(ScoreLib.tierFor(p, 700)), uint8(Tier.Platinum));
     }
 
-    /// @dev Platinum unlocks undercollateralized borrowing, so a spotless record is required on
-    /// top of the score. A high scorer with one historical default caps at Gold.
-    function test_tier_platinumRequiresZeroLate() public pure {
-        CreditProfile memory spotless = _empty();
-        CreditProfile memory blemished = _empty();
-        blemished.late = 1;
+    function test_tier_platinumRequiresSpotlessRecord() public pure {
+        CreditProfile memory clean = _empty();
+        CreditProfile memory oneLate = _empty();
+        oneLate.late = 1;
+        CreditProfile memory oneLiquidation = _empty();
+        oneLiquidation.liquidations = 1;
 
-        assertEq(uint8(ScoreLib.tierFor(spotless, 1000)), uint8(Tier.Platinum));
-        assertEq(uint8(ScoreLib.tierFor(blemished, 1000)), uint8(Tier.Gold), "one default bars Platinum forever");
+        assertEq(uint8(ScoreLib.tierFor(clean, 1000)), uint8(Tier.Platinum));
+        assertEq(uint8(ScoreLib.tierFor(oneLate, 1000)), uint8(Tier.Gold));
+        assertEq(uint8(ScoreLib.tierFor(oneLiquidation, 1000)), uint8(Tier.Gold));
     }
-
-    // ─── Component caps ───────────────────────────────────────────────────────────────────
-
-    function test_caps_onTimeComponentIsCapped() public pure {
-        CreditProfile memory p = _empty();
-        p.onTime = 6;
-        uint16 six = ScoreLib.compute(p);
-        p.onTime = 600;
-        assertEq(ScoreLib.compute(p), six, "on-time contribution caps at 600");
-    }
-
-    function test_caps_volumeComponentIsCapped() public pure {
-        CreditProfile memory p = _empty();
-        p.totalRepaidWei = 200 * 1e14;
-        uint16 atCap = ScoreLib.compute(p);
-        p.totalRepaidWei = 10_000 ether;
-        assertEq(ScoreLib.compute(p), atCap, "a whale cannot buy a tier");
-    }
-
-    function test_caps_collateralComponentIsCapped() public pure {
-        CreditProfile memory p = _empty();
-        p.totalCollateralWei = 80 * 1e14;
-        uint16 atCap = ScoreLib.compute(p);
-        p.totalCollateralWei = 10_000 ether;
-        assertEq(ScoreLib.compute(p), atCap);
-    }
-
-    function test_caps_closedLoansComponentIsCapped() public pure {
-        CreditProfile memory p = _empty();
-        p.loansClosed = 3;
-        uint16 three = ScoreLib.compute(p);
-        p.loansClosed = 300;
-        assertEq(ScoreLib.compute(p), three);
-    }
-
-    // ─── Floors and invariants ────────────────────────────────────────────────────────────
 
     function test_floor_emptyProfileScoresZero() public pure {
-        assertEq(ScoreLib.compute(_empty()), 0);
+        assertEq(ScoreLib.compute(_empty(), NOW), 0);
     }
 
     function testFuzz_scoreNeverExceedsMax(
-        uint256 repaid,
-        uint256 collateral,
         uint32 onTime,
-        uint32 closed
+        uint32 mainnet,
+        uint256 capacity,
+        uint32 closed,
+        uint64 age
     ) public pure {
         CreditProfile memory p = _empty();
-        p.totalRepaidWei = repaid;
-        p.totalCollateralWei = collateral;
         p.onTime = onTime;
+        p.mainnetRepayments = mainnet;
+        p.demonstratedCapacityWei = capacity;
         p.loansClosed = closed;
+        p.oldestActivity = uint64(bound(age, 0, NOW));
 
-        assertLe(ScoreLib.compute(p), ScoreLib.MAX_SCORE);
+        assertLe(ScoreLib.compute(p, NOW), ScoreLib.MAX_SCORE);
     }
 
     /// @dev Saturating subtraction: no underflow, no wrap, however many defaults accumulate.
-    function testFuzz_lateNeverUnderflows(uint32 onTime, uint32 late) public pure {
+    function testFuzz_penaltiesNeverUnderflow(uint32 late, uint32 liquidations) public pure {
         CreditProfile memory p = _empty();
-        p.onTime = onTime;
+        p.onTime = 6;
+        p.mainnetRepayments = 4;
         p.late = late;
+        p.liquidations = liquidations;
 
-        uint16 score = ScoreLib.compute(p);
-        assertLe(score, ScoreLib.MAX_SCORE);
-        if (late > 4) assertEq(score, 0, "penalties beyond the on-time cap floor the score");
+        assertLe(ScoreLib.compute(p, NOW), ScoreLib.MAX_SCORE);
     }
 
-    /// @dev More on-time repayments must never lower a score — otherwise good behaviour would be
-    /// punished somewhere in the curve.
-    function testFuzz_moreOnTimeIsNeverWorse(uint16 onTime) public pure {
-        onTime = uint16(bound(onTime, 0, 1000));
+    function testFuzz_moreRealRepaymentsIsNeverWorse(uint16 n) public pure {
+        n = uint16(bound(n, 0, 1000));
         CreditProfile memory a = _empty();
-        a.onTime = onTime;
+        a.mainnetRepayments = n;
         CreditProfile memory b = _empty();
-        b.onTime = onTime + 1;
+        b.mainnetRepayments = n + 1;
 
-        assertGe(ScoreLib.compute(b), ScoreLib.compute(a));
+        assertGe(ScoreLib.compute(b, NOW), ScoreLib.compute(a, NOW));
     }
 
-    /// @dev And an additional late repayment must never raise one.
-    function testFuzz_moreLateIsNeverBetter(uint16 late) public pure {
-        late = uint16(bound(late, 0, 100));
+    function testFuzz_moreLiquidationsIsNeverBetter(uint16 n) public pure {
+        n = uint16(bound(n, 0, 100));
         CreditProfile memory a = _empty();
-        a.onTime = 10;
-        a.late = late;
+        a.mainnetRepayments = 10;
+        a.liquidations = n;
         CreditProfile memory b = _empty();
-        b.onTime = 10;
-        b.late = late + 1;
+        b.mainnetRepayments = 10;
+        b.liquidations = n + 1;
 
-        assertLe(ScoreLib.compute(b), ScoreLib.compute(a));
+        assertLe(ScoreLib.compute(b, NOW), ScoreLib.compute(a, NOW));
     }
 }

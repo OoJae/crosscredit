@@ -17,7 +17,7 @@ import {writeFileSync, mkdirSync} from 'node:fs';
 import {dirname} from 'node:path';
 import {ethers} from 'ethers';
 import {proofProvider} from '@gluwa/usc-sdk';
-import {required, optional, proofBuilderUrl} from './lib/env.js';
+import {optional, proofBuilderUrl} from './lib/env.js';
 
 const DEFAULT_OUTPUT = 'contracts/test/fixtures/g0-proof.json';
 
@@ -25,16 +25,42 @@ const DEFAULT_OUTPUT = 'contracts/test/fixtures/g0-proof.json';
 // prover cache. Proof payloads can be large, so allow considerably longer.
 const PROVER_TIMEOUT_MS = 60_000;
 
+/**
+ * Creditcoin attests two source chains. Sepolia carries our own LoanBook; Ethereum mainnet
+ * carries the real DeFi history that actually matters, and needs an archive RPC because the
+ * transactions we prove can be years old.
+ */
+const CHAINS: Record<number, {name: string; rpcEnv: string; fallbackRpc: string}> = {
+  1: {
+    name: 'Ethereum Sepolia',
+    rpcEnv: 'SEPOLIA_RPC_URL',
+    fallbackRpc: 'https://ethereum-sepolia-rpc.publicnode.com',
+  },
+  3: {
+    name: 'Ethereum Mainnet',
+    rpcEnv: 'MAINNET_RPC_URL',
+    // Serves archive eth_getLogs without a key, which most public endpoints refuse.
+    fallbackRpc: 'https://rpc.mevblocker.io',
+  },
+};
+
 async function main(): Promise<void> {
   const txHash = process.argv[2];
   const outputPath = process.argv[3] ?? DEFAULT_OUTPUT;
 
   if (txHash === undefined || !/^0x[0-9a-fA-F]{64}$/.test(txHash)) {
-    throw new Error('Usage: npx tsx scripts/capture-proof.ts <txHash> [outputPath]');
+    throw new Error('Usage: npx tsx scripts/capture-proof.ts <txHash> [outputPath] [--chain-key N]');
   }
 
-  const chainKey = Number.parseInt(optional('SOURCE_CHAIN_KEY', '1'), 10);
-  const sourceRpc = new ethers.JsonRpcProvider(required('SEPOLIA_RPC_URL'));
+  const keyFlag = process.argv.indexOf('--chain-key');
+  const chainKey =
+    keyFlag === -1
+      ? Number.parseInt(optional('SOURCE_CHAIN_KEY', '1'), 10)
+      : Number.parseInt(process.argv[keyFlag + 1] ?? '1', 10);
+
+  const chain = CHAINS[chainKey];
+  if (chain === undefined) throw new Error(`unknown chainKey ${chainKey}`);
+  const sourceRpc = new ethers.JsonRpcProvider(optional(chain.rpcEnv, chain.fallbackRpc));
 
   const tx = await sourceRpc.getTransaction(txHash);
   if (tx === null) throw new Error(`Transaction ${txHash} not found on the source chain`);
@@ -45,7 +71,8 @@ async function main(): Promise<void> {
   console.log(`tx        ${txHash}`);
   console.log(`block     ${tx.blockNumber}`);
   console.log(`status    ${receipt?.status === 1 ? 'success' : 'FAILED'}`);
-  console.log(`chainKey  ${chainKey}`);
+  console.log(`chainKey  ${chainKey} (${chain.name})`);
+  console.log(`logs      ${receipt?.logs.length ?? 0}`);
 
   const builder = new proofProvider.service.ProofBuilder(chainKey, proofBuilderUrl(), PROVER_TIMEOUT_MS);
   console.log('\nfetching proof…');
@@ -72,6 +99,7 @@ async function main(): Promise<void> {
     emittedBy: receipt?.to ?? null,
     logCount: receipt?.logs.length ?? 0,
     chainKey,
+    chainName: chain.name,
     proof,
   };
 

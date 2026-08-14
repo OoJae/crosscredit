@@ -7,6 +7,7 @@ import {CreditRegistry} from "../src/creditcoin/CreditRegistry.sol";
 import {CreditProfile, ScoreLib, Tier} from "../src/creditcoin/ScoreLib.sol";
 import {INativeQueryVerifier, NativeQueryVerifierLib} from "../src/vendored/VerifierInterface.sol";
 import {MockNativeQueryVerifier} from "./mocks/MockNativeQueryVerifier.sol";
+import {SourceKind, EventSigs} from "../src/creditcoin/SourceKinds.sol";
 
 /// @notice Decodes **real** Attestcoin proofs captured from the live CC3 prover.
 ///
@@ -38,7 +39,8 @@ contract RealProofTest is Test {
         verifier = MockNativeQueryVerifier(NativeQueryVerifierLib.PRECOMPILE_ADDRESS);
         verifier.setShouldVerify(true);
 
-        registry = new CreditRegistry(SEPOLIA_KEY, LOANBOOK);
+        registry = new CreditRegistry();
+        registry.registerSource(SEPOLIA_KEY, LOANBOOK, SourceKind.LoanBook);
     }
 
     function _txBytes(string memory fixture) internal view returns (bytes memory) {
@@ -59,7 +61,7 @@ contract RealProofTest is Test {
         roots[0] = bytes32(uint256(0xc0));
 
         registry.execute(
-            uint8(CreditRegistry.Action.RepaymentMade),
+            uint8(CreditRegistry.Action.Generic),
             SEPOLIA_KEY,
             height,
             payload,
@@ -97,7 +99,7 @@ contract RealProofTest is Test {
         EvmV1Decoder.LogEntry memory log = receipt.receiptLogs[0];
         assertEq(log.address_, LOANBOOK, "emitted by our LoanBook");
         assertEq(log.topics.length, 3, "sig + loanId + borrower");
-        assertEq(log.topics[0], registry.REPAYMENT_MADE_SIG());
+        assertEq(log.topics[0], EventSigs.REPAYMENT_MADE);
         assertEq(address(uint160(uint256(log.topics[2]))), BORROWER_A);
         assertEq(log.data.length, 96, "amount + onTime + timestamp");
 
@@ -141,7 +143,9 @@ contract RealProofTest is Test {
     }
 
     /// @dev Real proof, wrong chain: the payload is genuine and the transaction really happened,
-    /// but claiming it came from Ethereum Mainnet (chainKey 3) must still be rejected.
+    /// but our LoanBook is only a registered source on Sepolia. Claiming the same log came from
+    /// Ethereum mainnet finds no registered `(chainKey, emitter)` pair, so nothing is ingested —
+    /// which is exactly what stops a look-alike contract at the same address on another chain.
     function test_realProof_rejectedWhenChainKeyIsWrong() public {
         bytes memory payload = _txBytes("repayment-ontime.json");
         uint64 height = _height("repayment-ontime.json");
@@ -152,9 +156,9 @@ contract RealProofTest is Test {
         bytes32[] memory roots = new bytes32[](1);
         roots[0] = bytes32(uint256(0xc0));
 
-        vm.expectRevert(abi.encodeWithSelector(CreditRegistry.WrongSourceChain.selector, SEPOLIA_KEY, uint64(3)));
+        vm.expectRevert(CreditRegistry.NoRecognisedEvents.selector);
         registry.execute(
-            uint8(CreditRegistry.Action.RepaymentMade),
+            uint8(CreditRegistry.Action.Generic),
             3,
             height,
             payload,
@@ -168,7 +172,8 @@ contract RealProofTest is Test {
     /// @dev Real proof, wrong registry: a registry watching a different LoanBook must ignore
     /// these logs entirely, even though the proof is perfectly valid.
     function test_realProof_rejectedByRegistryWatchingAnotherLoanBook() public {
-        CreditRegistry other = new CreditRegistry(SEPOLIA_KEY, address(0xdeadbeef));
+        CreditRegistry other = new CreditRegistry();
+        other.registerSource(SEPOLIA_KEY, address(0xdeadbeef), SourceKind.LoanBook);
 
         // Read the fixture before `expectRevert`: vm.readFile is itself a cheatcode call.
         bytes memory payload = _txBytes("repayment-ontime.json");
@@ -182,7 +187,7 @@ contract RealProofTest is Test {
 
         vm.expectRevert(CreditRegistry.NoRecognisedEvents.selector);
         other.execute(
-            uint8(CreditRegistry.Action.RepaymentMade),
+            uint8(CreditRegistry.Action.Generic),
             SEPOLIA_KEY,
             height,
             payload,

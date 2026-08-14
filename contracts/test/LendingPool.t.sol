@@ -9,13 +9,26 @@ import {Tier} from "../src/creditcoin/ScoreLib.sol";
 /// @dev Drives tiers directly; the registry's proof-to-tier path is covered elsewhere.
 contract StubTierSource is ITierSource {
     mapping(address => Tier) public tiers;
+    mapping(address => uint256) public capacity;
 
+    /// @dev Defaults to effectively unlimited demonstrated capacity so the pre-existing tier tests
+    /// keep measuring what they were written to measure. The cap itself is exercised by the
+    /// dedicated `test_capacityCap_*` cases below.
     function set(address borrower, Tier tier) external {
         tiers[borrower] = tier;
+        capacity[borrower] = type(uint128).max;
+    }
+
+    function setCapacity(address borrower, uint256 amount) external {
+        capacity[borrower] = amount;
     }
 
     function tierOf(address borrower) external view returns (Tier) {
         return tiers[borrower];
+    }
+
+    function demonstratedCapacityOf(address borrower) external view returns (uint256) {
+        return capacity[borrower];
     }
 }
 
@@ -334,7 +347,72 @@ contract LendingPoolTest is Test {
         new LendingPool(address(registry), address(0));
     }
 
+    // ─── The capacity cap: sybil defence by arithmetic ────────────────────────────────────
+
+    /// @dev A wallet with a Platinum *tier* but no real mainnet history gets no undercollateralized
+    /// credit at all. This is the hole that self-dealt `LoanBook` history opened, closed at the
+    /// point where it actually costs the protocol money.
+    function test_capacityCap_platinumWithoutRealHistoryGetsNoDiscount() public {
+        registry.setCapacity(platinum, 0);
+
+        assertEq(
+            pool.collateralRequired(platinum, 1_000e18),
+            1_000e18,
+            "no demonstrated capacity means fully collateralized"
+        );
+        assertEq(pool.undercollateralizedPortion(platinum, 1_000e18), 0);
+    }
+
+    /// @dev With real history, the discount applies — but only up to what was demonstrated.
+    function test_capacityCap_discountAppliesOnlyUpToCapacity() public {
+        registry.setCapacity(platinum, 400e18);
+
+        // 400 at 85% = 340, plus 600 at 100% = 600 → 940.
+        assertEq(pool.collateralRequired(platinum, 1_000e18), 940e18);
+        assertEq(pool.undercollateralizedPortion(platinum, 1_000e18), 400e18);
+    }
+
+    function test_capacityCap_fullDiscountWithinCapacity() public {
+        registry.setCapacity(platinum, 2_000e18);
+        assertEq(pool.collateralRequired(platinum, 1_000e18), 850e18, "wholly within capacity");
+    }
+
+    /// @dev Overcollateralized tiers are unaffected — the cap only ever limits a discount.
+    function test_capacityCap_doesNotAffectOvercollateralizedTiers() public {
+        registry.setCapacity(bronze, 0);
+        assertEq(pool.collateralRequired(bronze, 1_000e18), 1_500e18);
+    }
+
+    /// @dev Splitting a history across many wallets divides capacity rather than multiplying it,
+    /// so a sybil fleet gets no more total undercollateralized credit than one honest wallet.
+    function test_capacityCap_isInvariantUnderIdentitySplitting() public {
+        registry.setCapacity(platinum, 900e18);
+        uint256 honestDiscount = 900e18 - pool.collateralRequired(platinum, 900e18);
+
+        uint256 sybilDiscount;
+        for (uint256 i = 0; i < 9; ++i) {
+            address sybil = makeAddr(string.concat("sybil", vm.toString(i)));
+            registry.set(sybil, Tier.Platinum);
+            registry.setCapacity(sybil, 100e18); // the same 900 split nine ways
+            sybilDiscount += 100e18 - pool.collateralRequired(sybil, 100e18);
+        }
+
+        assertEq(sybilDiscount, honestDiscount, "capacity is conserved across identities");
+    }
+
+    /// @dev And borrowing enforces the capped requirement, not just the quote.
+    function test_capacityCap_borrowRejectsCollateralBelowCappedRequirement() public {
+        registry.setCapacity(platinum, 0);
+
+        vm.prank(platinum);
+        vm.expectRevert(
+            abi.encodeWithSelector(LendingPool.InsufficientCollateral.selector, 850e18, 1_000e18)
+        );
+        pool.borrow{value: 850e18}(1_000e18);
+    }
+
     function testFuzz_collateralRequiredScalesLinearly(uint128 amount) public view {
+        // `set` grants effectively unlimited capacity, so the pure tier ratio applies.
         uint256 required = pool.collateralRequired(platinum, amount);
         assertEq(required, (uint256(amount) * 8_500) / 10_000);
     }

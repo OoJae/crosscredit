@@ -9,6 +9,7 @@ import {CreditProfile, ScoreLib, Tier} from "../src/creditcoin/ScoreLib.sol";
 import {INativeQueryVerifier, NativeQueryVerifierLib} from "../src/vendored/VerifierInterface.sol";
 import {MockNativeQueryVerifier} from "./mocks/MockNativeQueryVerifier.sol";
 import {EncodedTxBuilder} from "./helpers/EncodedTxBuilder.sol";
+import {SourceKind, EventSigs} from "../src/creditcoin/SourceKinds.sol";
 
 /// @notice Tests for the Attestcoin Smart Contract that turns verified Sepolia transactions into
 /// credit reputation.
@@ -36,7 +37,8 @@ contract CreditRegistryTest is Test {
         verifier = MockNativeQueryVerifier(NativeQueryVerifierLib.PRECOMPILE_ADDRESS);
         verifier.setShouldVerify(true);
 
-        registry = new CreditRegistry(SEPOLIA_KEY, LOANBOOK);
+        registry = new CreditRegistry();
+        registry.registerSource(SEPOLIA_KEY, LOANBOOK, SourceKind.LoanBook);
         vm.warp(1_786_000_000);
     }
 
@@ -58,7 +60,7 @@ contract CreditRegistryTest is Test {
     }
 
     function _submit(bytes memory payload, bytes32 salt) internal {
-        _submit(uint8(CreditRegistry.Action.RepaymentMade), SEPOLIA_KEY, payload, salt);
+        _submit(uint8(CreditRegistry.Action.Generic), SEPOLIA_KEY, payload, salt);
     }
 
     function _repayment(uint256 loanId, address who, uint256 amount, bool onTime)
@@ -67,13 +69,13 @@ contract CreditRegistryTest is Test {
         returns (bytes memory)
     {
         return EncodedTxBuilder.single(
-            EncodedTxBuilder.repaymentMade(LOANBOOK, registry.REPAYMENT_MADE_SIG(), loanId, who, amount, onTime)
+            EncodedTxBuilder.repaymentMade(LOANBOOK, EventSigs.REPAYMENT_MADE, loanId, who, amount, onTime)
         );
     }
 
     function _opened(uint256 loanId, address who, uint256 principal) internal view returns (bytes memory) {
         return EncodedTxBuilder.single(
-            EncodedTxBuilder.loanOpened(LOANBOOK, registry.LOAN_OPENED_SIG(), loanId, who, principal, uint64(block.timestamp + 1 days))
+            EncodedTxBuilder.loanOpened(LOANBOOK, EventSigs.LOAN_OPENED, loanId, who, principal, uint64(block.timestamp + 1 days))
         );
     }
 
@@ -98,21 +100,21 @@ contract CreditRegistryTest is Test {
     }
 
     function test_ingest_loanOpenedIncrementsCounter() public {
-        _submit(uint8(CreditRegistry.Action.LoanOpened), SEPOLIA_KEY, _opened(1, borrower, PRINCIPAL), bytes32(uint256(3)));
+        _submit(uint8(CreditRegistry.Action.Generic), SEPOLIA_KEY, _opened(1, borrower, PRINCIPAL), bytes32(uint256(3)));
         assertEq(registry.profileOf(borrower).loansOpened, 1);
     }
 
     function test_ingest_collateralAccumulates() public {
         bytes memory payload = EncodedTxBuilder.single(
-            EncodedTxBuilder.collateralAdded(LOANBOOK, registry.COLLATERAL_ADDED_SIG(), borrower, 0.003 ether)
+            EncodedTxBuilder.collateralAdded(LOANBOOK, EventSigs.COLLATERAL_ADDED, borrower, 0.003 ether)
         );
-        _submit(uint8(CreditRegistry.Action.CollateralAdded), SEPOLIA_KEY, payload, bytes32(uint256(4)));
+        _submit(uint8(CreditRegistry.Action.Generic), SEPOLIA_KEY, payload, bytes32(uint256(4)));
 
         assertEq(registry.profileOf(borrower).totalCollateralWei, 0.003 ether);
     }
 
     function test_ingest_loanClosesWhenRepaymentsCoverPrincipal() public {
-        _submit(uint8(CreditRegistry.Action.LoanOpened), SEPOLIA_KEY, _opened(7, borrower, PRINCIPAL), bytes32(uint256(10)));
+        _submit(uint8(CreditRegistry.Action.Generic), SEPOLIA_KEY, _opened(7, borrower, PRINCIPAL), bytes32(uint256(10)));
         _submit(_repayment(7, borrower, PRINCIPAL / 2, true), bytes32(uint256(11)));
         assertEq(registry.profileOf(borrower).loansClosed, 0, "half repaid is not closed");
 
@@ -126,7 +128,7 @@ contract CreditRegistryTest is Test {
         _submit(_repayment(9, borrower, PRINCIPAL, true), bytes32(uint256(20)));
         assertEq(registry.profileOf(borrower).loansClosed, 0, "principal unknown yet");
 
-        _submit(uint8(CreditRegistry.Action.LoanOpened), SEPOLIA_KEY, _opened(9, borrower, PRINCIPAL), bytes32(uint256(21)));
+        _submit(uint8(CreditRegistry.Action.Generic), SEPOLIA_KEY, _opened(9, borrower, PRINCIPAL), bytes32(uint256(21)));
         assertEq(registry.profileOf(borrower).loansClosed, 1, "closure reconciled once principal known");
     }
 
@@ -136,10 +138,10 @@ contract CreditRegistryTest is Test {
     function test_ingest_allEventsInOneTransaction() public {
         EvmV1Decoder.LogEntryTuple[] memory logs = new EvmV1Decoder.LogEntryTuple[](2);
         logs[0] = EncodedTxBuilder.loanOpened(
-            LOANBOOK, registry.LOAN_OPENED_SIG(), 5, borrower, PRINCIPAL, uint64(block.timestamp + 1 days)
+            LOANBOOK, EventSigs.LOAN_OPENED, 5, borrower, PRINCIPAL, uint64(block.timestamp + 1 days)
         );
         logs[1] = EncodedTxBuilder.repaymentMade(
-            LOANBOOK, registry.REPAYMENT_MADE_SIG(), 5, borrower, PRINCIPAL, true
+            LOANBOOK, EventSigs.REPAYMENT_MADE, 5, borrower, PRINCIPAL, true
         );
 
         _submit(EncodedTxBuilder.encode(2, 1, logs), bytes32(uint256(30)));
@@ -175,15 +177,23 @@ contract CreditRegistryTest is Test {
 
     /// @dev CC3 attests Ethereum Mainnet (chainKey 3) as well as Sepolia. A LoanBook look-alike
     /// deployed at the same address on mainnet would otherwise mint history here.
+    /// @dev CC3 attests Ethereum mainnet as well as Sepolia. A LoanBook look-alike deployed at the
+    /// same address on mainnet must not be able to mint history: the `(chainKey, emitter)` pair is
+    /// unregistered there, so its logs are ignored and nothing is ingested.
     function test_reject_wrongSourceChain() public {
-        // Built before `expectRevert`: the builders read public constants off the registry, and
-        // those external calls would otherwise satisfy the expectation instead of `execute`.
         bytes memory payload = _repayment(1, borrower, PRINCIPAL, true);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(CreditRegistry.WrongSourceChain.selector, SEPOLIA_KEY, MAINNET_KEY)
+        vm.expectRevert(CreditRegistry.NoRecognisedEvents.selector);
+        _submit(uint8(CreditRegistry.Action.Generic), MAINNET_KEY, payload, bytes32(uint256(60)));
+    }
+
+    function test_reject_unregisteredEmitterOnRegisteredChain() public {
+        bytes memory payload = EncodedTxBuilder.single(
+            EncodedTxBuilder.repaymentMade(IMPOSTOR, EventSigs.REPAYMENT_MADE, 1, borrower, PRINCIPAL, true)
         );
-        _submit(uint8(CreditRegistry.Action.RepaymentMade), MAINNET_KEY, payload, bytes32(uint256(60)));
+
+        vm.expectRevert(CreditRegistry.NoRecognisedEvents.selector);
+        _submit(payload, bytes32(uint256(69)));
     }
 
     /// @dev The precompile proves inclusion, not success. A reverted repayment is still included
@@ -191,7 +201,7 @@ contract CreditRegistryTest is Test {
     function test_reject_revertedSourceTransaction() public {
         EvmV1Decoder.LogEntryTuple[] memory logs = new EvmV1Decoder.LogEntryTuple[](1);
         logs[0] = EncodedTxBuilder.repaymentMade(
-            LOANBOOK, registry.REPAYMENT_MADE_SIG(), 1, borrower, PRINCIPAL, true
+            LOANBOOK, EventSigs.REPAYMENT_MADE, 1, borrower, PRINCIPAL, true
         );
 
         vm.expectRevert(abi.encodeWithSelector(CreditRegistry.SourceTransactionFailed.selector, uint8(0)));
@@ -201,7 +211,7 @@ contract CreditRegistryTest is Test {
     /// @dev `getLogsByEventSignature` filters on topic0 alone, so provenance is entirely our job.
     function test_reject_eventFromImpostorContract() public {
         bytes memory payload = EncodedTxBuilder.single(
-            EncodedTxBuilder.repaymentMade(IMPOSTOR, registry.REPAYMENT_MADE_SIG(), 1, borrower, PRINCIPAL, true)
+            EncodedTxBuilder.repaymentMade(IMPOSTOR, EventSigs.REPAYMENT_MADE, 1, borrower, PRINCIPAL, true)
         );
 
         vm.expectRevert(CreditRegistry.NoRecognisedEvents.selector);
@@ -270,8 +280,29 @@ contract CreditRegistryTest is Test {
         assertGt(registry.scoreOf(borrower), 0);
     }
 
-    function test_constructor_rejectsZeroLoanBook() public {
+    function test_registerSource_rejectsZeroEmitter() public {
         vm.expectRevert(CreditRegistry.ZeroAddress.selector);
-        new CreditRegistry(SEPOLIA_KEY, address(0));
+        registry.registerSource(SEPOLIA_KEY, address(0), SourceKind.LoanBook);
+    }
+
+    function test_registerSource_isOwnerOnly() public {
+        vm.prank(relayer);
+        vm.expectRevert();
+        registry.registerSource(SEPOLIA_KEY, IMPOSTOR, SourceKind.LoanBook);
+    }
+
+    /// @dev Removing a source must stop new ingestion without rewriting history already proven.
+    function test_removeSource_stopsFurtherIngestion() public {
+        _submit(_repayment(1, borrower, PRINCIPAL, true), bytes32(uint256(70)));
+        uint16 scoreBefore = registry.scoreOf(borrower);
+        assertGt(scoreBefore, 0);
+
+        registry.removeSource(SEPOLIA_KEY, LOANBOOK);
+
+        bytes memory payload = _repayment(2, borrower, PRINCIPAL, true);
+        vm.expectRevert(CreditRegistry.NoRecognisedEvents.selector);
+        _submit(payload, bytes32(uint256(71)));
+
+        assertEq(registry.scoreOf(borrower), scoreBefore, "already-proven history is untouched");
     }
 }
