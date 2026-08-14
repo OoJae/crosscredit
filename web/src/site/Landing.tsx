@@ -1,5 +1,7 @@
 import {Link} from 'react-router-dom';
-import {Mark, Hallmark, AssayMark, TIER_HALLMARKS} from './Mark';
+import {Hallmark, AssayMark, TIER_HALLMARKS} from './Mark';
+import {PageShell} from './PageShell';
+import {Line, Eyebrow} from './Prose';
 import {Punch} from './Punch';
 import {useReveal, useScrollProgress} from './useReveal';
 import {ADDRESSES} from '../config';
@@ -11,27 +13,6 @@ import {ADDRESSES} from '../config';
  * docs/THREAT_MODEL.md. That is deliberate: the project already writes about itself better than a
  * marketing pass would, and every claim on this page is one the repository can be held to.
  */
-
-/** A masked line that rises into place once, on reveal. */
-function Line({children, delay = 0}: {children: React.ReactNode; delay?: number}) {
-  return (
-    <span className="block overflow-hidden">
-      <span className="reveal-line" style={{transitionDelay: `${delay}ms`}}>
-        {children}
-      </span>
-    </span>
-  );
-}
-
-function Eyebrow({step, children}: {step: string; children: React.ReactNode}) {
-  return (
-    <p className="flex items-center gap-3 font-mono text-label uppercase text-ash">
-      <span className="text-assay">{step}</span>
-      <span aria-hidden="true" className="h-px w-8 bg-ink-600" />
-      {children}
-    </p>
-  );
-}
 
 function Hero() {
   const {ref, progress} = useScrollProgress<HTMLDivElement>();
@@ -267,54 +248,12 @@ function Colophon() {
 
 export default function Landing() {
   return (
-    <div className="grain min-h-screen bg-ink-950 text-vellum">
-      <a
-        href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-5 focus:top-5 focus:z-50 focus:rounded-sm focus:bg-assay focus:px-4 focus:py-2 focus:font-mono focus:text-sm focus:text-ink-950"
-      >
-        Skip to content
-      </a>
-
-      <header className="fixed inset-x-0 top-0 z-40 border-b border-ink-700/60 bg-ink-950/70 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-          <Link to="/" className="flex items-center gap-2.5" aria-label="CrossCredit home">
-            <Mark size={26} />
-            <span className="font-mono text-sm font-semibold tracking-[0.18em]">CROSSCREDIT</span>
-          </Link>
-          <div className="flex items-center gap-6">
-            <span className="hidden font-mono text-label uppercase text-ash sm:inline">
-              Assay office · chainKey 1 &amp; 3
-            </span>
-            <Link
-              to="/app"
-              className="rounded-sm px-3 py-2 font-mono text-label uppercase text-vellum ring-1 ring-ink-600 transition-colors duration-200 hover:ring-assay"
-            >
-              Open app
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main id="main">
-        <Hero />
-        <Lender />
-        <Ladder />
-        <Tiers />
-        <Colophon />
-      </main>
-
-      <footer className="border-t border-ink-700">
-        <div className="mx-auto max-w-6xl px-5 py-10">
-          <p className="max-w-3xl text-sm leading-relaxed text-ash">
-            Testnet deployment, real mainnet data. History is proven from Ethereum to Creditcoin by
-            the Attestcoin Protocol&rsquo;s native block-prover precompile — a Merkle inclusion proof
-            plus a chain-continuity proof, verified inside a single Creditcoin block. There is no
-            oracle we run, no multisig we control and no bridge holding funds; Creditcoin&rsquo;s
-            attestor set is in the trust path, which is to say this needs no trust beyond the chain
-            you are already settling on.
-          </p>
-        </div>
-      </footer>
-    </div>
+    <PageShell>
+      <Hero />
+      <Lender />
+      <Ladder />
+      <Tiers />
+      <Colophon />
+    </PageShell>
   );
 }

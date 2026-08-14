@@ -6,6 +6,10 @@ import {BrowserRouter, Routes, Route, Navigate} from 'react-router-dom';
 import {wagmiConfig} from './config';
 import App from './App';
 import Landing from './site/Landing';
+import Proof from './site/Proof';
+import Tiers from './site/Tiers';
+import ThreatModel from './site/ThreatModel';
+import Explorer from './site/Explorer';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -27,6 +31,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Landing />} />
+            {/* Content routes must precede the catch-all, or they redirect to / silently. */}
+            <Route path="/proof" element={<Proof />} />
+            <Route path="/tiers" element={<Tiers />} />
+            <Route path="/threat-model" element={<ThreatModel />} />
+            <Route path="/explorer" element={<Explorer />} />
             {/* The dapp keeps its own internal tabs; only its mount point moved. */}
             <Route path="/app" element={<App />} />
             <Route path="/app/*" element={<App />} />

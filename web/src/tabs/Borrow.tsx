@@ -123,7 +123,7 @@ export default function Borrow({address, canWrite}: {address: Address; canWrite:
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="text-[11px] uppercase tracking-wider text-slate-500">
+              <thead className="text-[11px] uppercase tracking-wider text-ash">
                 <tr className="border-b border-ink-600">
                   <th className="pb-2 pr-4 font-medium">Tier</th>
                   <th className="pb-2 pr-4 font-medium">Collateral</th>
@@ -139,11 +139,11 @@ export default function Borrow({address, canWrite}: {address: Address; canWrite:
                   return (
                     <tr
                       key={t.tier}
-                      className={mine ? `${style.bg} font-semibold text-slate-100` : 'text-slate-400'}
+                      className={mine ? `${style.bg} font-semibold text-vellum` : 'text-ash'}
                     >
                       <td className="py-2.5 pr-4">
                         <span className={style.text}>{TIER_NAMES[t.tier]}</span>
-                        {mine && <span className="ml-2 text-[10px] uppercase text-slate-400">you</span>}
+                        {mine && <span className="ml-2 text-[10px] uppercase text-ash">you</span>}
                       </td>
                       <td className="py-2.5 pr-4 font-mono tabular-nums">
                         {(t.collateralRatioBps / 100).toFixed(0)}%
@@ -162,7 +162,7 @@ export default function Borrow({address, canWrite}: {address: Address; canWrite:
                 })}
               </tbody>
             </table>
-            <p className="mt-4 text-xs leading-relaxed text-slate-500">
+            <p className="mt-4 text-xs leading-relaxed text-ash">
               Platinum requires a score of 700 <em>and</em> zero late repayments. It is the only
               tier that lends more than the borrower posts, so a spotless record — not just a high
               score — is the condition.
@@ -180,7 +180,7 @@ export default function Borrow({address, canWrite}: {address: Address; canWrite:
               <Row label="Owed now" value={`${Number(formatEther(owed ?? 0n)).toFixed(6)} tUSD`} />
               <Row label="Rate fixed at" value={TIER_NAMES[Number(loan[3])] ?? '—'} />
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-ash">
               Terms were fixed when the loan opened, so a later tier downgrade cannot retroactively
               margin-call it.
             </p>
@@ -191,13 +191,13 @@ export default function Borrow({address, canWrite}: {address: Address; canWrite:
         ) : (
           <div className="space-y-4">
             <label className="block">
-              <span className="text-[11px] uppercase tracking-wider text-slate-500">Borrow (tUSD)</span>
+              <span className="text-[11px] uppercase tracking-wider text-ash">Borrow (tUSD)</span>
               <input
                 type="number"
                 min="0"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-ink-600 bg-ink-900 px-3 py-2 font-mono text-lg text-slate-100 outline-none focus:border-sky-500"
+                className="mt-1 w-full rounded-lg border border-ink-600 bg-ink-900 px-3 py-2 font-mono text-lg text-vellum outline-none focus:border-assay"
               />
             </label>
 
@@ -252,7 +252,7 @@ export default function Borrow({address, canWrite}: {address: Address; canWrite:
           </div>
         )}
 
-        <p className="mt-4 border-t border-ink-600 pt-3 text-[11px] text-slate-500">
+        <p className="mt-4 border-t border-ink-600 pt-3 text-[11px] text-ash">
           Pool:{' '}
           <ExplorerLink chain="cc3" type="address" hash={ADDRESSES.pool}>
             {ADDRESSES.pool.slice(0, 10)}…
@@ -276,10 +276,10 @@ function Row({
 }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
-      <span className="text-slate-500">{label}</span>
+      <span className="text-ash">{label}</span>
       <span
         className={`font-mono tabular-nums ${
-          tone === 'good' ? 'text-emerald-300' : emphasis ? 'text-lg text-slate-100' : 'text-slate-200'
+          tone === 'good' ? 'text-emerald-300' : emphasis ? 'text-lg text-vellum' : 'text-vellum'
         }`}
       >
         {value}

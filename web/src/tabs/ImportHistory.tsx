@@ -102,7 +102,7 @@ export default function ImportHistory({address, canWrite}: {address: Address; ca
       >
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="text-[11px] uppercase tracking-wider text-slate-500">
+            <thead className="text-[11px] uppercase tracking-wider text-ash">
               <tr className="border-b border-ink-600">
                 <th className="pb-2 pr-4 font-medium">Chain</th>
                 <th className="pb-2 pr-4 font-medium">Protocol</th>
@@ -112,21 +112,21 @@ export default function ImportHistory({address, canWrite}: {address: Address; ca
             </thead>
             <tbody className="divide-y divide-ink-700/60">
               {SOURCES.map((src) => (
-                <tr key={`${src.chainKey}-${src.address}`} className="text-slate-300">
+                <tr key={`${src.chainKey}-${src.address}`} className="text-vellum">
                   <td className="py-2 pr-4">
-                    <span className="rounded bg-ink-900 px-1.5 py-0.5 font-mono text-xs text-slate-400 ring-1 ring-ink-600">
+                    <span className="rounded bg-ink-900 px-1.5 py-0.5 font-mono text-xs text-ash ring-1 ring-ink-600">
                       {src.chain}
                     </span>
                   </td>
                   <td className="py-2 pr-4">{src.name}</td>
-                  <td className="py-2 pr-4 font-mono text-xs text-slate-500">
+                  <td className="py-2 pr-4 font-mono text-xs text-ash">
                     {src.address.slice(0, 10)}…
                   </td>
                   <td className="py-2 text-xs">
                     {src.raisesCapacity ? (
                       <span className="text-emerald-300/90">Yes — {src.note}</span>
                     ) : (
-                      <span className="text-slate-500">No — {src.note}</span>
+                      <span className="text-ash">No — {src.note}</span>
                     )}
                   </td>
                 </tr>
@@ -134,7 +134,7 @@ export default function ImportHistory({address, canWrite}: {address: Address; ca
             </tbody>
           </table>
         </div>
-        <p className="mt-3 max-w-3xl text-xs leading-relaxed text-slate-500">
+        <p className="mt-3 max-w-3xl text-xs leading-relaxed text-ash">
           The split in the last column is the whole design. Our own LoanBook is permissionless and
           escrows nothing, so anyone can manufacture a perfect record on it for the price of gas —
           it earns a tier, never a credit line. Aave and Sparklend had real third-party capital at
@@ -152,14 +152,14 @@ export default function ImportHistory({address, canWrite}: {address: Address; ca
         {isLoading ? (
           <Spinner label="Scanning Sepolia…" />
         ) : sourceTxHashes.length === 0 ? (
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-ash">
             No LoanBook activity for this address. Pick one of the demo borrowers above to see a
             seeded history.
           </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="text-[11px] uppercase tracking-wider text-slate-500">
+              <thead className="text-[11px] uppercase tracking-wider text-ash">
                 <tr className="border-b border-ink-600">
                   <th className="pb-2 pr-4 font-medium">Event</th>
                   <th className="pb-2 pr-4 font-medium">Amount</th>
@@ -169,7 +169,7 @@ export default function ImportHistory({address, canWrite}: {address: Address; ca
               </thead>
               <tbody className="divide-y divide-ink-700/60">
                 {(source ?? []).map((event) => (
-                  <tr key={`${event.txHash}-${event.kind}`} className="text-slate-300">
+                  <tr key={`${event.txHash}-${event.kind}`} className="text-vellum">
                     <td className="py-2 pr-4">
                       {event.kind}
                       {event.onTime === false && (
@@ -184,7 +184,7 @@ export default function ImportHistory({address, canWrite}: {address: Address; ca
                       )}
                     </td>
                     <td className="py-2 pr-4 font-mono text-xs">{formatEther(event.amount)} ETH</td>
-                    <td className="py-2 pr-4 font-mono text-xs text-slate-500">
+                    <td className="py-2 pr-4 font-mono text-xs text-ash">
                       {event.blockNumber.toString()}
                     </td>
                     <td className="py-2">
@@ -236,9 +236,9 @@ export default function ImportHistory({address, canWrite}: {address: Address; ca
             </Banner>
           ) : (
             <>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-ash">
                 {batch.length} transaction{batch.length === 1 ? '' : 's'} will be verified against a{' '}
-                <strong className="text-slate-300">single shared continuity proof</strong> — the
+                <strong className="text-vellum">single shared continuity proof</strong> — the
                 precompile walks back to an attested block once instead of {batch.length} times.
                 {pending.length > MAX_BATCH_SIZE &&
                   ` ${pending.length - MAX_BATCH_SIZE} more will need a second batch (the limit is ${MAX_BATCH_SIZE}).`}
@@ -272,7 +272,7 @@ export default function ImportHistory({address, canWrite}: {address: Address; ca
             </Banner>
           )}
 
-          <p className="border-t border-ink-600 pt-3 text-[11px] leading-relaxed text-slate-500">
+          <p className="border-t border-ink-600 pt-3 text-[11px] leading-relaxed text-ash">
             No oracle signs off on this, and no bridge custodies anything. Creditcoin&rsquo;s
             block-prover precompile checks a Merkle inclusion proof and a chain-continuity proof
             itself, inside the same transaction that acts on the result.
@@ -286,8 +286,8 @@ export default function ImportHistory({address, canWrite}: {address: Address; ca
 function Row({label, value, tone}: {label: string; value: string; tone?: 'warn'}) {
   return (
     <div className="flex items-baseline justify-between gap-4">
-      <span className="text-slate-500">{label}</span>
-      <span className={`font-mono tabular-nums ${tone === 'warn' ? 'text-amber-300' : 'text-slate-200'}`}>
+      <span className="text-ash">{label}</span>
+      <span className={`font-mono tabular-nums ${tone === 'warn' ? 'text-assay' : 'text-vellum'}`}>
         {value}
       </span>
     </div>

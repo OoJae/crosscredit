@@ -1,5 +1,6 @@
 import type {ReactNode} from 'react';
 import {EXPLORERS, TIER_NAMES, TIER_STYLES} from '../config';
+import {Hallmark} from '../site/Mark';
 
 export function Card({title, subtitle, children, className = ''}: {
   title?: string;
@@ -11,8 +12,8 @@ export function Card({title, subtitle, children, className = ''}: {
     <section className={`rounded-xl border border-ink-600 bg-ink-800 p-5 ${className}`}>
       {title !== undefined && (
         <header className="mb-4">
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">{title}</h2>
-          {subtitle !== undefined && <p className="mt-1 text-sm text-slate-500">{subtitle}</p>}
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-ash">{title}</h2>
+          {subtitle !== undefined && <p className="mt-1 text-sm text-ash">{subtitle}</p>}
         </header>
       )}
       {children}
@@ -20,13 +21,22 @@ export function Card({title, subtitle, children, className = ''}: {
   );
 }
 
+/**
+ * The tier, as its hallmark.
+ *
+ * Was a rounded pill. The cartouche carries the same information plus the score floor, and it is
+ * the mark the badge, the marketing pages and the favicon all use — a pill here would have been
+ * the one place the identity did not reach.
+ */
 export function TierPill({tier}: {tier: number}) {
-  const style = TIER_STYLES[tier] ?? TIER_STYLES[0]!;
+  const index = (tier >= 0 && tier <= 3 ? tier : 0) as 0 | 1 | 2 | 3;
+  const style = TIER_STYLES[index]!;
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ring-1 ${style.text} ${style.ring} ${style.bg}`}
-    >
-      {TIER_NAMES[tier] ?? 'Bronze'}
+    <span className="inline-flex items-center gap-2">
+      <Hallmark tier={index} size={22} />
+      <span className={`font-mono text-xs font-semibold uppercase tracking-wider ${style.text}`}>
+        {TIER_NAMES[index]}
+      </span>
     </span>
   );
 }
@@ -56,8 +66,8 @@ export function ScoreDial({score, tier}: {score: number; tier: number}) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-mono text-4xl font-bold text-slate-100 tabular-nums">{score}</span>
-        <span className="font-mono text-[11px] text-slate-500">/ 1000</span>
+        <span className="font-mono text-4xl font-bold text-vellum tabular-nums">{score}</span>
+        <span className="font-mono text-[11px] text-ash">/ 1000</span>
       </div>
     </div>
   );
@@ -66,9 +76,9 @@ export function ScoreDial({score, tier}: {score: number; tier: number}) {
 export function Stat({label, value, hint}: {label: string; value: ReactNode; hint?: string}) {
   return (
     <div className="rounded-lg border border-ink-600 bg-ink-900/60 px-4 py-3">
-      <div className="text-[11px] uppercase tracking-wider text-slate-500">{label}</div>
-      <div className="mt-1 font-mono text-lg text-slate-100 tabular-nums">{value}</div>
-      {hint !== undefined && <div className="mt-0.5 text-[11px] text-slate-500">{hint}</div>}
+      <div className="text-[11px] uppercase tracking-wider text-ash">{label}</div>
+      <div className="mt-1 font-mono text-lg text-vellum tabular-nums">{value}</div>
+      {hint !== undefined && <div className="mt-0.5 text-[11px] text-ash">{hint}</div>}
     </div>
   );
 }
@@ -89,7 +99,7 @@ export function ExplorerLink({
       href={`${EXPLORERS[chain]}/${type}/${hash}`}
       target="_blank"
       rel="noreferrer"
-      className="font-mono text-xs text-sky-400 underline decoration-sky-400/30 underline-offset-2 hover:decoration-sky-400"
+      className="font-mono text-xs text-vellum underline decoration-assay/40 underline-offset-2 transition-colors duration-200 hover:decoration-assay"
     >
       {children ?? `${hash.slice(0, 10)}…${hash.slice(-6)}`}
     </a>
@@ -98,8 +108,8 @@ export function ExplorerLink({
 
 export function Spinner({label}: {label: string}) {
   return (
-    <span className="inline-flex items-center gap-2 text-sm text-slate-400">
-      <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-600 border-t-sky-400" />
+    <span className="inline-flex items-center gap-2 text-sm text-ash">
+      <span className="h-3 w-3 animate-spin rounded-full border-2 border-ink-600 border-t-assay" />
       {label}
     </span>
   );
@@ -107,7 +117,7 @@ export function Spinner({label}: {label: string}) {
 
 export function Banner({tone, children}: {tone: 'info' | 'error' | 'success'; children: ReactNode}) {
   const tones = {
-    info: 'border-sky-500/30 bg-sky-500/10 text-sky-200',
+    info: 'border-ink-600 bg-ink-900/60 text-vellum',
     error: 'border-rose-500/30 bg-rose-500/10 text-rose-200',
     success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200',
   } as const;
@@ -127,8 +137,8 @@ export function Button({
 }) {
   const styles =
     variant === 'primary'
-      ? 'bg-sky-500 text-ink-900 hover:bg-sky-400 disabled:bg-ink-600 disabled:text-slate-500'
-      : 'border border-ink-600 text-slate-300 hover:border-slate-500 disabled:text-slate-600';
+      ? 'bg-assay text-ink-950 hover:bg-assay/90 disabled:bg-ink-600 disabled:text-ash'
+      : 'border border-ink-600 text-vellum hover:border-ash/40 disabled:text-ash/50';
   return (
     <button
       onClick={onClick}

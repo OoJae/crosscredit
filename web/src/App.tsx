@@ -1,6 +1,8 @@
 import {useState} from 'react';
 import {isAddress, type Address} from 'viem';
 import {useAccount, useConnect, useDisconnect, useSwitchChain} from 'wagmi';
+import {Link, useSearchParams} from 'react-router-dom';
+import {Mark} from './site/Mark';
 import {creditcoinCC3, DEMO_BORROWERS, ADDRESSES} from './config';
 import Dashboard from './tabs/Dashboard';
 import ImportHistory from './tabs/ImportHistory';
@@ -23,8 +25,14 @@ export default function App() {
   const [tab, setTab] = useState<TabId>('dashboard');
   // Read-only by default: a judge should see the whole product without a wallet or any testnet
   // funds. Connecting only adds the ability to sign.
-  const [viewing, setViewing] = useState<Address>(DEMO_BORROWERS[0].address as Address);
-  const [input, setInput] = useState('');
+  const [params] = useSearchParams();
+  const handedOver = params.get('address');
+  const [viewing, setViewing] = useState<Address>(
+    handedOver !== null && isAddress(handedOver)
+      ? (handedOver as Address)
+      : (DEMO_BORROWERS[0].address as Address),
+  );
+  const subject = DEMO_BORROWERS.find((b) => b.address.toLowerCase() === viewing.toLowerCase());
 
   const onRightChain = chainId === creditcoinCC3.id;
   // Writing requires a connected wallet, on CC3, acting for itself — you cannot import someone
@@ -32,21 +40,30 @@ export default function App() {
   const canWrite = isConnected && onRightChain && connected?.toLowerCase() === viewing.toLowerCase();
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-ink-600 bg-ink-800/60 backdrop-blur">
+    <div className="grain min-h-screen bg-ink-950">
+      <header className="border-b border-ink-700/60 bg-ink-950/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-4">
-          <div>
-            <h1 className="text-lg font-bold tracking-tight text-slate-100">CrossCredit</h1>
-            <p className="text-xs text-slate-500">
-              Your real Ethereum credit history, proven to Creditcoin and priced as a loan
-            </p>
+          {/* The mark links home, so the app is a room in the building rather than a separate one. */}
+          <div className="flex items-center gap-5">
+            <Link to="/" className="flex items-center gap-2.5" aria-label="CrossCredit home">
+              <Mark size={26} />
+              <span className="font-mono text-sm font-semibold tracking-[0.18em] text-vellum">
+                CROSSCREDIT
+              </span>
+            </Link>
+            <Link
+              to="/explorer"
+              className="hidden font-mono text-label uppercase text-ash transition-colors duration-200 hover:text-vellum sm:inline"
+            >
+              Explorer
+            </Link>
           </div>
 
           <div className="flex items-center gap-2">
             {isConnected && !onRightChain && (
               <button
                 onClick={() => switchChain({chainId: creditcoinCC3.id})}
-                className="rounded-lg bg-amber-500/90 px-3 py-2 text-xs font-semibold text-ink-900 hover:bg-amber-400"
+                className="rounded-sm px-3 py-2 font-mono text-label uppercase text-assay ring-1 ring-assay/60 transition-colors duration-200 hover:bg-assay/10"
               >
                 Switch to Creditcoin CC3
               </button>
@@ -54,14 +71,14 @@ export default function App() {
             {isConnected ? (
               <button
                 onClick={() => disconnect()}
-                className="rounded-lg border border-ink-600 px-3 py-2 font-mono text-xs text-slate-300 hover:border-slate-500"
+                className="rounded-sm border border-ink-600 px-3 py-2 font-mono text-xs text-vellum transition-colors duration-200 hover:border-assay"
               >
                 {connected?.slice(0, 6)}…{connected?.slice(-4)}
               </button>
             ) : (
               <button
                 onClick={() => connectors[0] !== undefined && connect({connector: connectors[0]})}
-                className="rounded-lg bg-sky-500 px-3 py-2 text-xs font-semibold text-ink-900 hover:bg-sky-400"
+                className="rounded-sm bg-assay px-4 py-2 font-mono text-xs font-semibold text-ink-950 transition-transform duration-200 ease-toggle active:translate-y-[var(--strike-depth)]"
               >
                 Connect wallet
               </button>
@@ -71,87 +88,50 @@ export default function App() {
       </header>
 
       <main className="mx-auto max-w-6xl space-y-5 px-5 py-6">
-        <section className="rounded-xl border border-ink-600 bg-ink-800 p-5">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">
-                Viewing borrower
-              </h2>
-              <p className="mt-1 font-mono text-sm text-slate-200">{viewing}</p>
-              <p className="mt-1 text-xs text-slate-500">
-                No wallet needed to look around — everything below is read from live testnet.
-              </p>
-            </div>
-            <form
-              className="flex gap-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (isAddress(input)) setViewing(input);
-              }}
-            >
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="0x… any address"
-                className="w-64 rounded-lg border border-ink-600 bg-ink-900 px-3 py-2 font-mono text-xs text-slate-200 outline-none focus:border-sky-500"
-              />
-              <button
-                type="submit"
-                disabled={!isAddress(input)}
-                className="rounded-lg border border-ink-600 px-3 py-2 text-xs text-slate-300 hover:border-slate-500 disabled:text-slate-600"
-              >
-                View
-              </button>
-            </form>
+        {/*
+          The borrower picker moved to /explorer. Two address inputs doing the same job meant two
+          front doors, and the plainer one was inside the dapp — so a judge could easily meet the
+          product before meeting the brand. This keeps the subject visible and hands changing it
+          off to the page that owns it.
+        */}
+        <section className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-sm border border-ink-700 bg-ink-900/60 px-5 py-4">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="font-mono text-label uppercase text-ash">Viewing</span>
+            <span className="font-mono text-sm text-vellum">{viewing}</span>
+            {subject !== undefined && <span className="text-xs text-ash">{subject.note}</span>}
           </div>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {DEMO_BORROWERS.map((b) => (
-              <button
-                key={b.address}
-                onClick={() => setViewing(b.address as Address)}
-                className={`rounded-lg border px-3 py-2 text-left text-xs transition ${
-                  viewing.toLowerCase() === b.address.toLowerCase()
-                    ? 'border-sky-500/60 bg-sky-500/10 text-slate-100'
-                    : 'border-ink-600 text-slate-400 hover:border-slate-500'
-                }`}
-              >
-                <div className="font-semibold">{b.label}</div>
-                <div className="text-slate-500">{b.note}</div>
-              </button>
-            ))}
-            {isConnected && connected !== undefined && (
+          <div className="flex items-center gap-4">
+            {isConnected && connected !== undefined && viewing.toLowerCase() !== connected.toLowerCase() && (
               <button
                 onClick={() => setViewing(connected)}
-                className={`rounded-lg border px-3 py-2 text-left text-xs transition ${
-                  viewing.toLowerCase() === connected.toLowerCase()
-                    ? 'border-sky-500/60 bg-sky-500/10 text-slate-100'
-                    : 'border-ink-600 text-slate-400 hover:border-slate-500'
-                }`}
+                className="font-mono text-label uppercase text-assay transition-colors duration-200 hover:text-vellum"
               >
-                <div className="font-semibold">Your wallet</div>
-                <div className="font-mono text-slate-500">
-                  {connected.slice(0, 10)}…{connected.slice(-6)}
-                </div>
+                View my wallet
               </button>
             )}
+            <Link
+              to={`/explorer?a=${viewing}`}
+              className="font-mono text-label uppercase text-ash transition-colors duration-200 hover:text-vellum"
+            >
+              Change borrower →
+            </Link>
           </div>
-
-          {isConnected && !canWrite && onRightChain && (
-            <p className="mt-3 text-xs text-amber-300/80">
-              You are viewing another borrower. Switch to &ldquo;Your wallet&rdquo; to import
-              history, mint a badge or borrow.
-            </p>
-          )}
         </section>
 
-        <nav className="flex gap-1 rounded-xl border border-ink-600 bg-ink-800 p-1">
+        {isConnected && !canWrite && onRightChain && (
+          <p className="text-xs text-assay">
+            You are viewing another borrower. Switch to your own wallet to import history, mint a
+            badge or borrow.
+          </p>
+        )}
+
+        <nav className="flex gap-1 rounded-sm border border-ink-700 bg-ink-900/60 p-1">
           {TABS.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
               className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition ${
-                tab === t.id ? 'bg-ink-600 text-slate-100' : 'text-slate-400 hover:text-slate-200'
+                tab === t.id ? 'bg-ink-600 text-vellum' : 'text-ash hover:text-vellum'
               }`}
             >
               {t.label}
@@ -164,7 +144,7 @@ export default function App() {
         {tab === 'borrow' && <Borrow address={viewing} canWrite={canWrite} />}
       </main>
 
-      <footer className="mx-auto max-w-6xl px-5 pb-10 pt-4 text-xs text-slate-600">
+      <footer className="mx-auto max-w-6xl px-5 pb-10 pt-4 text-xs text-ash/50">
         <div className="flex flex-wrap gap-x-5 gap-y-1 border-t border-ink-700 pt-4">
           <span>
             Registry <ExplorerLink chain="cc3" type="address" hash={ADDRESSES.registry}>
@@ -181,7 +161,7 @@ export default function App() {
             href="https://github.com/OoJae/crosscredit/blob/main/docs/THREAT_MODEL.md"
             target="_blank"
             rel="noreferrer"
-            className="text-sky-400/70 hover:text-sky-400"
+            className="text-ash hover:text-vellum"
           >
             What this does not solve
           </a>
@@ -189,7 +169,7 @@ export default function App() {
             href="https://github.com/OoJae/crosscredit"
             target="_blank"
             rel="noreferrer"
-            className="text-sky-400/70 hover:text-sky-400"
+            className="text-ash hover:text-vellum"
           >
             Source on GitHub
           </a>

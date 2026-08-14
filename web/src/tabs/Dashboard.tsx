@@ -94,16 +94,16 @@ export default function Dashboard({address, canWrite}: {address: Address; canWri
               }`}
             >
               <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[11px] uppercase tracking-wider text-slate-500">
+                <span className="text-[11px] uppercase tracking-wider text-ash">
                   Demonstrated capacity
                 </span>
                 <span
-                  className={`font-mono text-lg ${hasCapacity ? 'text-emerald-300' : 'text-slate-500'}`}
+                  className={`font-mono text-lg ${hasCapacity ? 'text-emerald-300' : 'text-ash'}`}
                 >
                   {hasCapacity ? formatUsd(capacity!) : '$0'}
                 </span>
               </div>
-              <p className="mt-1 text-xs leading-relaxed text-slate-500">
+              <p className="mt-1 text-xs leading-relaxed text-ash">
                 {hasCapacity ? (
                   <>
                     The largest single amount this address has provably repaid to a real
@@ -113,7 +113,7 @@ export default function Dashboard({address, canWrite}: {address: Address; canWri
                 ) : (
                   <>
                     No third-party capital has been repaid by this address, so it earns{' '}
-                    <strong className="text-slate-400">no undercollateralized credit</strong>{' '}
+                    <strong className="text-ash">no undercollateralized credit</strong>{' '}
                     whatever its tier. Self-reported history sets a rate; only real history sets a
                     limit.
                   </>
@@ -125,7 +125,7 @@ export default function Dashboard({address, canWrite}: {address: Address; canWri
 
         {history !== undefined && history.length > 1 && (
           <div className="mt-6">
-            <div className="mb-2 text-[11px] uppercase tracking-wider text-slate-500">
+            <div className="mb-2 text-[11px] uppercase tracking-wider text-ash">
               How the score was earned — one verified proof at a time
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
@@ -135,12 +135,12 @@ export default function Dashboard({address, canWrite}: {address: Address; canWri
                     href={`https://creditcoin-testnet.blockscout.com/tx/${point.txHash}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded bg-ink-900 px-2 py-1 font-mono text-xs text-slate-300 ring-1 ring-ink-600 hover:ring-sky-500/50"
+                    className="rounded bg-ink-900 px-2 py-1 font-mono text-xs text-vellum ring-1 ring-ink-600 hover:ring-assay/50"
                     title={`${TIER_NAMES[point.tier]} — view on Blockscout`}
                   >
                     {point.score}
                   </a>
-                  {i < history.length - 1 && <span className="text-slate-600">→</span>}
+                  {i < history.length - 1 && <span className="text-ash/50">→</span>}
                 </span>
               ))}
             </div>
@@ -159,7 +159,7 @@ export default function Dashboard({address, canWrite}: {address: Address; canWri
               height={400}
               className="w-full rounded-xl ring-1 ring-ink-600"
             />
-            <div className="flex items-center justify-between text-xs text-slate-500">
+            <div className="flex items-center justify-between text-xs text-ash">
               <span>Token #{tokenId!.toString()}</span>
               <span className="text-emerald-400/80">🔒 non-transferable</span>
             </div>
@@ -169,12 +169,12 @@ export default function Dashboard({address, canWrite}: {address: Address; canWri
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-ink-600 text-sm text-slate-500">
+            <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-ink-600 text-sm text-ash">
               {hasHistory ? 'No badge minted yet' : 'No verified history yet'}
             </div>
             {hasHistory && (
               <>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-ash">
                   Minting is permissionless — the badge only reflects what the registry already
                   knows, so anyone can pay the gas to bring it up to date.
                 </p>
@@ -198,14 +198,14 @@ export default function Dashboard({address, canWrite}: {address: Address; canWri
 
       <Card className="lg:col-span-3" title="Verified events" subtitle="Each row is an Ethereum transaction proven to Creditcoin by the block-prover precompile.">
         {ingested === undefined || ingested.length === 0 ? (
-          <p className="text-sm text-slate-500">
-            Nothing verified yet. Head to <span className="text-slate-300">Import history</span> to
+          <p className="text-sm text-ash">
+            Nothing verified yet. Head to <span className="text-vellum">Import history</span> to
             prove this address&rsquo;s record on Sepolia or Ethereum mainnet.
           </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="text-[11px] uppercase tracking-wider text-slate-500">
+              <thead className="text-[11px] uppercase tracking-wider text-ash">
                 <tr className="border-b border-ink-600">
                   <th className="pb-2 pr-4 font-medium">Event</th>
                   <th className="pb-2 pr-4 font-medium">Loan</th>
@@ -215,12 +215,12 @@ export default function Dashboard({address, canWrite}: {address: Address; canWri
               </thead>
               <tbody className="divide-y divide-ink-700/60">
                 {ingested.map((event) => (
-                  <tr key={event.queryId} className="text-slate-300">
+                  <tr key={event.queryId} className="text-vellum">
                     <td className="py-2 pr-4">{event.kind}</td>
-                    <td className="py-2 pr-4 font-mono text-xs text-slate-500">
+                    <td className="py-2 pr-4 font-mono text-xs text-ash">
                       {event.loanId === 0n ? '—' : `#${event.loanId.toString()}`}
                     </td>
-                    <td className="py-2 pr-4 font-mono text-xs text-slate-500">
+                    <td className="py-2 pr-4 font-mono text-xs text-ash">
                       {event.queryId.slice(0, 10)}…
                     </td>
                     <td className="py-2">
