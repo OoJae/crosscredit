@@ -73,6 +73,9 @@ jobs:
       # A hand-written frontend ABI does not fail loudly when it drifts — it decodes garbage, or
       # derives a topic0 that matches nothing and reads as "no history". That shipped three times.
       - run: npm run check:abi
+      # .env.example went stale after a redeploy twice, each time leaving a fresh clone running
+      # against a paused prior-generation registry. Judges only ever get the example.
+      - run: npm run check:env
 
   web:
     name: frontend

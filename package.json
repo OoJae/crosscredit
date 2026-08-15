@@ -26,7 +26,8 @@
     "negative-paths": "tsx scripts/negative-paths.ts",
     "prove:mainnet": "tsx scripts/prove-mainnet.ts",
     "poh:negative": "tsx scripts/poh-negative.ts",
-    "check:abi": "tsx scripts/check-abi-parity.ts"
+    "check:abi": "tsx scripts/check-abi-parity.ts",
+    "check:env": "tsx scripts/check-env-example.ts"
   },
   "dependencies": {
     "@gluwa/usc-contracts": "0.1.2",

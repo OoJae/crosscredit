@@ -1,0 +1,21 @@
+{
+  "capturedAt": "2026-08-15T18:58:16.035Z",
+  "network": "creditcoin-cc3-testnet",
+  "precompile": "0x0000000000000000000000000000000000000FD2",
+  "method": "direct staticCall of the batch verifyAndEmit overload, registry bypassed",
+  "sourceTxHash": "0x290f52826a71a27ee78f3653fb914952d4825295908438ce60fbbac8f6acc90e",
+  "sourceBlock": 11486254,
+  "ceilingShown": true,
+  "results": [
+    {
+      "size": 10,
+      "verified": true,
+      "reason": "verified"
+    },
+    {
+      "size": 11,
+      "verified": false,
+      "reason": "heights: Value is too large for length"
+    }
+  ]
+}

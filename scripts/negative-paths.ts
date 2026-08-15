@@ -57,10 +57,16 @@ function reasonOf(error: unknown): string {
 }
 
 /**
- * A source transaction that has already been ingested, so the replay check has something real to
- * replay. Overridable with `--tx`.
+ * A source transaction that has already been ingested ON THE CURRENT registry, so the replay
+ * check has something real to replay. Overridable with `--tx`.
+ *
+ * This matters more than it looks: an earlier revision pointed at a transaction ingested on a
+ * prior-generation registry, so the "replay" ran against a queryId the current registry had
+ * never seen — the guard passed it, and the recorded rejection was really `UnknownAction` from
+ * the stale `action=1` bug below. The replay guard itself was never exercised live.
+ * 0x290f5282… is the single-ingest benchmark tx (CC3 0x659e4d5b…, 532,140 gas, worker/state.json).
  */
-const DEFAULT_TX = '0xeeaa5b3f44a0727b175dab9a97838b6e50e0c476668fc18649d77b7b81e9e8ea';
+const DEFAULT_TX = '0x290f52826a71a27ee78f3653fb914952d4825295908438ce60fbbac8f6acc90e';
 
 async function main(): Promise<void> {
   const provider = new ethers.JsonRpcProvider(cc3RpcUrl());
@@ -145,7 +151,7 @@ async function main(): Promise<void> {
   // attests both, so without this check a look-alike LoanBook on mainnet could mint history.
   try {
     await registry['execute']!.staticCall(
-      1,
+      0,
       3,
       proof.headerNumber,
       proof.txBytes,
@@ -171,10 +177,12 @@ async function main(): Promise<void> {
   }
 
   // ── 4. Replayed query ──────────────────────────────────────────────────────────────────
-  // Resubmit a transaction the registry has already ingested.
+  // Resubmit a transaction the registry has already ingested. `action` must be 0 (Generic):
+  // any other value reverts `UnknownAction` inside the hook, which runs AFTER the replay guard —
+  // so a wrong action here would mask whether the guard fired at all.
   try {
     await registry['execute']!.staticCall(
-      1,
+      0,
       chainKey,
       proof.headerNumber,
       proof.txBytes,
@@ -205,7 +213,7 @@ async function main(): Promise<void> {
   try {
     const eleven = Array.from({length: 11}, () => proof.headerNumber);
     await registry['executeBatch']!.staticCall(
-      eleven.map(() => 1),
+      eleven.map(() => 0),
       chainKey,
       eleven,
       eleven.map(() => proof.txBytes),
