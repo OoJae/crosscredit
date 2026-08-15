@@ -355,7 +355,9 @@ per-block score progression and final profiles:
 **Replay protection demonstrated on-chain**, not just in tests: a forced resubmission reverted
 with `Query already processed`
 ([`0x7c4737ca…`](https://creditcoin-testnet.blockscout.com/tx/0x7c4737cab8f77b699c28906cde9c8b4758a215a850847115702e9a35a0e2a0a5),
-status 0) and the score held at 110 instead of doubling.
+status 0) and the score held at 110 instead of doubling. **That transaction ran against a
+prior-generation registry** (`0xE53a5448…`); the guard is unchanged in the current one, and
+`npm run negative-paths` re-proves it against `0x4C4381dB…` on every run.
 
 **Facts are derived, never asserted.** `LoanBook` emits no "loan closed" event, so the registry
 reconstructs closure by accumulating proven repayments against a proven principal — and reconciles
@@ -398,6 +400,10 @@ source transactions against **one shared continuity proof** in a single Creditco
 A fresh wallet's entire Sepolia credit history — 9 events, 9 transactions, 9 blocks — was imported
 in [one transaction](https://creditcoin-testnet.blockscout.com/tx/0xc8ca57e39f8fb840ff4e9de837f1f826b0ff41f30039cb311f6a1fbce325437b)
 that emitted **9 `HistoryEventIngested` events** and took the borrower from Bronze to Platinum.
+That run predates the flash-loan guard and its registry is now paused; the current-generation
+equivalent is
+[`0xffad0a92…`](https://creditcoin-testnet.blockscout.com/tx/0xffad0a92eb99ca20d2d58043c92b9d82fc7cd025f789e51a3ed347859312b69b)
+— same 9 events, 1,207,503 gas, 134,167 per event.
 
 | Path | Gas per event | Nine events |
 |---|---|---|
@@ -433,6 +439,7 @@ credit history would be worse than none.
 [`CreditTierSBT`](../contracts/src/creditcoin/CreditTierSBT.sol) (ERC-721 + ERC-5192, metadata and
 SVG generated on-chain) and prices a real loan: Borrower C
 [borrowed 100 tUSD against 85 tCTC](https://creditcoin-testnet.blockscout.com/tx/0xb6da8c060e8e9c3ff84e17e0399bcc3c844c58507fcb11655de540d82270d833)
+(prior-generation pool, now paused — see `deployments.json` → `supersededContracts.paused`)
 — **more value than they posted**. Undercollateralized credit is only defensible because the tier
 traces back through the registry to transactions the precompile verified; a self-reported
 reputation could never justify it. Borrower B's single late repayment costs them **650 tCTC more
