@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CrossCredit — deck</title>
+<style>
+  /* ── Brand tokens, from the shipped product ─────────────────────────────── */
+  @font-face { font-family:'Instrument Serif'; src:url('../../web/public/fonts/instrument-serif-400.woff2') format('woff2'); font-weight:400; }
+  @font-face { font-family:'Instrument Serif'; src:url('../../web/public/fonts/instrument-serif-400-italic.woff2') format('woff2'); font-weight:400; font-style:italic; }
+  @font-face { font-family:'Inter Tight'; src:url('../../web/public/fonts/inter-tight-var.woff2') format('woff2'); font-weight:100 900; }
+  @font-face { font-family:'IBM Plex Mono'; src:url('../../web/public/fonts/ibm-plex-mono-400.woff2') format('woff2'); font-weight:400; }
+  @font-face { font-family:'IBM Plex Mono'; src:url('../../web/public/fonts/ibm-plex-mono-600.woff2') format('woff2'); font-weight:600; }
+
+  :root{
+    --bench:#0A0B0D; --panel:#101216; --vellum:#EDE7DD; --ash:#8A8F97;
+    --assay:#C8482A; --hair:rgba(237,231,221,.14);
+    --bronze:#8C6239; --silver:#A8ADB4; --gold:#C9A227; --platinum:#D7DDE3;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  @page { size: 1280px 720px; margin:0; }
+  html,body{ background:var(--bench); }
+
+  .slide{
+    width:1280px; height:720px; page-break-after:always; position:relative; overflow:hidden;
+    background:var(--bench); color:var(--vellum);
+    font-family:'Inter Tight',sans-serif; font-weight:380;
+    padding:64px 72px; display:flex; flex-direction:column;
+  }
+  .slide::after{ /* bench grain — same device as the site's ground */
+    content:''; position:absolute; inset:0; pointer-events:none; opacity:.5;
+    background:
+      radial-gradient(1200px 500px at 20% -10%, rgba(237,231,221,.045), transparent 60%),
+      radial-gradient(900px 500px at 90% 110%, rgba(200,72,42,.05), transparent 55%);
+  }
+  .slide > *{ position:relative; z-index:1; }
+
+  .eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:13px; letter-spacing:.22em;
+    text-transform:uppercase; color:var(--assay); margin-bottom:20px; }
+  .folio{ position:absolute; bottom:40px; right:72px; font-family:'IBM Plex Mono',monospace;
+    font-size:12px; color:var(--ash); z-index:2; }
+  .foot{ position:absolute; bottom:40px; left:72px; font-family:'IBM Plex Mono',monospace;
+    font-size:12px; color:var(--ash); z-index:2; }
+
+  h1{ font-family:'Instrument Serif',serif; font-weight:400; font-size:64px; line-height:1.06; letter-spacing:.005em; }
+  h2{ font-family:'Instrument Serif',serif; font-weight:400; font-size:44px; line-height:1.1; margin-bottom:26px; max-width:20ch; }
+  .serif-i{ font-family:'Instrument Serif',serif; font-style:italic; }
+  .mono{ font-family:'IBM Plex Mono',monospace; }
+  .ash{ color:var(--ash); }
+  .assay{ color:var(--assay); }
+  .num{ font-family:'IBM Plex Mono',monospace; font-weight:600; }
+
+  .cols{ display:flex; gap:44px; flex:1; min-height:0; }
+  .col{ flex:1; min-width:0; }
+
+  p.lede{ font-size:21px; line-height:1.5; max-width:56ch; color:var(--vellum); }
+  p.body, li.body{ font-size:16.5px; line-height:1.55; color:var(--vellum); }
+  .measure{ max-width:52ch; }
+
+  .rule{ border:0; border-top:1px solid var(--hair); margin:22px 0; }
+
+  .stat .v{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:40px; letter-spacing:-.01em; }
+  .stat .k{ font-size:13.5px; color:var(--ash); margin-top:6px; line-height:1.4; }
+
+  table{ border-collapse:collapse; width:100%; }
+  th{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.14em; text-transform:uppercase;
+      color:var(--ash); text-align:left; padding:0 14px 10px 0; font-weight:400; border-bottom:1px solid var(--hair); }
+  td{ font-size:15px; padding:10px 14px 10px 0; border-bottom:1px solid rgba(237,231,221,.07); vertical-align:top; line-height:1.45; }
+  td.mono{ font-size:13.5px; }
+
+  .plate{ background:var(--panel); border:1px solid var(--hair); border-radius:6px; padding:22px 24px; }
+
+  .shot{ border:1px solid var(--hair); border-radius:6px; overflow:hidden; background:#000; }
+  .shot img{ display:block; width:100%; height:auto; }
+  .shot .cap{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ash);
+    padding:8px 12px; border-top:1px solid var(--hair); }
+
+  ol.checks{ list-style:none; counter-reset:c; }
+  ol.checks li{ counter-increment:c; display:flex; gap:14px; padding:9px 0; border-bottom:1px solid rgba(237,231,221,.07); }
+  ol.checks li::before{ content:counter(c); font-family:'IBM Plex Mono',monospace; font-weight:600;
+    color:var(--assay); font-size:15px; min-width:18px; }
+  ol.checks li .t{ flex:1; } /* one flex child, or every inline span becomes its own column */
+
+  ul.plain{ list-style:none; }
+  ul.plain li{ padding:8px 0 8px 22px; position:relative; }
+  ul.plain li::before{ content:''; position:absolute; left:0; top:16px; width:10px; height:1.5px; background:var(--assay); }
+
+  .markrow{ display:flex; gap:40px; align-items:flex-end; }
+  .tiercard{ text-align:center; }
+  .tiercard .nm{ font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:.18em; text-transform:uppercase; margin-top:12px; }
+  .tiercard .fl{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ash); margin-top:3px; }
+</style>
+</head>
+<body>
+
+<!-- ── 1 · Title ──────────────────────────────────────────────────────────── -->
+<section class="slide" style="justify-content:center; align-items:center; text-align:center;">
+  <svg width="120" height="120" viewBox="0 0 64 64" fill="none" style="margin-bottom:36px;">
+    <path d="M32 3 61 32 32 61 3 32Z" stroke="#EDE7DD" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M29.1 20.4A9 9 0 1 0 29.1 43.6" stroke="#EDE7DD" stroke-width="3.6" stroke-linecap="round"/>
+    <g transform="translate(64 0) scale(-1 1)">
+      <path d="M29.1 20.4A9 9 0 1 0 29.1 43.6" stroke="#EDE7DD" stroke-width="3.6" stroke-linecap="round"/>
+    </g>
+  </svg>
+  <h1 style="font-size:76px;">CrossCredit</h1>
+  <p class="lede" style="margin-top:22px; max-width:44ch;">Cross-chain credit reputation and lending on Creditcoin,<br>priced on <span class="serif-i">proof</span> rather than trust.</p>
+  <p class="mono" style="margin-top:34px; font-size:15px;">crosscredit.vercel.app <span class="ash">·</span> github.com/OoJae/crosscredit</p>
+  <p class="mono ash" style="margin-top:12px; font-size:12.5px;">BUIDL CTC 2026 Fall · live on Creditcoin CC3 testnet</p>
+</section>
+
+<!-- ── 2 · Problem ────────────────────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">The problem</div>
+  <h2>Credit history does not travel.</h2>
+  <div class="cols">
+    <div class="col">
+      <p class="lede measure">A wallet with years of Aave repayments on Ethereum arrives on every other chain as a stranger — and posts <span class="num">$1,500</span> to borrow <span class="num">$1,000</span>.</p>
+      <p class="body measure" style="margin-top:18px;">Not because the lender doubts that history. Because it cannot read that chain. Collateral stands in for information that already exists and is already provable.</p>
+      <p class="body measure ash" style="margin-top:18px;">The usual fixes swap evidence for a promise — a scorer's off-chain API, or unsecured lending on stated creditworthiness. Maple lost $36M that way; Goldfinch wrote off ~$18M.</p>
+    </div>
+    <div class="col" style="display:flex; flex-direction:column; justify-content:center; gap:34px;">
+      <div class="stat"><div class="v">150<span style="font-size:26px;">%</span></div><div class="k">collateral demanded of a stranger — every chain restarts every borrower at zero</div></div>
+      <div class="stat"><div class="v">1.4B</div><div class="k">adults outside formal credit systems — the population Creditcoin exists for</div></div>
+    </div>
+  </div>
+  <div class="folio">02</div>
+</section>
+
+<!-- ── 3 · Why now ────────────────────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">Why now</div>
+  <h2>Creditcoin can now verify foreign-chain facts in-contract.</h2>
+  <div class="cols">
+    <div class="col">
+      <p class="body measure">The Attestcoin Protocol (USC) puts a block-prover precompile inside the Creditcoin EVM: a Merkle inclusion proof says the transaction is in the block, a continuity proof says the block is really on Ethereum, and the precompile checks both — synchronously, inside one CC3 block.</p>
+      <p class="body measure" style="margin-top:16px;">No oracle <span class="serif-i">we</span> run. No bridge holding funds. The attestor network is Creditcoin's own consensus, not our multisig.</p>
+    </div>
+    <div class="col">
+      <div class="plate">
+        <p class="mono" style="font-size:13px; color:var(--ash); letter-spacing:.14em; text-transform:uppercase; margin-bottom:14px;">The finding that became the project</p>
+        <p class="body">CC3 attests <strong>Ethereum mainnet</strong> as chainKey <span class="num assay">3</span>, beside Sepolia's 1 — we found it in neither the docs nor the examples.</p>
+        <p class="body ash" style="margin-top:12px;">So the evidence can be real: unaffiliated Aave V3 history from a protocol whose capital was genuinely at risk — not events we issued to ourselves.</p>
+      </div>
+    </div>
+  </div>
+  <div class="folio">03</div>
+</section>
+
+<!-- ── 4 · Product ────────────────────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">The product</div>
+  <h2>Import history. Strike a tier. Borrow against it.</h2>
+  <div style="display:flex; gap:22px; flex:1; align-items:center;">
+    <div class="shot" style="flex:1;"><img src="../../demo/captures/54-app-borrow-quote.png" alt=""><div class="cap">/app — the live quote: 850 tCTC collateral to borrow 1,000 tUSD at Platinum</div></div>
+    <div class="shot" style="flex:1;"><img src="../../demo/captures/41-explorer-platinum.png" alt=""><div class="cap">/explorer — five proven Aave repayments, score 800, no wallet needed</div></div>
+  </div>
+  <div class="foot">read-only without a wallet · soulbound ERC-5192 tier badge, SVG rendered on-chain</div>
+  <div class="folio">04</div>
+</section>
+
+<!-- ── 5 · Deep integration — THE CRITERION SLIDE ─────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">Depth of Attestcoin utilization</div>
+  <h2 style="max-width:30ch;">A valid proof of the wrong thing is worthless.</h2>
+  <div class="cols">
+    <div class="col" style="flex:1.15;">
+      <table>
+        <tr><th style="width:34%;">Primitive</th><th>How we use it</th></tr>
+        <tr><td class="mono">verifyAndEmit · single</td><td>main ingest, via vendored USCBase (pinned @4ff9a3bf)</td></tr>
+        <tr><td class="mono">verifyAndEmit · batch</td><td>≤10 proofs on one shared continuity proof — no example exercises it. Ceiling confirmed at the precompile: 10 verifies, 11 reverts</td></tr>
+        <tr><td class="mono">verify · read-only</td><td>free pre-flight: previewIngest names the failing guard before any signature; dryRunBatch staticCalls a whole batch</td></tr>
+        <tr><td class="mono">calculateTxIndex</td><td>replay id — keccak(chainKey, height, txIndex)</td></tr>
+        <tr><td class="mono">EvmV1Decoder</td><td>external library, delegatecall — so we deploy our own build</td></tr>
+        <tr><td class="mono">ChainInfo 0x…0fd3</td><td>getSupportedChains, attested heights</td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <p class="mono" style="font-size:13px; color:var(--ash); letter-spacing:.14em; text-transform:uppercase; margin-bottom:10px;">Five checks after every proof</p>
+      <ol class="checks">
+        <li class="body"><span class="t">replay — queryId guard, exercised live</span></li>
+        <li class="body"><span class="t">source auth on the <span class="mono">(chainKey, emitter)</span> pair — mainnet spoofing is otherwise free</span></li>
+        <li class="body"><span class="t"><span class="mono">receiptStatus == 1</span>, decoded in-contract — the precompile does not check success</span></li>
+        <li class="body"><span class="t">dispatch on the log's own emitter, never the caller's action byte</span></li>
+        <li class="body"><span class="t">topic0 must match the source's registered signatures</span></li>
+      </ol>
+    </div>
+  </div>
+  <div class="foot">plus: verify() reverts, never returns false · continuity proofs expire · getBatchProof reorders by height</div>
+  <div class="folio">05</div>
+</section>
+
+<!-- ── 6 · Demo results ───────────────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">Measured, on chain</div>
+  <h2>Every number is live on testnet.</h2>
+  <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:34px 44px; flex:1; align-content:center;">
+    <div class="stat"><div class="v">134,167</div><div class="k">gas per event — nine Sepolia proofs in one CC3 tx (0xffad0a92…), vs 532,140 one at a time</div></div>
+    <div class="stat"><div class="v">0 → 800</div><div class="k">five real Aave V3 mainnet repayments, proven and scored to Platinum</div></div>
+    <div class="stat"><div class="v">9:39</div><div class="k">end to end, measured — ~8.5 min Sepolia attestation, ~15 s verification in one CC3 block</div></div>
+    <div class="stat"><div class="v">850 <span style="font-size:22px;color:var(--ash)">vs</span> 1,300</div><div class="k">collateral for 1,000 tUSD: proven history against a self-dealt wallet — same pool, same free view call</div></div>
+    <div class="stat"><div class="v">5/5</div><div class="k">attacks rejected live — 3 by the precompile, 2 by the registry. npm run negative-paths, no wallet needed</div></div>
+    <div class="stat"><div class="v">10 | 11</div><div class="k">batch ceiling probed at the precompile itself: ten verifies, an eleventh reverts — artifact committed</div></div>
+  </div>
+  <div class="foot">tx hashes and evidence files: github.com/OoJae/crosscredit → docs/evidence/</div>
+  <div class="folio">06</div>
+</section>
+
+<!-- ── 7 · Market ─────────────────────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">Market</div>
+  <h2>Creditcoin's own mission, made cross-chain.</h2>
+  <div class="cols">
+    <div class="col">
+      <p class="body measure">Creditcoin exists to put credit history on-chain for borrowers the formal system cannot see — years of real lending records across Africa and Southeast Asia prove the model.</p>
+      <p class="body measure" style="margin-top:16px;">CrossCredit generalises it: reputation earned <span class="serif-i">anywhere</span> becomes collateral-relief <span class="serif-i">here</span>. The score is computed inside the EVM that verified the evidence — deterministic, eight constants, no owner-tunable weights, no off-chain model.</p>
+    </div>
+    <div class="col">
+      <ul class="plain">
+        <li class="body">Every comparable scorer — Spectral, Cred, Nomis, RociFi — computes off-chain and delivers a number by API</li>
+        <li class="body">Undercollateralized DeFi keeps failing on <span class="serif-i">stated</span> creditworthiness; nobody prices on <span class="serif-i">proven</span> repayment</li>
+        <li class="body">Credit-data network effects: every proven repayment makes the registry more valuable to the next lender</li>
+      </ul>
+    </div>
+  </div>
+  <div class="folio">07</div>
+</section>
+
+<!-- ── 8 · Business model ─────────────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">Business model</div>
+  <h2>Lenders pay for information. Borrowers pay less for capital.</h2>
+  <div class="cols">
+    <div class="col">
+      <table>
+        <tr><th>Revenue</th><th>Mechanism</th></tr>
+        <tr><td>Origination fee</td><td>basis points on every loan the registry prices</td></tr>
+        <tr><td>Rate spread</td><td>tier-priced lending pool — Platinum at 85% collateral is the acquisition hook</td></tr>
+        <tr><td>Registry reads</td><td>third-party pools querying scoreOf / demonstratedCapacity for their own terms</td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <div class="markrow" style="justify-content:center; padding-top:8px;">
+        <div class="tiercard">
+          <svg width="72" height="72" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="26" stroke="#8C6239" stroke-width="2.4"/></svg>
+          <div class="nm" style="color:var(--bronze)">Bronze</div><div class="fl">150%</div>
+        </div>
+        <div class="tiercard">
+          <svg width="72" height="72" viewBox="0 0 64 64" fill="none"><rect x="8" y="8" width="48" height="48" rx="6" stroke="#A8ADB4" stroke-width="2.4"/></svg>
+          <div class="nm" style="color:var(--silver)">Silver</div><div class="fl">130%</div>
+        </div>
+        <div class="tiercard">
+          <svg width="72" height="72" viewBox="0 0 64 64" fill="none"><path d="M32 6 58 32 32 58 6 32Z" stroke="#C9A227" stroke-width="2.4"/></svg>
+          <div class="nm" style="color:var(--gold)">Gold</div><div class="fl">110%</div>
+        </div>
+        <div class="tiercard">
+          <svg width="72" height="72" viewBox="0 0 64 64" fill="none"><path d="M20 6H44L58 20V44L44 58H20L6 44V20Z" stroke="#D7DDE3" stroke-width="2.4"/></svg>
+          <div class="nm" style="color:var(--platinum)">Platinum</div><div class="fl">85%</div>
+        </div>
+      </div>
+      <p class="body ash" style="margin-top:26px; text-align:center;">The tier sets the rate. The credit line above collateral is capped by the largest single repayment <span class="serif-i">proven</span> to a real third-party protocol.</p>
+    </div>
+  </div>
+  <div class="folio">08</div>
+</section>
+
+<!-- ── 9 · Roadmap ────────────────────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">Roadmap</div>
+  <h2>The threat model is the backlog.</h2>
+  <div class="cols">
+    <div class="col">
+      <ul class="plain">
+        <li class="body"><strong>Close multi-block wash lending</strong> — duration-of-exposure scoring; the same-transaction flash-loan path is already closed and tested</li>
+        <li class="body"><strong>More source chains</strong> as CC3 attests them — the registry authenticates on (chainKey, emitter), so a new chain is a registration, not a rewrite</li>
+        <li class="body"><strong>Mainnet import in the app</strong> — today the flagship path is CLI (prove:mainnet); it belongs in the Import tab</li>
+      </ul>
+    </div>
+    <div class="col">
+      <ul class="plain">
+        <li class="body"><strong>Credit delegation</strong> — proven capacity as a primitive other pools consume</li>
+        <li class="body"><strong>RWA pools</strong> — Creditcoin's real-world lenders pricing on imported reputation</li>
+        <li class="body"><strong>Audit</strong> — CertiK credits from this prize, pointed first at the ingest path</li>
+      </ul>
+      <p class="body ash" style="margin-top:18px;">Twelve open items are disclosed in docs/THREAT_MODEL.md — what is unsolved is written down next to what is.</p>
+    </div>
+  </div>
+  <div class="folio">09</div>
+</section>
+
+<!-- ── 10 · Ask ───────────────────────────────────────────────────────────── -->
+<section class="slide" style="justify-content:center;">
+  <div class="eyebrow">The ask</div>
+  <h2 style="max-width:26ch;">Solo build, 23 days, live end to end. Ready for CEIP.</h2>
+  <div class="cols" style="flex:0 1 auto; margin-top:8px;">
+    <div class="col">
+      <p class="body measure">Built from Aug 13 for BUIDL CTC 2026 Fall — contracts, worker, frontend, film and this deck by one builder. Everything user-facing runs against the real precompile on live CC3; nothing in the demo path is mocked.</p>
+      <p class="body measure" style="margin-top:16px;">The ask: <strong>CEIP fast-track</strong> — funding the audit and the first external lending pool on Creditcoin mainnet.</p>
+    </div>
+    <div class="col" style="display:flex; flex-direction:column; justify-content:center;">
+      <div class="plate">
+        <p class="mono" style="font-size:14px; line-height:2.1;">
+          <span class="ash">live</span>&nbsp;&nbsp;crosscredit.vercel.app<br>
+          <span class="ash">code</span>&nbsp;&nbsp;github.com/OoJae/crosscredit<br>
+          <span class="ash">docs</span>&nbsp;&nbsp;docs/ATTESTCOIN_INTEGRATION.md<br>
+          <span class="ash">registry</span>&nbsp;&nbsp;0x4C4381dB…Dddf81 · CC3
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="folio">10</div>
+</section>
+
+</body>
+</html>
