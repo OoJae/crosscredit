@@ -23,23 +23,21 @@ Raw URL, if an upload is refused:
 
 ### Vision — *"Describe the problem which this project solves"*
 
-The field renders as a single-line input. Short version first; use the long one if it accepts it.
+**Hard cap: 256 characters** — measured on the live form, which rejects anything longer.
 
-**Short (287 characters):**
+**Vision (236 characters):**
 
-> A wallet with years of Aave repayments on Ethereum arrives on any other chain as a stranger and
-> posts 150% collateral anyway: $1,500 locked to borrow $1,000. Not because the lender doubts that
-> history — because it cannot read that chain. CrossCredit makes the lending chain read it itself.
+> A wallet with years of Aave repayments on Ethereum posts $1,500 to borrow $1,000 on every other
+> chain. Not because the lender doubts that history — because it cannot read that chain.
+> CrossCredit makes the lending chain verify it itself.
 
-**Long (593 characters):**
+### Key innovation domains (optional)
 
-> A wallet with years of Aave repayments on Ethereum arrives on any other chain as a stranger and
-> posts 150% collateral — not because the lender doubts that history, but because it cannot read
-> that chain. The usual fixes swap evidence for a promise: a scorer's off-chain API, or unsecured
-> lending on stated creditworthiness (Maple lost $36M, Goldfinch wrote off ~$18M). CrossCredit has
-> the lending chain verify those transactions itself, via Attestcoin Protocol's BlockProver
-> precompile — no oracle we run. Five proven Aave repayments quote 850 collateral for 1,000 tUSD;
-> a Bronze wallet, 1,500.
+DeFi · Lending · Cross-chain / Interoperability · Identity & Reputation
+
+### Infrastructures — Layer-1s (optional)
+
+Creditcoin · Ethereum
 
 ### Category
 
