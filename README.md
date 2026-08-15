@@ -1,6 +1,6 @@
 # CrossCredit
 
-**Trustless cross-chain credit reputation and lending on Creditcoin.**
+**Cross-chain credit reputation and lending on Creditcoin, priced on proof rather than trust.**
 
 ### → **[crosscredit.vercel.app](https://crosscredit.vercel.app)** — live on testnet, no wallet needed to look around
 
