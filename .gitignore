@@ -37,3 +37,17 @@ demo/*.mp4
 demo/*.m4a
 videos/*/snaps/
 videos/*/capture/
+
+# ─── Internal working docs — local only, never public ────────────────────────
+CLAUDE.md
+PROGRESS.md
+docs/BUILD_GUIDE.md
+docs/HUMAN_ACTIONS.md
+docs/STRATEGY.md
+docs/SUBMISSION.md
+docs/submission-details.md
+demo/VOICEOVER.md
+videos/**/CLAUDE.md
+videos/**/BRIEF.md
+videos/**/STORYBOARD.md
+cache/

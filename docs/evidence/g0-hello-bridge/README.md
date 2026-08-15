@@ -48,8 +48,8 @@ Tokens minted! Contract: 0x914Cf9…134E, To: 0x8ce707…89c6,
 Gluwa's tutorial README states *"the faucet yields 100 test CTC every 24 hours. This balance is
 sufficient to submit 9 oracle queries, since testnet oracle fees are artificially high."* At a
 measured **0.000197 CTC** per query, 100 CTC is worth roughly **half a million** queries. That
-line is stale, and we had been letting it shape decisions. Corrected across `CLAUDE.md`,
-`docs/BUILD_GUIDE.md` and `docs/HUMAN_ACTIONS.md`.
+line is stale, and we had been letting it shape decisions. Corrected across our internal
+build docs the same day.
 
 ## Two failure modes worth recording
 

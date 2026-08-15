@@ -203,8 +203,9 @@ you all five being refused. It costs nothing and needs no key.
 
 ### A funded test wallet — to write
 
-You need tCTC from the Creditcoin Discord `token-faucet` (`/faucet address:0x…`); a real ingest costs
-about 0.0002 CTC. [`docs/HUMAN_ACTIONS.md`](docs/HUMAN_ACTIONS.md) has the links.
+You need tCTC from the Creditcoin Discord `token-faucet` (`/faucet address:0x…`, invite at
+[creditcoin.org](https://creditcoin.org)); a real ingest costs about 0.0002 CTC. For the Sepolia
+side, any public faucet works — the seeded flows need well under 0.05 ETH.
 
 ```bash
 npm run prove:mainnet -- --find-aave        # pick any attested Aave repayment
@@ -245,7 +246,7 @@ worker/          Oracle worker — watch, backfill and batch modes
 web/             The frontend deployed at crosscredit.vercel.app
 scripts/         check-chains, seed-history, capture-proof, negative-paths, prove-mainnet,
                  poh-negative, deploy
-docs/            ATTESTCOIN_INTEGRATION · SCORING · THREAT_MODEL · BUILD_GUIDE · evidence/
+docs/            ATTESTCOIN_INTEGRATION · SCORING · THREAT_MODEL · evidence/
 ```
 
 ## Documentation
@@ -256,8 +257,7 @@ docs/            ATTESTCOIN_INTEGRATION · SCORING · THREAT_MODEL · BUILD_GUID
 - **[docs/THREAT_MODEL.md](docs/THREAT_MODEL.md)** — the flaw that shaped the design, and the five
   things still unsolved
 - **[docs/evidence/](docs/evidence/)** — gate-by-gate proof: G0 round-trip, G2 credit loop,
-  G3 batch import, G5 real mainnet credit, negative paths
-- **[PROGRESS.md](PROGRESS.md)** — build log, including the things that went wrong
+  G3 batch import, G5 real mainnet credit, negative paths — including the runs that went wrong
 
 ## Attribution
 
