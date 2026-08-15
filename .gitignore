@@ -51,3 +51,6 @@ videos/**/CLAUDE.md
 videos/**/BRIEF.md
 videos/**/STORYBOARD.md
 cache/
+demo/
+videos/
+docs/deck/deck.html
